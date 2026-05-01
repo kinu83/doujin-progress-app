@@ -1,75 +1,20 @@
-# Nuxt Minimal Starter
+# 同人原稿管理アプリ
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+締切日とページごとの進捗状況をもとに、締切までに必要な作業量を自動計算するWebアプリです。
 
-## Setup
+## 使用技術
 
-Make sure to install dependencies:
+- Nuxt.js
+- Vue.js
+- Tailwind CSS
+- localStorage
 
-```bash
-# npm
-npm install
+## 主な機能
 
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+- プロジェクト作成
+- 締切登録
+- ページ数登録
+- ページごとの進捗変更
+- 全体進捗率表示
+- 締切までの日数表示
+- 1日あたり必要作業量表示

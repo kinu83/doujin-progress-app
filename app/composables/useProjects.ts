@@ -1,5 +1,6 @@
-import type { Project, PageStatus } from "~~/types/project";
-import { progressMap } from "~~/composables/useProgress";
+import type { Project, PageStatus } from "~/types/project";
+import { progressMap } from "~/composables/useProgress";
+import { useState } from "#app";
 
 const STORAGE_KEY = "doujin-progress-projects";
 
