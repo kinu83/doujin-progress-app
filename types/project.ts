@@ -12,11 +12,19 @@ export type ManuscriptPage = {
   progress: number;
 };
 
+export type DailyWorkEntry = {
+  planned: number;
+  actual: number;
+};
+
 export type Project = {
   id: string;
   title: string;
+  startDate: string;
+  eventDate: string;
   deadline: string;
   totalPages: number;
   pages: ManuscriptPage[];
+  dailyWorkEntries: Record<string, DailyWorkEntry>;
   createdAt: string;
 };
