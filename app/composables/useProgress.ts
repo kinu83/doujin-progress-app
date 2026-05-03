@@ -1,4 +1,5 @@
 import type { ManuscriptPage, PageStatus } from "~/types/project";
+import { DEFAULT_SETTINGS, useSettings } from "~/composables/useSettings";
 
 export type CrunchLevelTone = "emerald" | "sky" | "amber" | "orange" | "red";
 
@@ -19,17 +20,25 @@ export const completedStepMap: Record<PageStatus, number> = {
 };
 
 export const totalStepCount = 5;
-export const defaultStepMinutes = 60;
+export const defaultStepMinutes = DEFAULT_SETTINGS.defaultStepMinutes;
 
 export const calculatePageProgress = (page: ManuscriptPage) => {
   return Math.round((completedStepMap[page.status] / totalStepCount) * 100);
 };
 
-export const calculateStatusCompletedMinutes = (status: PageStatus) => {
-  return completedStepMap[status] * defaultStepMinutes;
+export const calculateStatusCompletedMinutes = (
+  status: PageStatus,
+  stepMinutes = defaultStepMinutes
+) => {
+  return completedStepMap[status] * stepMinutes;
 };
 
 export const useProgress = () => {
+  const { settings, loadSettings } = useSettings();
+  loadSettings();
+
+  const stepMinutes = computed(() => settings.value.defaultStepMinutes);
+
   const workToMinutes = (work: number) => {
     return Math.round(Math.max(0, work));
   };
@@ -60,9 +69,9 @@ export const useProgress = () => {
   };
 
   const calculateRemainingWork = (pages: ManuscriptPage[]) => {
-    const totalWork = pages.length * totalStepCount * defaultStepMinutes;
+    const totalWork = pages.length * totalStepCount * stepMinutes.value;
     const currentWork = pages.reduce((sum, page) => {
-      return sum + calculateStatusCompletedMinutes(page.status);
+      return sum + calculateStatusCompletedMinutes(page.status, stepMinutes.value);
     }, 0);
 
     return totalWork - currentWork;
