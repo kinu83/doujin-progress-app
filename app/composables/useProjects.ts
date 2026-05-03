@@ -1,5 +1,6 @@
 import type { BookSpec, DailyWorkEntry, Project, PageStatus } from "~/types/project";
 import { calculateStatusCompletedMinutes } from "~/composables/useProgress";
+import { useSettings } from "~/composables/useSettings";
 import { useState } from "#app";
 
 const STORAGE_KEY = "doujin-progress-projects";
@@ -61,6 +62,7 @@ const normalizeDailyWorkEntries = (
 
 export const useProjects = () => {
   const projects = useState<Project[]>("projects", () => []);
+  const { settings, loadSettings } = useSettings();
 
   const loadProjects = () => {
     if (import.meta.server) return;
@@ -234,12 +236,20 @@ export const useProjects = () => {
     const page = project.pages.find((p) => p.pageNumber === pageNumber);
     if (!page) return;
 
-    const previousActualMinutes = calculateStatusCompletedMinutes(page.status);
+    loadSettings();
+
+    const previousActualMinutes = calculateStatusCompletedMinutes(
+      page.status,
+      settings.value.defaultStepMinutes
+    );
     page.status = status;
 
     if (options.syncDailyActual && options.workDate) {
       const actualDelta =
-        calculateStatusCompletedMinutes(page.status) - previousActualMinutes;
+        calculateStatusCompletedMinutes(
+          page.status,
+          settings.value.defaultStepMinutes
+        ) - previousActualMinutes;
       applyDailyActualDelta(project, options.workDate, actualDelta);
     }
 

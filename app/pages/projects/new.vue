@@ -106,13 +106,14 @@ import { useProjects } from "~/composables/useProjects";
 
 const router = useRouter();
 const { createProject, loadProjects } = useProjects();
+const { settings, loadSettings } = useSettings();
 
 const eventName = ref("");
 const title = ref("");
 const startDate = ref("");
 const eventDate = ref("");
 const deadline = ref("");
-const totalPages = ref(16);
+const totalPages = ref(settings.value.defaultTotalPages);
 
 const formError = computed(() => {
   if (startDate.value && deadline.value && startDate.value > deadline.value) {
@@ -129,7 +130,9 @@ const formError = computed(() => {
 const canSubmit = computed(() => !formError.value);
 
 onMounted(() => {
+  loadSettings();
   loadProjects();
+  totalPages.value = settings.value.defaultTotalPages;
 });
 
 const handleSubmit = () => {

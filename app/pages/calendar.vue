@@ -10,9 +10,6 @@
             <h1 class="mt-2 text-2xl font-bold tracking-normal text-gray-950">
               カレンダー
             </h1>
-            <p class="mt-1 text-sm text-gray-500">
-              イベント日、原稿締切、作業開始日と日々の作業時間をまとめて確認できます。
-            </p>
           </div>
         </div>
 
