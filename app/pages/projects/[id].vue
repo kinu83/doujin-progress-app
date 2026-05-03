@@ -174,19 +174,19 @@
               残り日数: {{ calculateDaysLeft(project.deadline) }}日
             </div>
             <div class="rounded-2xl bg-gray-50 p-4">
-              残作業量: {{ calculateRemainingWork(project.pages) }}
+              残作業時間: {{ formatWorkDuration(calculateRemainingWork(project.pages)) }}
             </div>
             <div
               v-if="!isBeforeStartDate(project.startDate)"
               class="rounded-2xl bg-gray-50 p-4"
             >
-              1日あたり必要量: {{ calculateDailyWork(project.pages, project.deadline) }}
+              1日あたり必要時間: {{ formatWorkDuration(calculateDailyWork(project.pages, project.deadline)) }}
             </div>
             <NuxtLink
               to="/calendar"
               class="rounded-2xl bg-gray-50 p-4 transition hover:bg-gray-100"
             >
-              今日の作業量: {{ todayDailyEntry.actual }} / 予定 {{ todayDailyEntry.planned }}
+              今日の作業時間: {{ formatWorkDuration(todayDailyEntry.actual) }} / 予定 {{ formatWorkDuration(todayDailyEntry.planned) }}
             </NuxtLink>
           </div>
         </section>
@@ -207,14 +207,14 @@
                   {{ page.pageNumber }}P
                 </p>
                 <span class="text-sm font-semibold text-gray-600">
-                  {{ page.progress }}%
+                  {{ calculatePageProgress(page) }}%
                 </span>
               </div>
 
               <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-200">
                 <div
                   class="h-full rounded-full bg-gray-900"
-                  :style="{ width: `${page.progress}%` }"
+                  :style="{ width: `${calculatePageProgress(page)}%` }"
                 />
               </div>
 
@@ -526,6 +526,8 @@ const {
   isBeforeStartDate,
   calculateDailyWork,
   calculateCrunchLevel,
+  calculatePageProgress,
+  formatWorkDuration,
 } = useProgress();
 
 const statuses: PageStatus[] = [

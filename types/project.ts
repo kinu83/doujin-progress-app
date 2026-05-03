@@ -9,7 +9,6 @@ export type PageStatus =
 export type ManuscriptPage = {
   pageNumber: number;
   status: PageStatus;
-  progress: number;
 };
 
 export type DailyWorkEntry = {

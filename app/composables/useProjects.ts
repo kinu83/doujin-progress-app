@@ -1,5 +1,5 @@
 import type { BookSpec, DailyWorkEntry, Project, PageStatus } from "~/types/project";
-import { progressMap } from "~/composables/useProgress";
+import { calculateStatusCompletedMinutes } from "~/composables/useProgress";
 import { useState } from "#app";
 
 const STORAGE_KEY = "doujin-progress-projects";
@@ -40,6 +40,25 @@ const defaultBookSpec = (): BookSpec => ({
   budget: 0,
 });
 
+const normalizeDailyWorkEntries = (
+  entries: Record<string, DailyWorkEntry> | undefined,
+  shouldMigrateFromLegacyWorkUnits: boolean
+) => {
+  return Object.fromEntries(
+    Object.entries(entries ?? {}).map(([date, entry]) => {
+      const multiplier = shouldMigrateFromLegacyWorkUnits ? 3 : 1;
+
+      return [
+        date,
+        {
+          planned: Math.max(0, Number(entry.planned) || 0) * multiplier,
+          actual: Math.max(0, Number(entry.actual) || 0) * multiplier,
+        },
+      ];
+    })
+  );
+};
+
 export const useProjects = () => {
   const projects = useState<Project[]>("projects", () => []);
 
@@ -49,17 +68,28 @@ export const useProjects = () => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
 
-    projects.value = JSON.parse(saved).map((project: Project) => ({
-      ...project,
-      eventName: project.eventName ?? "",
-      startDate: project.startDate ?? "",
-      eventDate: project.eventDate ?? "",
-      bookSpec: {
-        ...defaultBookSpec(),
-        ...(project.bookSpec ?? {}),
-      },
-      dailyWorkEntries: project.dailyWorkEntries ?? {},
-    }));
+    projects.value = JSON.parse(saved).map((project: Project) => {
+      const hasLegacyProgress = project.pages.some((page) => "progress" in page);
+
+      return {
+        ...project,
+        eventName: project.eventName ?? "",
+        startDate: project.startDate ?? "",
+        eventDate: project.eventDate ?? "",
+        bookSpec: {
+          ...defaultBookSpec(),
+          ...(project.bookSpec ?? {}),
+        },
+        pages: project.pages.map((page) => ({
+          pageNumber: page.pageNumber,
+          status: page.status,
+        })),
+        dailyWorkEntries: normalizeDailyWorkEntries(
+          project.dailyWorkEntries,
+          hasLegacyProgress
+        ),
+      };
+    });
   };
 
   const saveProjects = () => {
@@ -76,7 +106,6 @@ export const useProjects = () => {
       return {
         pageNumber: index + 1,
         status,
-        progress: progressMap[status],
       };
     });
 
@@ -138,7 +167,6 @@ export const useProjects = () => {
       return {
         pageNumber: index + 1,
         status,
-        progress: progressMap[status],
       };
     }).map((page, index) => ({
       ...page,
@@ -172,7 +200,6 @@ export const useProjects = () => {
       return {
         pageNumber: index + 1,
         status,
-        progress: progressMap[status],
       };
     }).map((page, index) => ({
       ...page,
@@ -207,12 +234,12 @@ export const useProjects = () => {
     const page = project.pages.find((p) => p.pageNumber === pageNumber);
     if (!page) return;
 
-    const previousProgress = page.progress;
+    const previousActualMinutes = calculateStatusCompletedMinutes(page.status);
     page.status = status;
-    page.progress = progressMap[status];
 
     if (options.syncDailyActual && options.workDate) {
-      const actualDelta = page.progress - previousProgress;
+      const actualDelta =
+        calculateStatusCompletedMinutes(page.status) - previousActualMinutes;
       applyDailyActualDelta(project, options.workDate, actualDelta);
     }
 

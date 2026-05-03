@@ -11,7 +11,7 @@
               カレンダー
             </h1>
             <p class="mt-1 text-sm text-gray-500">
-              イベント日、原稿締切、作業開始日と日々の作業量をまとめて確認できます。
+              イベント日、原稿締切、作業開始日と日々の作業時間をまとめて確認できます。
             </p>
           </div>
         </div>
@@ -76,14 +76,14 @@
             <div class="flex flex-wrap items-center justify-end gap-3">
               <div class="flex items-center gap-2 text-xs font-bold text-gray-500">
                 <span class="h-2 w-8 rounded-full bg-gray-900" />
-                今日の作業量
+                今日の作業時間
               </div>
               <div class="flex items-center gap-2 text-xs font-bold text-gray-500">
                 <span class="h-2 w-8 rounded-full border border-gray-400 bg-white" />
                 予定
               </div>
               <p class="text-sm font-semibold text-gray-500">
-                {{ monthTotals.actual }} / {{ monthTotals.planned }}
+                {{ formatWorkDuration(monthTotals.actual) }} / {{ formatWorkDuration(monthTotals.planned) }}
               </p>
             </div>
           </div>
@@ -121,7 +121,7 @@
                   v-if="dayTotals(day.dateKey).planned || dayTotals(day.dateKey).actual"
                   class="text-[11px] font-bold text-gray-500"
                 >
-                  {{ dayTotals(day.dateKey).actual }}/{{ dayTotals(day.dateKey).planned }}
+                  {{ formatWorkDuration(dayTotals(day.dateKey).actual) }}/{{ formatWorkDuration(dayTotals(day.dateKey).planned) }}
                 </span>
               </div>
 
@@ -145,7 +145,7 @@
               <div
                 v-if="workBars(day.dateKey).length"
                 class="mt-auto grid w-full gap-1 pt-2"
-                :aria-label="`${day.dateKey} の今日の作業量 ${dayTotals(day.dateKey).actual}、予定 ${dayTotals(day.dateKey).planned}`"
+                :aria-label="`${day.dateKey} の今日の作業時間 ${formatWorkDuration(dayTotals(day.dateKey).actual)}、予定 ${formatWorkDuration(dayTotals(day.dateKey).planned)}`"
               >
                 <span
                   v-for="bar in workBars(day.dateKey)"
@@ -171,7 +171,7 @@
               {{ selectedDateLabel }}
             </p>
             <h2 class="mt-1 text-lg font-bold text-gray-950">
-              作業量
+              作業時間
             </h2>
           </div>
 
@@ -234,7 +234,7 @@
                     進捗 {{ calculateTotalProgress(project.pages) }}%
                   </span>
                   <span class="rounded-xl bg-gray-50 px-3 py-2">
-                    残り {{ calculateRemainingWork(project.pages) }}
+                    残り {{ formatWorkDuration(calculateRemainingWork(project.pages)) }}
                   </span>
                 </div>
 
@@ -242,19 +242,19 @@
                   v-if="projectUnplannedWork(project) > 0"
                   class="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800"
                 >
-                  必要な作業量分の予定量を入力してください。あと {{ projectUnplannedWork(project) }} 割り振れます。
+                  必要な作業時間分の予定を入力してください。あと {{ formatWorkDuration(projectUnplannedWork(project)) }} 割り振れます。
                 </p>
 
                 <div class="mt-4 grid grid-cols-2 gap-3">
                   <div class="grid gap-2">
-                    <span class="text-xs font-bold text-gray-500">予定</span>
+                    <span class="text-xs font-bold text-gray-500">予定（分）</span>
                     <div class="flex overflow-hidden rounded-xl border border-gray-300 bg-white focus-within:border-gray-900">
                       <input
-                        :value="dailyEntry(project.id).planned"
+                        :value="workToMinutes(dailyEntry(project.id).planned)"
                         type="number"
                         min="0"
                         step="any"
-                        :max="maxPlannedEntry(project.id)"
+                        :max="workToMinutes(maxPlannedEntry(project.id))"
                         inputmode="decimal"
                         class="min-w-0 flex-1 px-3 py-2 text-sm outline-none"
                         @input="handlePlannedEntry(project.id, $event)"
@@ -262,10 +262,10 @@
                       <div class="grid w-9 shrink-0 border-l border-gray-200">
                         <button
                           type="button"
-                          aria-label="予定を10増やす"
-                          title="予定を10増やす"
+                          aria-label="予定を30分増やす"
+                          title="予定を30分増やす"
                           class="grid place-items-center text-gray-700 transition hover:bg-gray-100"
-                          @click="adjustPlannedEntry(project.id, 10)"
+                          @click="adjustPlannedEntry(project.id, 30)"
                         >
                           <svg
                             class="h-3 w-3"
@@ -282,10 +282,10 @@
                         </button>
                         <button
                           type="button"
-                          aria-label="予定を10減らす"
-                          title="予定を10減らす"
+                          aria-label="予定を30分減らす"
+                          title="予定を30分減らす"
                           class="grid place-items-center border-t border-gray-200 text-gray-700 transition hover:bg-gray-100"
-                          @click="adjustPlannedEntry(project.id, -10)"
+                          @click="adjustPlannedEntry(project.id, -30)"
                         >
                           <svg
                             class="h-3 w-3"
@@ -305,9 +305,9 @@
                   </div>
 
                   <div class="grid gap-2">
-                    <span class="text-xs font-bold text-gray-500">今日の作業量</span>
+                    <span class="text-xs font-bold text-gray-500">今日の作業時間</span>
                     <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-bold text-gray-800">
-                      {{ dailyEntry(project.id).actual }}
+                      {{ formatWorkDuration(dailyEntry(project.id).actual) }}
                     </div>
                   </div>
                 </div>
@@ -316,7 +316,7 @@
                   :to="`/projects/${project.id}`"
                   class="ml-auto mt-4 flex w-fit items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-gray-700"
                 >
-                  作業量入力
+                  作業時間入力
                 </NuxtLink>
               </div>
             </section>
@@ -341,10 +341,16 @@ type ScheduleItem = {
 };
 
 const { projects, loadProjects, updateDailyWorkEntry } = useProjects();
-const { calculateTotalProgress, calculateRemainingWork } = useProgress();
+const {
+  calculateTotalProgress,
+  calculateRemainingWork,
+  workToMinutes,
+  minutesToWork,
+  formatWorkDuration,
+} = useProgress();
 
 const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
-const workBarUnit = 20;
+const workBarUnit = 60;
 const maxCollapsedWorkBars = 4;
 const scheduleLabels: Record<ScheduleKind, string> = {
   event: "イベント",
@@ -663,8 +669,8 @@ function normalizePlannedEntry(projectId: string, value: number) {
 function handlePlannedEntry(projectId: string, event: Event) {
   const current = dailyEntry(projectId);
   const input = event.target as HTMLInputElement;
-  const planned = normalizePlannedEntry(projectId, Number(input.value));
-  input.value = String(planned);
+  const planned = normalizePlannedEntry(projectId, minutesToWork(Number(input.value)));
+  input.value = String(workToMinutes(planned));
 
   updateDailyWorkEntry(projectId, selectedDate.value, {
     ...current,

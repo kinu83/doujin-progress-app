@@ -9,30 +9,60 @@ export type CrunchLevel = {
   intensity: number;
 };
 
-export const progressMap: Record<PageStatus, number> = {
+export const completedStepMap: Record<PageStatus, number> = {
   未着手: 0,
-  ネーム: 20,
-  下描き: 40,
-  ペン入れ: 60,
-  仕上げ: 80,
-  完成: 100,
+  ネーム: 0,
+  下描き: 1,
+  ペン入れ: 2,
+  仕上げ: 3,
+  完成: 4,
+};
+
+export const totalStepCount = 4;
+export const defaultStepMinutes = 60;
+
+export const calculatePageProgress = (page: ManuscriptPage) => {
+  return Math.round((completedStepMap[page.status] / totalStepCount) * 100);
+};
+
+export const calculateStatusCompletedMinutes = (status: PageStatus) => {
+  return completedStepMap[status] * defaultStepMinutes;
 };
 
 export const useProgress = () => {
+  const workToMinutes = (work: number) => {
+    return Math.round(Math.max(0, work));
+  };
+
+  const minutesToWork = (minutes: number) => {
+    return Math.max(0, minutes);
+  };
+
+  const formatWorkDuration = (minutes: number) => {
+    const normalizedMinutes = workToMinutes(minutes);
+    const hours = Math.floor(normalizedMinutes / 60);
+    const remainingMinutes = normalizedMinutes % 60;
+
+    if (hours === 0) return `${remainingMinutes}m`;
+    if (remainingMinutes === 0) return `${hours}h`;
+
+    return `${hours}h${remainingMinutes}m`;
+  };
+
   const calculateTotalProgress = (pages: ManuscriptPage[]) => {
     if (pages.length === 0) return 0;
 
     const total = pages.reduce((sum, page) => {
-      return sum + page.progress;
+      return sum + calculatePageProgress(page);
     }, 0);
 
     return Math.round(total / pages.length);
   };
 
   const calculateRemainingWork = (pages: ManuscriptPage[]) => {
-    const totalWork = pages.length * 100;
+    const totalWork = pages.length * totalStepCount * defaultStepMinutes;
     const currentWork = pages.reduce((sum, page) => {
-      return sum + page.progress;
+      return sum + calculateStatusCompletedMinutes(page.status);
     }, 0);
 
     return totalWork - currentWork;
@@ -96,52 +126,52 @@ export const useProgress = () => {
       return {
         label: "準備期間",
         tone: "sky",
-        message: "作業開始日前です。開始したら必要量を見ながら進めましょう。",
+        message: "作業開始日前です。開始したら必要時間を見ながら進めましょう。",
         intensity: 1,
       };
     }
 
     if (daysLeft === 0) {
       return {
-        label: dailyWork > 300 ? "限界修羅場" : "締切当日",
-        tone: dailyWork > 300 ? "red" : "orange",
-        message: "締切当日です。残り作業を今日すべて片付ける計算です。",
-        intensity: dailyWork > 300 ? 5 : 4,
+        label: dailyWork >= 360 ? "限界修羅場" : "締切当日",
+        tone: dailyWork >= 360 ? "red" : "orange",
+        message: "締切当日です。全力を出して、全てを片付けましょう！",
+        intensity: dailyWork >= 360 ? 5 : 4,
       };
     }
 
-    if (dailyWork <= 50) {
+    if (dailyWork < 60) {
       return {
         label: "平穏",
         tone: "emerald",
-        message: `今日の必要量は${dailyWork}。進捗${totalProgress}%なら、かなり落ち着いて進められます。`,
+        message: `今日の必要時間は${formatWorkDuration(dailyWork)}。進捗${totalProgress}%なら、かなり平和です。今のうちに未来の自分へ貯金しておきましょう。`,
         intensity: 1,
       };
     }
 
-    if (dailyWork <= 100) {
+    if (dailyWork < 120) {
       return {
-        label: "通常進行",
+        label: "通常",
         tone: "sky",
-        message: `今日の必要量は${dailyWork}。1日1ページ未満のペースです。`,
+        message: `今日の必要時間は${formatWorkDuration(dailyWork)}。進捗${totalProgress}%なら、いつもの原稿ペースです。机に向かえば勝ちです。`,
         intensity: 2,
       };
     }
 
-    if (dailyWork <= 200) {
+    if (dailyWork < 180) {
       return {
-        label: "修羅場",
+        label: "修羅場一歩手前",
         tone: "amber",
-        message: `今日の必要量は${dailyWork}。1日1ページ以上の作業量です。`,
+        message: `今日の必要時間は${formatWorkDuration(dailyWork)}。進捗${totalProgress}%なら、まだ戻れます。原稿を開いて、1ページずつ着実に進めましょう。`,
         intensity: 3,
       };
     }
 
-    if (dailyWork <= 300) {
+    if (dailyWork < 360) {
       return {
-        label: "大修羅場",
+        label: "修羅場",
         tone: "orange",
-        message: `今日の必要量は${dailyWork}。優先順位を絞って進めたい負荷です。`,
+        message: `今日の必要時間は${formatWorkDuration(dailyWork)}。かなり熱い戦いです。今いちばん効く作業から片付けましょう。`,
         intensity: 4,
       };
     }
@@ -149,18 +179,23 @@ export const useProgress = () => {
     return {
       label: "限界修羅場",
       tone: "red",
-      message: `今日の必要量は${dailyWork}。締切やページ数の見直しも考えたい負荷です。`,
+      message: `今日の必要時間は${formatWorkDuration(dailyWork)}。かなり危険域です。それでも出したいんですよね？ まず深呼吸して、削れる作業・残す作業を分けましょう。`,
       intensity: 5,
     };
   };
 
   return {
-    progressMap,
+    completedStepMap,
+    calculatePageProgress,
+    calculateStatusCompletedMinutes,
     calculateTotalProgress,
     calculateRemainingWork,
     calculateDaysLeft,
     isBeforeStartDate,
     calculateDailyWork,
     calculateCrunchLevel,
+    workToMinutes,
+    minutesToWork,
+    formatWorkDuration,
   };
 };
