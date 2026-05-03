@@ -57,26 +57,76 @@
       </div>
 
       <div v-else class="grid gap-4">
-        <NuxtLink
+        <article
           v-for="project in projects"
           :key="project.id"
-          :to="`/projects/${project.id}`"
           class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-200 transition hover:-translate-y-0.5 hover:shadow-md"
         >
           <div class="flex items-start justify-between gap-4">
             <div>
-              <h2 class="text-lg font-bold text-gray-900">
-                {{ project.title }}
-              </h2>
-              <p class="mt-1 text-sm text-gray-500">
-                締切: {{ project.deadline }} / {{ project.totalPages }}P
-              </p>
-              <p v-if="project.startDate" class="mt-1 text-sm text-gray-500">
-                作業開始日: {{ project.startDate }}
-              </p>
-              <p v-if="project.eventDate" class="mt-1 text-sm text-gray-500">
-                イベント日: {{ project.eventDate }}
-              </p>
+              <div class="flex flex-wrap items-center gap-2 font-bold">
+                <NuxtLink
+                  :to="`/projects/${project.id}`"
+                  class="text-lg text-gray-900 transition hover:text-gray-600"
+                >
+                  {{ project.title }}
+                </NuxtLink>
+                <span
+                  v-if="formatEventLabel(project)"
+                  class="rounded-full bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700 ring-1 ring-rose-100"
+                >
+                  {{ formatEventLabel(project) }}
+                </span>
+              </div>
+              <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+                <span>
+                  締切日 {{ formatProjectDate(project.deadline) }}
+                </span>
+                <span v-if="project.startDate">
+                  作業開始日 {{ formatProjectDate(project.startDate) }}
+                </span>
+              </div>
+              <details class="group mt-1 text-sm text-gray-500">
+                <summary class="flex cursor-pointer list-none items-center gap-1 font-semibold text-gray-500 hover:text-gray-700">
+                  <span class="text-[10px] transition-transform group-open:rotate-90">
+                    ▶
+                  </span>
+                  <span>本の情報</span>
+                </summary>
+
+                <div class="mt-1">
+                  <dl class="flex flex-wrap gap-x-4 gap-y-1">
+                    <div class="flex gap-1">
+                      <dt>ページ数</dt>
+                      <dd>{{ project.totalPages }}P</dd>
+                    </div>
+                    <div class="flex gap-1">
+                      <dt>カラー</dt>
+                      <dd>{{ project.bookSpec.colorMode }}</dd>
+                    </div>
+                    <div v-if="project.bookSpec.coverPaper" class="flex gap-1">
+                      <dt>表紙の紙</dt>
+                      <dd>{{ project.bookSpec.coverPaper }}</dd>
+                    </div>
+                    <div v-if="project.bookSpec.bodyPaper" class="flex gap-1">
+                      <dt>本文の紙</dt>
+                      <dd>{{ project.bookSpec.bodyPaper }}</dd>
+                    </div>
+                    <div v-if="project.bookSpec.printer" class="flex gap-1">
+                      <dt>印刷会社</dt>
+                      <dd>{{ project.bookSpec.printer }}</dd>
+                    </div>
+                    <div v-if="project.bookSpec.printRun" class="flex gap-1">
+                      <dt>発行部数</dt>
+                      <dd>{{ project.bookSpec.printRun }}部</dd>
+                    </div>
+                    <div v-if="project.bookSpec.budget" class="flex gap-1">
+                      <dt>予算</dt>
+                      <dd>{{ project.bookSpec.budget.toLocaleString() }}円</dd>
+                    </div>
+                  </dl>
+                </div>
+              </details>
             </div>
 
             <div class="flex shrink-0 flex-col items-end gap-2">
@@ -106,13 +156,14 @@
               今日の必要量: {{ calculateDailyWork(project.pages, project.deadline) }}
             </span>
           </div>
-        </NuxtLink>
+        </article>
       </div>
     </div>
   </main>
 </template>
 
 <script setup lang="ts">
+import { formatEventLabel, formatProjectDate } from "~/utils/projectDisplay";
 
 const { projects, loadProjects } = useProjects();
 const {

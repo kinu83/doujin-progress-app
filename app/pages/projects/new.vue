@@ -10,10 +10,30 @@
           新規プロジェクト作成
         </h1>
         <p class="mt-2 text-sm text-gray-500">
-          タイトル、締切、ページ数を登録すると進捗管理を始められます。
+          イベント情報、作品タイトル、作業期間を登録すると進捗管理を始められます。
         </p>
 
         <form class="mt-8 grid gap-5" @submit.prevent="handleSubmit">
+          <label class="grid gap-2">
+            <span class="text-sm font-semibold text-gray-700">イベント名</span>
+            <input
+              v-model="eventName"
+              type="text"
+              placeholder="例: コミックマーケット"
+              class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+            >
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-semibold text-gray-700">イベント開催日</span>
+            <input
+              v-model="eventDate"
+              type="date"
+              :min="deadline || undefined"
+              class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+            >
+          </label>
+
           <label class="grid gap-2">
             <span class="text-sm font-semibold text-gray-700">タイトル</span>
             <input
@@ -37,27 +57,17 @@
             </label>
 
             <label class="grid gap-2">
-              <span class="text-sm font-semibold text-gray-700">イベント日</span>
+              <span class="text-sm font-semibold text-gray-700">締切日</span>
               <input
-                v-model="eventDate"
+                v-model="deadline"
                 type="date"
-                :min="deadline || undefined"
+                required
+                :min="startDate || undefined"
+                :max="eventDate || undefined"
                 class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
               >
             </label>
           </div>
-
-          <label class="grid gap-2">
-            <span class="text-sm font-semibold text-gray-700">締切</span>
-            <input
-              v-model="deadline"
-              type="date"
-              required
-              :min="startDate || undefined"
-              :max="eventDate || undefined"
-              class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
-            >
-          </label>
 
           <label class="grid gap-2">
             <span class="text-sm font-semibold text-gray-700">総ページ数</span>
@@ -97,6 +107,7 @@ import { useProjects } from "~/composables/useProjects";
 const router = useRouter();
 const { createProject, loadProjects } = useProjects();
 
+const eventName = ref("");
 const title = ref("");
 const startDate = ref("");
 const eventDate = ref("");
@@ -125,6 +136,7 @@ const handleSubmit = () => {
   if (!canSubmit.value) return;
 
   const project = createProject({
+    eventName: eventName.value.trim(),
     title: title.value.trim(),
     startDate: startDate.value,
     eventDate: eventDate.value,

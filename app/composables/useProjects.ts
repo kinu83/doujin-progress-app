@@ -1,10 +1,11 @@
-import type { DailyWorkEntry, Project, PageStatus } from "~/types/project";
+import type { BookSpec, DailyWorkEntry, Project, PageStatus } from "~/types/project";
 import { progressMap } from "~/composables/useProgress";
 import { useState } from "#app";
 
 const STORAGE_KEY = "doujin-progress-projects";
 
 type ProjectInfoInput = {
+  eventName: string;
   title: string;
   startDate: string;
   eventDate: string;
@@ -12,7 +13,12 @@ type ProjectInfoInput = {
   totalPages: number;
 };
 
+type BookSpecInput = BookSpec & {
+  totalPages: number;
+};
+
 type CreateProjectInput = {
+  eventName?: string;
   title: string;
   startDate?: string;
   eventDate?: string;
@@ -25,6 +31,15 @@ type UpdatePageStatusOptions = {
   syncDailyActual?: boolean;
 };
 
+const defaultBookSpec = (): BookSpec => ({
+  colorMode: "モノクロ",
+  coverPaper: "",
+  bodyPaper: "",
+  printer: "",
+  printRun: 0,
+  budget: 0,
+});
+
 export const useProjects = () => {
   const projects = useState<Project[]>("projects", () => []);
 
@@ -36,8 +51,13 @@ export const useProjects = () => {
 
     projects.value = JSON.parse(saved).map((project: Project) => ({
       ...project,
+      eventName: project.eventName ?? "",
       startDate: project.startDate ?? "",
       eventDate: project.eventDate ?? "",
+      bookSpec: {
+        ...defaultBookSpec(),
+        ...(project.bookSpec ?? {}),
+      },
       dailyWorkEntries: project.dailyWorkEntries ?? {},
     }));
   };
@@ -62,11 +82,13 @@ export const useProjects = () => {
 
     const project: Project = {
       id: crypto.randomUUID(),
+      eventName: input.eventName ?? "",
       title: input.title,
       startDate: input.startDate ?? "",
       eventDate: input.eventDate ?? "",
       deadline: input.deadline,
       totalPages,
+      bookSpec: defaultBookSpec(),
       pages,
       dailyWorkEntries: {},
       createdAt: new Date().toISOString(),
@@ -123,12 +145,50 @@ export const useProjects = () => {
       pageNumber: index + 1,
     }));
 
+    project.eventName = input.eventName;
     project.title = input.title;
     project.startDate = input.startDate;
     project.eventDate = input.eventDate;
     project.deadline = input.deadline;
     project.totalPages = totalPages;
     project.pages = nextPages;
+
+    saveProjects();
+
+    return true;
+  };
+
+  const updateBookSpec = (projectId: string, input: BookSpecInput) => {
+    const project = getProjectById(projectId);
+    if (!project) return false;
+
+    const totalPages = Math.max(1, Number(input.totalPages) || 1);
+    const currentPages = project.pages;
+    const nextPages = Array.from({ length: totalPages }, (_, index) => {
+      const existingPage = currentPages[index];
+      if (existingPage) return existingPage;
+
+      const status: PageStatus = "未着手";
+      return {
+        pageNumber: index + 1,
+        status,
+        progress: progressMap[status],
+      };
+    }).map((page, index) => ({
+      ...page,
+      pageNumber: index + 1,
+    }));
+
+    project.totalPages = totalPages;
+    project.pages = nextPages;
+    project.bookSpec = {
+      colorMode: input.colorMode,
+      coverPaper: input.coverPaper.trim(),
+      bodyPaper: input.bodyPaper.trim(),
+      printer: input.printer.trim(),
+      printRun: Math.max(0, Number(input.printRun) || 0),
+      budget: Math.max(0, Number(input.budget) || 0),
+    };
 
     saveProjects();
 
@@ -214,6 +274,7 @@ export const useProjects = () => {
     getProjectById,
     deleteProject,
     updateProjectInfo,
+    updateBookSpec,
     updatePageStatus,
     updateDailyWorkEntry,
   };

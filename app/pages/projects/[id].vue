@@ -35,21 +35,75 @@
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-start gap-3">
                 <div class="min-w-0 flex-1">
-                  <h1 class="break-words text-2xl font-bold text-gray-900">
-                    {{ project.title }}
-                  </h1>
-                  <p v-if="project.startDate" class="mt-1 text-sm text-gray-500">
-                    作業開始日 {{ project.startDate }}
-                  </p>
-                  <p v-else class="mt-1 text-sm text-gray-400">
-                    作業開始日は未設定です
-                  </p>
-                  <p class="mt-2 text-sm text-gray-500">
-                    締切 {{ project.deadline }} / {{ project.totalPages }}P
-                  </p>
-                  <p v-if="project.eventDate" class="mt-1 text-sm text-gray-500">
-                    イベント日 {{ project.eventDate }}
-                  </p>
+                  <div class="flex flex-wrap items-center gap-3">
+                    <h1 class="break-words text-2xl font-bold text-gray-900">
+                      {{ project.title }}
+                    </h1>
+                    <span
+                      v-if="formatEventLabel(project)"
+                      class="rounded-full bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700 ring-1 ring-rose-100"
+                    >
+                      {{ formatEventLabel(project) }}
+                    </span>
+                  </div>
+                  <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+                    <span>
+                      締切日 {{ formatProjectDate(project.deadline) }}
+                    </span>
+                    <span v-if="project.startDate">
+                      作業開始日 {{ formatProjectDate(project.startDate) }}
+                    </span>
+                    <span v-else class="text-gray-400">
+                      作業開始日は未設定です
+                    </span>
+                  </div>
+                  <details class="group mt-1 text-sm text-gray-500">
+                    <summary class="flex cursor-pointer list-none items-center gap-1 font-semibold text-gray-500 hover:text-gray-700">
+                      <span class="text-[10px] transition-transform group-open:rotate-90">
+                        ▶
+                      </span>
+                      <span>本の情報</span>
+                    </summary>
+                    <div class="mt-1">
+                      <dl class="flex flex-wrap gap-x-4 gap-y-1">
+                        <div class="flex gap-1">
+                          <dt>ページ数</dt>
+                          <dd>{{ project.totalPages }}P</dd>
+                        </div>
+                        <div class="flex gap-1">
+                          <dt>カラー</dt>
+                          <dd>{{ project.bookSpec.colorMode }}</dd>
+                        </div>
+                        <div v-if="project.bookSpec.coverPaper" class="flex gap-1">
+                          <dt>表紙の紙</dt>
+                          <dd>{{ project.bookSpec.coverPaper }}</dd>
+                        </div>
+                        <div v-if="project.bookSpec.bodyPaper" class="flex gap-1">
+                          <dt>本文の紙</dt>
+                          <dd>{{ project.bookSpec.bodyPaper }}</dd>
+                        </div>
+                        <div v-if="project.bookSpec.printer" class="flex gap-1">
+                          <dt>印刷会社</dt>
+                          <dd>{{ project.bookSpec.printer }}</dd>
+                        </div>
+                        <div v-if="project.bookSpec.printRun" class="flex gap-1">
+                          <dt>発行部数</dt>
+                          <dd>{{ project.bookSpec.printRun }}部</dd>
+                        </div>
+                        <div v-if="project.bookSpec.budget" class="flex gap-1">
+                          <dt>予算</dt>
+                          <dd>{{ project.bookSpec.budget.toLocaleString() }}円</dd>
+                        </div>
+                      </dl>
+                      <button
+                        type="button"
+                        class="mt-2 text-xs font-bold text-gray-500 underline-offset-2 hover:text-gray-800 hover:underline"
+                        @click="startBookSpecEdit"
+                      >
+                        編集
+                      </button>
+                    </div>
+                  </details>
                 </div>
 
                 <div class="flex shrink-0 flex-wrap gap-2">
@@ -244,6 +298,25 @@
 
               <div class="grid gap-4 px-6 py-5 md:grid-cols-2">
                 <label class="grid gap-2 md:col-span-2">
+                  <span class="text-sm font-semibold text-gray-700">イベント名</span>
+                  <input
+                    v-model="editEventName"
+                    type="text"
+                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                  >
+                </label>
+
+                <label class="grid gap-2 md:col-span-2">
+                  <span class="text-sm font-semibold text-gray-700">イベント開催日</span>
+                  <input
+                    v-model="editEventDate"
+                    type="date"
+                    :min="editDeadline || undefined"
+                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                  >
+                </label>
+
+                <label class="grid gap-2 md:col-span-2">
                   <span class="text-sm font-semibold text-gray-700">タイトル</span>
                   <input
                     v-model="editTitle"
@@ -264,34 +337,13 @@
                 </label>
 
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">締切</span>
+                  <span class="text-sm font-semibold text-gray-700">締切日</span>
                   <input
                     v-model="editDeadline"
                     type="date"
                     required
                     :min="editStartDate || undefined"
                     :max="editEventDate || undefined"
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
-                  >
-                </label>
-
-                <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">イベント日</span>
-                  <input
-                    v-model="editEventDate"
-                    type="date"
-                    :min="editDeadline || undefined"
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
-                  >
-                </label>
-
-                <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">総ページ数</span>
-                  <input
-                    v-model.number="editTotalPages"
-                    type="number"
-                    min="1"
-                    required
                     class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
                   >
                 </label>
@@ -323,6 +375,120 @@
             </form>
           </div>
         </Teleport>
+
+        <Teleport to="body">
+          <div
+            v-if="isEditingBookSpec"
+            class="fixed inset-0 z-50 grid place-items-center bg-gray-900/50 px-4 py-6"
+            @click.self="cancelBookSpecEdit"
+          >
+            <form
+              class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-gray-200"
+              @submit.prevent="handleBookSpecSubmit"
+            >
+              <div class="border-b border-gray-200 px-6 py-5">
+                <h2 class="text-lg font-bold text-gray-900">
+                  本の情報を編集
+                </h2>
+                <p class="mt-1 text-sm text-gray-500">
+                  ページ数や印刷仕様を更新できます。
+                </p>
+              </div>
+
+              <div class="grid gap-4 px-6 py-5 md:grid-cols-2">
+                <label class="grid gap-2">
+                  <span class="text-sm font-semibold text-gray-700">ページ数</span>
+                  <input
+                    v-model.number="bookSpecForm.totalPages"
+                    type="number"
+                    min="1"
+                    required
+                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                  >
+                </label>
+
+                <label class="grid gap-2">
+                  <span class="text-sm font-semibold text-gray-700">カラー</span>
+                  <select
+                    v-model="bookSpecForm.colorMode"
+                    class="rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none transition focus:border-gray-900"
+                  >
+                    <option
+                      v-for="colorMode in colorModes"
+                      :key="colorMode"
+                      :value="colorMode"
+                    >
+                      {{ colorMode }}
+                    </option>
+                  </select>
+                </label>
+
+                <label class="grid gap-2">
+                  <span class="text-sm font-semibold text-gray-700">表紙の紙</span>
+                  <input
+                    v-model="bookSpecForm.coverPaper"
+                    type="text"
+                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                  >
+                </label>
+
+                <label class="grid gap-2">
+                  <span class="text-sm font-semibold text-gray-700">本文の紙</span>
+                  <input
+                    v-model="bookSpecForm.bodyPaper"
+                    type="text"
+                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                  >
+                </label>
+
+                <label class="grid gap-2">
+                  <span class="text-sm font-semibold text-gray-700">印刷会社</span>
+                  <input
+                    v-model="bookSpecForm.printer"
+                    type="text"
+                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                  >
+                </label>
+
+                <label class="grid gap-2">
+                  <span class="text-sm font-semibold text-gray-700">発行部数</span>
+                  <input
+                    v-model.number="bookSpecForm.printRun"
+                    type="number"
+                    min="0"
+                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                  >
+                </label>
+
+                <label class="grid gap-2">
+                  <span class="text-sm font-semibold text-gray-700">予算</span>
+                  <input
+                    v-model.number="bookSpecForm.budget"
+                    type="number"
+                    min="0"
+                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                  >
+                </label>
+              </div>
+
+              <div class="flex flex-col-reverse gap-3 border-t border-gray-200 px-6 py-4 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  class="rounded-xl border border-gray-300 px-4 py-3 text-sm font-bold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
+                  @click="cancelBookSpecEdit"
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="submit"
+                  class="rounded-xl bg-gray-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-gray-700"
+                >
+                  保存
+                </button>
+              </div>
+            </form>
+          </div>
+        </Teleport>
       </div>
 
       <div v-else class="mt-6 rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-gray-200">
@@ -340,7 +506,8 @@
 <script setup lang="ts">
 import { useProgress } from "~/composables/useProgress";
 import { useProjects } from "~/composables/useProjects";
-import type { PageStatus } from "~/types/project";
+import type { PageStatus, PrintColorMode } from "~/types/project";
+import { formatEventLabel, formatProjectDate } from "~/utils/projectDisplay";
 
 const route = useRoute();
 const router = useRouter();
@@ -350,6 +517,7 @@ const {
   deleteProject,
   updatePageStatus,
   updateProjectInfo,
+  updateBookSpec,
 } = useProjects();
 const {
   calculateTotalProgress,
@@ -368,6 +536,7 @@ const statuses: PageStatus[] = [
   "仕上げ",
   "完成",
 ];
+const colorModes: PrintColorMode[] = ["フルカラー", "モノクロ"];
 
 onMounted(() => {
   loadProjects();
@@ -383,12 +552,22 @@ const todayDailyEntry = computed(() => {
 });
 
 const isEditingInfo = ref(false);
+const isEditingBookSpec = ref(false);
 const isConfirmingDelete = ref(false);
+const editEventName = ref("");
 const editTitle = ref("");
 const editStartDate = ref("");
 const editEventDate = ref("");
 const editDeadline = ref("");
-const editTotalPages = ref(1);
+const bookSpecForm = reactive({
+  totalPages: 1,
+  colorMode: "モノクロ" as PrintColorMode,
+  coverPaper: "",
+  bodyPaper: "",
+  printer: "",
+  printRun: 0,
+  budget: 0,
+});
 
 const isStartDateAfterDeadline = computed(() => {
   if (!editStartDate.value || !editDeadline.value) return false;
@@ -427,11 +606,23 @@ const getCrunchLevelClasses = (tone: string) => {
 const fillInfoForm = () => {
   if (!project.value) return;
 
+  editEventName.value = project.value.eventName;
   editTitle.value = project.value.title;
   editStartDate.value = project.value.startDate;
   editEventDate.value = project.value.eventDate;
   editDeadline.value = project.value.deadline;
-  editTotalPages.value = project.value.totalPages;
+};
+
+const fillBookSpecForm = () => {
+  if (!project.value) return;
+
+  bookSpecForm.totalPages = project.value.totalPages;
+  bookSpecForm.colorMode = project.value.bookSpec.colorMode;
+  bookSpecForm.coverPaper = project.value.bookSpec.coverPaper;
+  bookSpecForm.bodyPaper = project.value.bookSpec.bodyPaper;
+  bookSpecForm.printer = project.value.bookSpec.printer;
+  bookSpecForm.printRun = project.value.bookSpec.printRun;
+  bookSpecForm.budget = project.value.bookSpec.budget;
 };
 
 const startInfoEdit = () => {
@@ -442,6 +633,16 @@ const startInfoEdit = () => {
 const cancelInfoEdit = () => {
   fillInfoForm();
   isEditingInfo.value = false;
+};
+
+const startBookSpecEdit = () => {
+  fillBookSpecForm();
+  isEditingBookSpec.value = true;
+};
+
+const cancelBookSpecEdit = () => {
+  fillBookSpecForm();
+  isEditingBookSpec.value = false;
 };
 
 const openDeleteConfirm = () => {
@@ -469,11 +670,12 @@ const handleInfoSubmit = () => {
   }
 
   const updated = updateProjectInfo(project.value.id, {
+    eventName: editEventName.value.trim(),
     title: editTitle.value.trim(),
     startDate: editStartDate.value,
     eventDate: editEventDate.value,
     deadline: editDeadline.value,
-    totalPages: editTotalPages.value,
+    totalPages: project.value.totalPages,
   });
 
   if (!updated) {
@@ -481,6 +683,24 @@ const handleInfoSubmit = () => {
   }
 
   isEditingInfo.value = false;
+};
+
+const handleBookSpecSubmit = () => {
+  if (!project.value) return;
+
+  const updated = updateBookSpec(project.value.id, {
+    totalPages: bookSpecForm.totalPages,
+    colorMode: bookSpecForm.colorMode,
+    coverPaper: bookSpecForm.coverPaper,
+    bodyPaper: bookSpecForm.bodyPaper,
+    printer: bookSpecForm.printer,
+    printRun: bookSpecForm.printRun,
+    budget: bookSpecForm.budget,
+  });
+
+  if (updated) {
+    isEditingBookSpec.value = false;
+  }
 };
 
 const handleStatusChange = (pageNumber: number, event: Event) => {

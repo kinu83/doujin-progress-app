@@ -75,15 +75,15 @@
             </h2>
             <div class="flex flex-wrap items-center justify-end gap-3">
               <div class="flex items-center gap-2 text-xs font-bold text-gray-500">
-                <span class="h-2 w-8 rounded-full border border-gray-400 bg-white" />
-                予定
-              </div>
-              <div class="flex items-center gap-2 text-xs font-bold text-gray-500">
                 <span class="h-2 w-8 rounded-full bg-gray-900" />
                 今日の作業量
               </div>
+              <div class="flex items-center gap-2 text-xs font-bold text-gray-500">
+                <span class="h-2 w-8 rounded-full border border-gray-400 bg-white" />
+                予定
+              </div>
               <p class="text-sm font-semibold text-gray-500">
-                {{ monthTotals.planned }} / {{ monthTotals.actual }}
+                {{ monthTotals.actual }} / {{ monthTotals.planned }}
               </p>
             </div>
           </div>
@@ -145,7 +145,7 @@
               <div
                 v-if="workBars(day.dateKey).length"
                 class="mt-auto grid w-full gap-1 pt-2"
-                :aria-label="`${day.dateKey} の予定作業量 ${dayTotals(day.dateKey).planned}、今日の作業量 ${dayTotals(day.dateKey).actual}`"
+                :aria-label="`${day.dateKey} の今日の作業量 ${dayTotals(day.dateKey).actual}、予定 ${dayTotals(day.dateKey).planned}`"
               >
                 <span
                   v-for="bar in workBars(day.dateKey)"
@@ -238,18 +238,71 @@
                   </span>
                 </div>
 
+                <p
+                  v-if="projectUnplannedWork(project) > 0"
+                  class="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800"
+                >
+                  必要な作業量分の予定量を入力してください。あと {{ projectUnplannedWork(project) }} 割り振れます。
+                </p>
+
                 <div class="mt-4 grid grid-cols-2 gap-3">
-                  <label class="grid gap-2">
+                  <div class="grid gap-2">
                     <span class="text-xs font-bold text-gray-500">予定</span>
-                    <input
-                      :value="dailyEntry(project.id).planned"
-                      type="number"
-                      min="0"
-                      inputmode="numeric"
-                      class="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-gray-900"
-                      @input="handlePlannedEntry(project.id, $event)"
-                    >
-                  </label>
+                    <div class="flex overflow-hidden rounded-xl border border-gray-300 bg-white focus-within:border-gray-900">
+                      <input
+                        :value="dailyEntry(project.id).planned"
+                        type="number"
+                        min="0"
+                        step="any"
+                        :max="maxPlannedEntry(project.id)"
+                        inputmode="decimal"
+                        class="min-w-0 flex-1 px-3 py-2 text-sm outline-none"
+                        @input="handlePlannedEntry(project.id, $event)"
+                      >
+                      <div class="grid w-9 shrink-0 border-l border-gray-200">
+                        <button
+                          type="button"
+                          aria-label="予定を10増やす"
+                          title="予定を10増やす"
+                          class="grid place-items-center text-gray-700 transition hover:bg-gray-100"
+                          @click="adjustPlannedEntry(project.id, 10)"
+                        >
+                          <svg
+                            class="h-3 w-3"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="m18 15-6-6-6 6" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="予定を10減らす"
+                          title="予定を10減らす"
+                          class="grid place-items-center border-t border-gray-200 text-gray-700 transition hover:bg-gray-100"
+                          @click="adjustPlannedEntry(project.id, -10)"
+                        >
+                          <svg
+                            class="h-3 w-3"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="m6 9 6 6 6-6" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
 
                   <div class="grid gap-2">
                     <span class="text-xs font-bold text-gray-500">今日の作業量</span>
@@ -261,9 +314,9 @@
 
                 <NuxtLink
                   :to="`/projects/${project.id}`"
-                  class="mt-4 flex items-center justify-center rounded-xl border border-gray-300 px-4 py-2 text-sm font-bold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
+                  class="ml-auto mt-4 flex w-fit items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-gray-700"
                 >
-                  プロジェクト詳細へ
+                  作業量入力
                 </NuxtLink>
               </div>
             </section>
@@ -423,7 +476,7 @@ function daySchedule(dateKey: string): ScheduleItem[] {
 function toScheduleItem(project: Project, kind: ScheduleKind): ScheduleItem {
   return {
     projectId: project.id,
-    title: project.title,
+    title: kind === "event" && project.eventName ? project.eventName : project.title,
     kind,
   };
 }
@@ -581,13 +634,51 @@ function dailyEntry(projectId: string): DailyWorkEntry {
   };
 }
 
+function projectRequiredWork(project: Project) {
+  return calculateRemainingWork(project.pages);
+}
+
+function projectPlannedTotal(project: Project) {
+  return Object.values(project.dailyWorkEntries).reduce((sum, entry) => {
+    return sum + entry.planned;
+  }, 0);
+}
+
+function projectUnplannedWork(project: Project) {
+  return Math.max(projectRequiredWork(project) - projectPlannedTotal(project), 0);
+}
+
+function maxPlannedEntry(projectId: string) {
+  const project = projects.value.find((item) => item.id === projectId);
+  if (!project) return 0;
+
+  const current = dailyEntry(projectId);
+  return Math.max(current.planned + projectUnplannedWork(project), 0);
+}
+
+function normalizePlannedEntry(projectId: string, value: number) {
+  return Math.max(0, Math.min(Number.isFinite(value) ? value : 0, maxPlannedEntry(projectId)));
+}
+
 function handlePlannedEntry(projectId: string, event: Event) {
   const current = dailyEntry(projectId);
-  const value = Number((event.target as HTMLInputElement).value);
+  const input = event.target as HTMLInputElement;
+  const planned = normalizePlannedEntry(projectId, Number(input.value));
+  input.value = String(planned);
 
   updateDailyWorkEntry(projectId, selectedDate.value, {
     ...current,
-    planned: value,
+    planned,
+  });
+}
+
+function adjustPlannedEntry(projectId: string, amount: number) {
+  const current = dailyEntry(projectId);
+  const planned = normalizePlannedEntry(projectId, current.planned + amount);
+
+  updateDailyWorkEntry(projectId, selectedDate.value, {
+    ...current,
+    planned,
   });
 }
 </script>
