@@ -171,16 +171,13 @@
 
           <div class="mt-5 grid gap-3 text-sm text-gray-600 md:grid-cols-4">
             <div class="rounded-2xl bg-gray-50 p-4">
-              残り日数: {{ calculateDaysLeft(project.deadline) }}日
+              残日数: {{ calculateDaysLeft(project.deadline) }}日
             </div>
             <div class="rounded-2xl bg-gray-50 p-4">
               残作業時間: {{ formatWorkDuration(calculateRemainingWork(project.pages)) }}
             </div>
-            <div
-              v-if="!isBeforeStartDate(project.startDate)"
-              class="rounded-2xl bg-gray-50 p-4"
-            >
-              1日あたり必要時間: {{ formatWorkDuration(calculateDailyWork(project.pages, project.deadline)) }}
+            <div class="rounded-2xl bg-gray-50 p-4">
+              残ページ数: {{ formatRemainingPages(project) }}P
             </div>
             <NuxtLink
               to="/calendar"
@@ -207,30 +204,42 @@
                   {{ page.pageNumber }}P
                 </p>
                 <span class="text-sm font-semibold text-gray-600">
-                  {{ calculatePageProgress(page) }}%
+                  {{ page.status }}・{{ calculatePageProgress(page) }}%
                 </span>
               </div>
 
-              <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-200">
-                <div
-                  class="h-full rounded-full bg-gray-900"
-                  :style="{ width: `${calculatePageProgress(page)}%` }"
-                />
-              </div>
-
-              <select
-                :value="page.status"
-                class="mt-4 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm"
-                @change="handleStatusChange(page.pageNumber, $event)"
+              <button
+                type="button"
+                class="group mt-3 w-full rounded-full py-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
+                role="slider"
+                :aria-label="`${page.pageNumber}Pの進捗ステップ`"
+                :aria-valuemin="0"
+                :aria-valuemax="statuses.length - 1"
+                :aria-valuenow="getPageStatusIndex(page.status)"
+                :aria-valuetext="page.status"
+                @click="handleProgressBarClick(page.pageNumber, $event)"
+                @keydown="handleProgressBarKeydown(page.pageNumber, page.status, $event)"
               >
-                <option
-                  v-for="status in statuses"
-                  :key="status"
-                  :value="status"
+                <div class="relative h-2 overflow-hidden rounded-full bg-gray-200">
+                  <div
+                    class="h-full rounded-full bg-gray-900 transition-[width]"
+                    :style="{ width: `${getPageStatusPercent(page.status)}%` }"
+                  />
+                </div>
+                <div
+                  class="relative mt-1 h-3"
+                  aria-hidden="true"
                 >
-                  {{ status }}
-                </option>
-              </select>
+                  <span
+                    v-for="(status, index) in statuses"
+                    :key="status"
+                    class="absolute top-0 h-3 w-3 -translate-x-1/2 rounded-full border-2 bg-white transition group-hover:border-gray-900"
+                    :class="index <= getPageStatusIndex(page.status) ? 'border-gray-900' : 'border-gray-300'"
+                    :style="{ left: `${getStatusIndexPercent(index)}%` }"
+                  />
+                </div>
+              </button>
+
             </div>
           </div>
         </section>
@@ -348,6 +357,37 @@
                   >
                 </label>
 
+                <label class="grid gap-2">
+                  <span class="text-sm font-semibold text-gray-700">ページ数</span>
+                  <div class="flex overflow-hidden rounded-xl border border-gray-300 bg-white focus-within:border-gray-900">
+                    <input
+                      v-model.number="editTotalPages"
+                      type="number"
+                      min="1"
+                      required
+                      class="min-w-0 flex-1 border-0 px-4 py-3 outline-none"
+                    >
+                    <div class="grid w-11 shrink-0 border-l border-gray-200">
+                      <button
+                        type="button"
+                        aria-label="ページ数を増やす"
+                        class="grid place-items-center text-xs font-bold text-gray-600 transition hover:bg-gray-50"
+                        @click="incrementEditTotalPages"
+                      >
+                        ▲
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="ページ数を減らす"
+                        class="grid place-items-center border-t border-gray-200 text-xs font-bold text-gray-600 transition hover:bg-gray-50"
+                        @click="decrementEditTotalPages"
+                      >
+                        ▼
+                      </button>
+                    </div>
+                  </div>
+                </label>
+
                 <p
                   v-if="infoEditError"
                   class="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 md:col-span-2"
@@ -398,13 +438,33 @@
               <div class="grid gap-4 px-6 py-5 md:grid-cols-2">
                 <label class="grid gap-2">
                   <span class="text-sm font-semibold text-gray-700">ページ数</span>
-                  <input
-                    v-model.number="bookSpecForm.totalPages"
-                    type="number"
-                    min="1"
-                    required
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
-                  >
+                  <div class="flex overflow-hidden rounded-xl border border-gray-300 bg-white focus-within:border-gray-900">
+                    <input
+                      v-model.number="bookSpecForm.totalPages"
+                      type="number"
+                      min="1"
+                      required
+                      class="min-w-0 flex-1 border-0 px-4 py-3 outline-none"
+                    >
+                    <div class="grid w-11 shrink-0 border-l border-gray-200">
+                      <button
+                        type="button"
+                        aria-label="ページ数を増やす"
+                        class="grid place-items-center text-xs font-bold text-gray-600 transition hover:bg-gray-50"
+                        @click="incrementBookSpecTotalPages"
+                      >
+                        ▲
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="ページ数を減らす"
+                        class="grid place-items-center border-t border-gray-200 text-xs font-bold text-gray-600 transition hover:bg-gray-50"
+                        @click="decrementBookSpecTotalPages"
+                      >
+                        ▼
+                      </button>
+                    </div>
+                  </div>
                 </label>
 
                 <label class="grid gap-2">
@@ -524,7 +584,6 @@ const {
   calculateRemainingWork,
   calculateDaysLeft,
   isBeforeStartDate,
-  calculateDailyWork,
   calculateCrunchLevel,
   calculatePageProgress,
   formatWorkDuration,
@@ -553,6 +612,13 @@ const todayDailyEntry = computed(() => {
   };
 });
 
+const formatRemainingPages = (project: NonNullable<typeof project.value>) => {
+  const completedPages = project.pages.filter((page) => page.status === "完成").length;
+  const remainingPages = Math.max(project.totalPages - completedPages, 0);
+
+  return `${remainingPages}/${project.totalPages}`;
+};
+
 const isEditingInfo = ref(false);
 const isEditingBookSpec = ref(false);
 const isConfirmingDelete = ref(false);
@@ -561,6 +627,7 @@ const editTitle = ref("");
 const editStartDate = ref("");
 const editEventDate = ref("");
 const editDeadline = ref("");
+const editTotalPages = ref(1);
 const bookSpecForm = reactive({
   totalPages: 1,
   colorMode: "モノクロ" as PrintColorMode,
@@ -613,6 +680,7 @@ const fillInfoForm = () => {
   editStartDate.value = project.value.startDate;
   editEventDate.value = project.value.eventDate;
   editDeadline.value = project.value.deadline;
+  editTotalPages.value = project.value.totalPages;
 };
 
 const fillBookSpecForm = () => {
@@ -647,6 +715,22 @@ const cancelBookSpecEdit = () => {
   isEditingBookSpec.value = false;
 };
 
+const incrementEditTotalPages = () => {
+  editTotalPages.value = Math.max(1, Number(editTotalPages.value) || 1) + 1;
+};
+
+const decrementEditTotalPages = () => {
+  editTotalPages.value = Math.max(1, (Number(editTotalPages.value) || 1) - 1);
+};
+
+const incrementBookSpecTotalPages = () => {
+  bookSpecForm.totalPages = Math.max(1, Number(bookSpecForm.totalPages) || 1) + 1;
+};
+
+const decrementBookSpecTotalPages = () => {
+  bookSpecForm.totalPages = Math.max(1, (Number(bookSpecForm.totalPages) || 1) - 1);
+};
+
 const openDeleteConfirm = () => {
   isConfirmingDelete.value = true;
 };
@@ -677,7 +761,7 @@ const handleInfoSubmit = () => {
     startDate: editStartDate.value,
     eventDate: editEventDate.value,
     deadline: editDeadline.value,
-    totalPages: project.value.totalPages,
+    totalPages: editTotalPages.value,
   });
 
   if (!updated) {
@@ -705,12 +789,67 @@ const handleBookSpecSubmit = () => {
   }
 };
 
-const handleStatusChange = (pageNumber: number, event: Event) => {
-  const nextStatus = (event.target as HTMLSelectElement).value as PageStatus;
+const updatePageStatusWithDailySync = (
+  pageNumber: number,
+  nextStatus: PageStatus
+) => {
   updatePageStatus(String(route.params.id), pageNumber, nextStatus, {
     workDate: todayKey.value,
     syncDailyActual: true,
   });
+};
+
+const getPageStatusIndex = (status: PageStatus) => {
+  return Math.max(0, statuses.indexOf(status));
+};
+
+const getStatusIndexPercent = (index: number) => {
+  if (statuses.length <= 1) return 0;
+
+  return Math.round((index / (statuses.length - 1)) * 100);
+};
+
+const getPageStatusPercent = (status: PageStatus) => {
+  return getStatusIndexPercent(getPageStatusIndex(status));
+};
+
+const getStatusFromPointerEvent = (event: MouseEvent) => {
+  const button = event.currentTarget as HTMLElement;
+  const rect = button.getBoundingClientRect();
+  const pointerX = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
+  const ratio = rect.width === 0 ? 0 : pointerX / rect.width;
+  const statusIndex = Math.round(ratio * (statuses.length - 1));
+
+  return statuses[statusIndex];
+};
+
+const handleProgressBarClick = (pageNumber: number, event: MouseEvent) => {
+  if (event.detail === 0) return;
+
+  updatePageStatusWithDailySync(pageNumber, getStatusFromPointerEvent(event));
+};
+
+const handleProgressBarKeydown = (
+  pageNumber: number,
+  currentStatus: PageStatus,
+  event: KeyboardEvent
+) => {
+  const currentIndex = getPageStatusIndex(currentStatus);
+  const keyToStatusIndex: Record<string, number> = {
+    ArrowLeft: currentIndex - 1,
+    ArrowDown: currentIndex - 1,
+    ArrowRight: currentIndex + 1,
+    ArrowUp: currentIndex + 1,
+    Home: 0,
+    End: statuses.length - 1,
+  };
+  const nextIndex = keyToStatusIndex[event.key];
+
+  if (nextIndex === undefined) return;
+
+  event.preventDefault();
+  const boundedIndex = Math.min(Math.max(nextIndex, 0), statuses.length - 1);
+  updatePageStatusWithDailySync(pageNumber, statuses[boundedIndex]);
 };
 
 function formatDateKey(date: Date) {

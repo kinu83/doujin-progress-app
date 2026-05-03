@@ -11,14 +11,14 @@ export type CrunchLevel = {
 
 export const completedStepMap: Record<PageStatus, number> = {
   未着手: 0,
-  ネーム: 0,
-  下描き: 1,
-  ペン入れ: 2,
-  仕上げ: 3,
-  完成: 4,
+  ネーム: 1,
+  下描き: 2,
+  ペン入れ: 3,
+  仕上げ: 4,
+  完成: 5,
 };
 
-export const totalStepCount = 4;
+export const totalStepCount = 5;
 export const defaultStepMinutes = 60;
 
 export const calculatePageProgress = (page: ManuscriptPage) => {
