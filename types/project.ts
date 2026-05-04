@@ -1,10 +1,4 @@
-export type PageStatus =
-  | "未着手"
-  | "ネーム"
-  | "下描き"
-  | "ペン入れ"
-  | "仕上げ"
-  | "完成";
+export type PageStatus = string;
 
 export type ManuscriptPage = {
   pageNumber: number;
@@ -35,6 +29,9 @@ export type Project = {
   eventDate: string;
   deadline: string;
   totalPages: number;
+  workProcessId: string;
+  workProcessName: string;
+  workProcessSteps: import("~/types/settings").WorkProcessStep[];
   bookSpec: BookSpec;
   pages: ManuscriptPage[];
   dailyWorkEntries: Record<string, DailyWorkEntry>;

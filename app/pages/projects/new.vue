@@ -80,6 +80,22 @@
             >
           </label>
 
+          <label class="grid gap-2">
+            <span class="text-sm font-semibold text-gray-700">作業工程</span>
+            <select
+              v-model="workProcessId"
+              class="rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+            >
+              <option
+                v-for="process in settings.workProcesses"
+                :key="process.id"
+                :value="process.id"
+              >
+                {{ process.name }}
+              </option>
+            </select>
+          </label>
+
           <p
             v-if="formError"
             class="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
@@ -114,6 +130,7 @@ const startDate = ref("");
 const eventDate = ref("");
 const deadline = ref("");
 const totalPages = ref(settings.value.defaultTotalPages);
+const workProcessId = ref(settings.value.defaultWorkProcessId);
 
 const formError = computed(() => {
   if (startDate.value && deadline.value && startDate.value > deadline.value) {
@@ -133,6 +150,7 @@ onMounted(() => {
   loadSettings();
   loadProjects();
   totalPages.value = settings.value.defaultTotalPages;
+  workProcessId.value = settings.value.defaultWorkProcessId;
 });
 
 const handleSubmit = () => {
@@ -145,6 +163,7 @@ const handleSubmit = () => {
     eventDate: eventDate.value,
     deadline: deadline.value,
     totalPages: totalPages.value,
+    workProcessId: workProcessId.value,
   });
 
   router.push(`/projects/${project.id}`);

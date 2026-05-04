@@ -1,6 +1,7 @@
 import type { BookSpec, DailyWorkEntry, Project, PageStatus } from "~/types/project";
+import type { WorkProcess, WorkProcessStep } from "~/types/settings";
 import { calculateStatusCompletedMinutes } from "~/composables/useProgress";
-import { useSettings } from "~/composables/useSettings";
+import { DEFAULT_WORK_PROCESS, useSettings } from "~/composables/useSettings";
 import { useState } from "#app";
 
 const STORAGE_KEY = "doujin-progress-projects";
@@ -12,6 +13,7 @@ type ProjectInfoInput = {
   eventDate: string;
   deadline: string;
   totalPages: number;
+  workProcessId: string;
 };
 
 type BookSpecInput = BookSpec & {
@@ -25,6 +27,7 @@ type CreateProjectInput = {
   eventDate?: string;
   deadline: string;
   totalPages: number;
+  workProcessId?: string;
 };
 
 type UpdatePageStatusOptions = {
@@ -60,9 +63,59 @@ const normalizeDailyWorkEntries = (
   );
 };
 
+const workProcessToProjectFields = (process: WorkProcess) => {
+  return {
+    workProcessId: process.id,
+    workProcessName: process.name,
+    workProcessSteps: process.steps.map((step) => ({ ...step })),
+  };
+};
+
+const normalizeProjectSteps = (
+  steps: Array<string | Partial<WorkProcessStep>> | undefined
+) => {
+  const normalized = (steps ?? []).reduce<WorkProcessStep[]>((result, step) => {
+    const name = typeof step === "string" ? step.trim() : String(step.name ?? "").trim();
+    if (!name || result.some((item) => item.name === name)) return result;
+
+    const minutesPerPage = typeof step === "string"
+      ? 60
+      : Math.max(1, Math.round(Number(step.minutesPerPage) || 60));
+
+    result.push({ name, minutesPerPage });
+    return result;
+  }, []);
+
+  return normalized.length > 0
+    ? normalized
+    : DEFAULT_WORK_PROCESS.steps.map((step) => ({ ...step }));
+};
+
+const getProjectStatusList = (steps: WorkProcessStep[]) => [
+  "未着手",
+  ...steps.map((step) => step.name),
+];
+
+const normalizeStatusForSteps = (
+  status: PageStatus,
+  previousSteps: WorkProcessStep[],
+  nextSteps: WorkProcessStep[]
+) => {
+  const nextStatuses = getProjectStatusList(nextSteps);
+  if (nextStatuses.includes(status)) return status;
+
+  const previousStatuses = getProjectStatusList(previousSteps);
+  const previousIndex = previousStatuses.indexOf(status);
+  if (previousIndex === previousStatuses.length - 1) {
+    return nextStatuses[nextStatuses.length - 1];
+  }
+
+  return "未着手";
+};
+
 export const useProjects = () => {
   const projects = useState<Project[]>("projects", () => []);
-  const { settings, loadSettings } = useSettings();
+  const { settings, loadSettings, getWorkProcessById } = useSettings();
 
   const loadProjects = () => {
     if (import.meta.server) return;
@@ -70,14 +123,22 @@ export const useProjects = () => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
 
+    loadSettings();
+
     projects.value = JSON.parse(saved).map((project: Project) => {
       const hasLegacyProgress = project.pages.some((page) => "progress" in page);
+      const processFields = {
+        workProcessId: project.workProcessId ?? DEFAULT_WORK_PROCESS.id,
+        workProcessName: project.workProcessName ?? DEFAULT_WORK_PROCESS.name,
+        workProcessSteps: normalizeProjectSteps(project.workProcessSteps),
+      };
 
       return {
         ...project,
         eventName: project.eventName ?? "",
         startDate: project.startDate ?? "",
         eventDate: project.eventDate ?? "",
+        ...processFields,
         bookSpec: {
           ...defaultBookSpec(),
           ...(project.bookSpec ?? {}),
@@ -101,6 +162,11 @@ export const useProjects = () => {
   };
 
   const createProject = (input: CreateProjectInput) => {
+    loadSettings();
+    const workProcess = input.workProcessId
+      ? getWorkProcessById(input.workProcessId)
+      : getWorkProcessById(settings.value.defaultWorkProcessId);
+    const processFields = workProcessToProjectFields(workProcess ?? DEFAULT_WORK_PROCESS);
     const totalPages = Math.max(1, input.totalPages);
     const pages = Array.from({ length: totalPages }, (_, index) => {
       const status: PageStatus = "未着手";
@@ -119,6 +185,7 @@ export const useProjects = () => {
       eventDate: input.eventDate ?? "",
       deadline: input.deadline,
       totalPages,
+      ...processFields,
       bookSpec: defaultBookSpec(),
       pages,
       dailyWorkEntries: {},
@@ -160,6 +227,13 @@ export const useProjects = () => {
     }
 
     const totalPages = Math.max(1, input.totalPages);
+    loadSettings();
+    const workProcess = getWorkProcessById(input.workProcessId);
+    const nextProcessFields = workProcessToProjectFields(workProcess ?? {
+      id: project.workProcessId,
+      name: project.workProcessName,
+      steps: project.workProcessSteps,
+    });
     const currentPages = project.pages;
     const nextPages = Array.from({ length: totalPages }, (_, index) => {
       const existingPage = currentPages[index];
@@ -173,6 +247,11 @@ export const useProjects = () => {
     }).map((page, index) => ({
       ...page,
       pageNumber: index + 1,
+      status: normalizeStatusForSteps(
+        page.status,
+        project.workProcessSteps,
+        nextProcessFields.workProcessSteps
+      ),
     }));
 
     project.eventName = input.eventName;
@@ -181,6 +260,9 @@ export const useProjects = () => {
     project.eventDate = input.eventDate;
     project.deadline = input.deadline;
     project.totalPages = totalPages;
+    project.workProcessId = nextProcessFields.workProcessId;
+    project.workProcessName = nextProcessFields.workProcessName;
+    project.workProcessSteps = nextProcessFields.workProcessSteps;
     project.pages = nextPages;
 
     saveProjects();
@@ -240,7 +322,7 @@ export const useProjects = () => {
 
     const previousActualMinutes = calculateStatusCompletedMinutes(
       page.status,
-      settings.value.defaultStepMinutes
+      project.workProcessSteps
     );
     page.status = status;
 
@@ -248,7 +330,7 @@ export const useProjects = () => {
       const actualDelta =
         calculateStatusCompletedMinutes(
           page.status,
-          settings.value.defaultStepMinutes
+          project.workProcessSteps
         ) - previousActualMinutes;
       applyDailyActualDelta(project, options.workDate, actualDelta);
     }
@@ -303,6 +385,34 @@ export const useProjects = () => {
     saveProjects();
   };
 
+  const applyWorkProcessToProjects = (process: WorkProcess) => {
+    let hasUpdatedProject = false;
+
+    projects.value.forEach((project) => {
+      if (project.workProcessId !== process.id) return;
+
+      const previousSteps = project.workProcessSteps;
+      const nextProcessFields = workProcessToProjectFields(process);
+      project.workProcessName = nextProcessFields.workProcessName;
+      project.workProcessSteps = nextProcessFields.workProcessSteps;
+      project.pages = project.pages.map((page) => ({
+        ...page,
+        status: normalizeStatusForSteps(
+          page.status,
+          previousSteps,
+          nextProcessFields.workProcessSteps
+        ),
+      }));
+      hasUpdatedProject = true;
+    });
+
+    if (hasUpdatedProject) {
+      saveProjects();
+    }
+
+    return hasUpdatedProject;
+  };
+
   return {
     projects,
     loadProjects,
@@ -314,5 +424,6 @@ export const useProjects = () => {
     updateBookSpec,
     updatePageStatus,
     updateDailyWorkEntry,
+    applyWorkProcessToProjects,
   };
 };

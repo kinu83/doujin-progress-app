@@ -94,7 +94,7 @@
                 </NuxtLink>
                 <span
                   v-if="formatEventLabel(project)"
-                  class="rounded-full bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700 ring-1 ring-rose-100"
+                  class="rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700 ring-1 ring-sky-100"
                 >
                   {{ formatEventLabel(project) }}
                 </span>
@@ -111,13 +111,13 @@
 
             <div class="flex shrink-0 flex-col items-end gap-2">
               <span class="rounded-full bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-700">
-                {{ calculateTotalProgress(project.pages) }}%
+                {{ calculateTotalProgress(project.pages, project.workProcessSteps) }}%
               </span>
               <span
                 class="rounded-full px-3 py-1 text-xs font-bold"
-                :class="getCrunchLevelClasses(calculateCrunchLevel(project.pages, project.deadline, project.startDate).tone)"
+                :class="getCrunchLevelClasses(calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps).tone)"
               >
-                修羅場レベル: {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate).label }}
+                修羅場レベル: {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps).label }}
               </span>
             </div>
           </div>
@@ -125,15 +125,15 @@
           <div class="mt-4 h-3 overflow-hidden rounded-full bg-gray-200">
             <div
               class="h-full rounded-full bg-gray-900"
-              :style="{ width: `${calculateTotalProgress(project.pages)}%` }"
+              :style="{ width: `${calculateTotalProgress(project.pages, project.workProcessSteps)}%` }"
             />
           </div>
 
           <div class="mt-4 flex flex-wrap gap-3 text-sm text-gray-600">
-            <span>残作業時間: {{ formatWorkDuration(calculateRemainingWork(project.pages)) }}</span>
+            <span>残作業時間: {{ formatWorkDuration(calculateRemainingWork(project.pages, project.workProcessSteps)) }}</span>
             <span>残り日数: {{ calculateDaysLeft(project.deadline) }}日</span>
             <span v-if="!isBeforeStartDate(project.startDate)">
-              今日の必要時間: {{ formatWorkDuration(calculateDailyWork(project.pages, project.deadline)) }}
+              今日の必要時間: {{ formatWorkDuration(calculateDailyWork(project.pages, project.deadline, project.workProcessSteps)) }}
             </span>
           </div>
         </article>
