@@ -228,10 +228,10 @@
 
                 <div class="mt-3 grid grid-cols-2 gap-2 text-xs font-bold text-gray-500">
                   <span class="rounded-xl bg-gray-50 px-3 py-2">
-                    進捗 {{ calculateTotalProgress(project.pages) }}%
+                    進捗 {{ calculateTotalProgress(project.pages, project.workProcessSteps) }}%
                   </span>
                   <span class="rounded-xl bg-gray-50 px-3 py-2">
-                    残り {{ formatWorkDuration(calculateRemainingWork(project.pages)) }}
+                    残り {{ formatWorkDuration(calculateRemainingWork(project.pages, project.workProcessSteps)) }}
                   </span>
                 </div>
 
@@ -638,7 +638,7 @@ function dailyEntry(projectId: string): DailyWorkEntry {
 }
 
 function projectRequiredWork(project: Project) {
-  return calculateRemainingWork(project.pages);
+  return calculateRemainingWork(project.pages, project.workProcessSteps);
 }
 
 function projectPlannedTotal(project: Project) {

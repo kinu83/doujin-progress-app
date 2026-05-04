@@ -71,6 +71,10 @@
                           <dd>{{ project.totalPages }}P</dd>
                         </div>
                         <div class="flex gap-1">
+                          <dt>作業工程</dt>
+                          <dd>{{ project.workProcessName }}</dd>
+                        </div>
+                        <div class="flex gap-1">
                           <dt>カラー</dt>
                           <dd>{{ project.bookSpec.colorMode }}</dd>
                         </div>
@@ -127,7 +131,7 @@
 
             <div class="shrink-0 text-right">
               <p class="text-3xl font-bold text-gray-900">
-                {{ calculateTotalProgress(project.pages) }}%
+                {{ calculateTotalProgress(project.pages, project.workProcessSteps) }}%
               </p>
               <p class="text-sm text-gray-500">
                 全体進捗
@@ -138,13 +142,13 @@
           <div class="mt-5 h-3 overflow-hidden rounded-full bg-gray-200">
             <div
               class="h-full rounded-full bg-gray-900"
-              :style="{ width: `${calculateTotalProgress(project.pages)}%` }"
+              :style="{ width: `${calculateTotalProgress(project.pages, project.workProcessSteps)}%` }"
             />
           </div>
 
           <div
             class="mt-5 rounded-2xl border p-4"
-            :class="getCrunchLevelClasses(calculateCrunchLevel(project.pages, project.deadline, project.startDate).tone)"
+            :class="getCrunchLevelClasses(calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps).tone)"
           >
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -152,7 +156,7 @@
                   修羅場レベル
                 </p>
                 <p class="mt-1 text-2xl font-bold">
-                  {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate).label }}
+                  {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps).label }}
                 </p>
               </div>
               <div class="flex gap-1" aria-hidden="true">
@@ -160,12 +164,12 @@
                   v-for="level in 5"
                   :key="level"
                   class="h-3 w-3 rounded-full"
-                  :class="level <= calculateCrunchLevel(project.pages, project.deadline, project.startDate).intensity ? 'bg-current' : 'bg-current/20'"
+                  :class="level <= calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps).intensity ? 'bg-current' : 'bg-current/20'"
                 />
               </div>
             </div>
             <p class="mt-2 text-sm leading-6">
-              {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate).message }}
+              {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps).message }}
             </p>
           </div>
 
@@ -174,7 +178,7 @@
               残日数: {{ calculateDaysLeft(project.deadline) }}日
             </div>
             <div class="rounded-2xl bg-gray-50 p-4">
-              残作業時間: {{ formatWorkDuration(calculateRemainingWork(project.pages)) }}
+              残作業時間: {{ formatWorkDuration(calculateRemainingWork(project.pages, project.workProcessSteps)) }}
             </div>
             <div class="rounded-2xl bg-gray-50 p-4">
               残ページ数: {{ formatRemainingPages(project) }}P
@@ -204,7 +208,7 @@
                   {{ page.pageNumber }}P
                 </p>
                 <span class="text-sm font-semibold text-gray-600">
-                  {{ page.status }}・{{ calculatePageProgress(page) }}%
+                  {{ page.status }}・{{ calculatePageProgress(page, project.workProcessSteps) }}%
                 </span>
               </div>
 
@@ -388,6 +392,22 @@
                   </div>
                 </label>
 
+                <label class="grid gap-2">
+                  <span class="text-sm font-semibold text-gray-700">作業工程</span>
+                  <select
+                    v-model="editWorkProcessId"
+                    class="rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none transition focus:border-gray-900"
+                  >
+                    <option
+                      v-for="process in settings.workProcesses"
+                      :key="process.id"
+                      :value="process.id"
+                    >
+                      {{ process.name }}
+                    </option>
+                  </select>
+                </label>
+
                 <p
                   v-if="infoEditError"
                   class="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 md:col-span-2"
@@ -566,6 +586,7 @@
 <script setup lang="ts">
 import { useProgress } from "~/composables/useProgress";
 import { useProjects } from "~/composables/useProjects";
+import { createStatusList } from "~/composables/useProgress";
 import type { PageStatus, PrintColorMode } from "~/types/project";
 import { formatEventLabel, formatProjectDate } from "~/utils/projectDisplay";
 
@@ -579,6 +600,7 @@ const {
   updateProjectInfo,
   updateBookSpec,
 } = useProjects();
+const { settings, loadSettings } = useSettings();
 const {
   calculateTotalProgress,
   calculateRemainingWork,
@@ -589,21 +611,17 @@ const {
   formatWorkDuration,
 } = useProgress();
 
-const statuses: PageStatus[] = [
-  "未着手",
-  "ネーム",
-  "下描き",
-  "ペン入れ",
-  "仕上げ",
-  "完成",
-];
 const colorModes: PrintColorMode[] = ["フルカラー", "モノクロ"];
 
 onMounted(() => {
+  loadSettings();
   loadProjects();
 });
 
 const project = computed(() => getProjectById(String(route.params.id)));
+const statuses = computed<PageStatus[]>(() => {
+  return createStatusList(project.value?.workProcessSteps);
+});
 const todayKey = computed(() => formatDateKey(new Date()));
 const todayDailyEntry = computed(() => {
   return project.value?.dailyWorkEntries[todayKey.value] ?? {
@@ -613,7 +631,8 @@ const todayDailyEntry = computed(() => {
 });
 
 const formatRemainingPages = (project: NonNullable<typeof project.value>) => {
-  const completedPages = project.pages.filter((page) => page.status === "完成").length;
+  const finalStatus = project.workProcessSteps[project.workProcessSteps.length - 1]?.name;
+  const completedPages = project.pages.filter((page) => page.status === finalStatus).length;
   const remainingPages = Math.max(project.totalPages - completedPages, 0);
 
   return `${remainingPages}/${project.totalPages}`;
@@ -628,6 +647,7 @@ const editStartDate = ref("");
 const editEventDate = ref("");
 const editDeadline = ref("");
 const editTotalPages = ref(1);
+const editWorkProcessId = ref("");
 const bookSpecForm = reactive({
   totalPages: 1,
   colorMode: "モノクロ" as PrintColorMode,
@@ -681,6 +701,7 @@ const fillInfoForm = () => {
   editEventDate.value = project.value.eventDate;
   editDeadline.value = project.value.deadline;
   editTotalPages.value = project.value.totalPages;
+  editWorkProcessId.value = project.value.workProcessId;
 };
 
 const fillBookSpecForm = () => {
@@ -762,6 +783,7 @@ const handleInfoSubmit = () => {
     eventDate: editEventDate.value,
     deadline: editDeadline.value,
     totalPages: editTotalPages.value,
+    workProcessId: editWorkProcessId.value,
   });
 
   if (!updated) {
@@ -800,13 +822,13 @@ const updatePageStatusWithDailySync = (
 };
 
 const getPageStatusIndex = (status: PageStatus) => {
-  return Math.max(0, statuses.indexOf(status));
+  return Math.max(0, statuses.value.indexOf(status));
 };
 
 const getStatusIndexPercent = (index: number) => {
-  if (statuses.length <= 1) return 0;
+  if (statuses.value.length <= 1) return 0;
 
-  return Math.round((index / (statuses.length - 1)) * 100);
+  return Math.round((index / (statuses.value.length - 1)) * 100);
 };
 
 const getPageStatusPercent = (status: PageStatus) => {
@@ -818,9 +840,9 @@ const getStatusFromPointerEvent = (event: MouseEvent) => {
   const rect = button.getBoundingClientRect();
   const pointerX = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
   const ratio = rect.width === 0 ? 0 : pointerX / rect.width;
-  const statusIndex = Math.round(ratio * (statuses.length - 1));
+  const statusIndex = Math.round(ratio * (statuses.value.length - 1));
 
-  return statuses[statusIndex];
+  return statuses.value[statusIndex];
 };
 
 const handleProgressBarClick = (pageNumber: number, event: MouseEvent) => {
@@ -841,15 +863,15 @@ const handleProgressBarKeydown = (
     ArrowRight: currentIndex + 1,
     ArrowUp: currentIndex + 1,
     Home: 0,
-    End: statuses.length - 1,
+    End: statuses.value.length - 1,
   };
   const nextIndex = keyToStatusIndex[event.key];
 
   if (nextIndex === undefined) return;
 
   event.preventDefault();
-  const boundedIndex = Math.min(Math.max(nextIndex, 0), statuses.length - 1);
-  updatePageStatusWithDailySync(pageNumber, statuses[boundedIndex]);
+  const boundedIndex = Math.min(Math.max(nextIndex, 0), statuses.value.length - 1);
+  updatePageStatusWithDailySync(pageNumber, statuses.value[boundedIndex]);
 };
 
 function formatDateKey(date: Date) {
