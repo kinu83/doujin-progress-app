@@ -3,6 +3,12 @@ import type { WorkProcess, WorkProcessStep } from "~/types/settings";
 import { calculateStatusCompletedMinutes } from "~/composables/useProgress";
 import { DEFAULT_WORK_PROCESS, useSettings } from "~/composables/useSettings";
 import { useState } from "#app";
+import {
+  deleteRemoteProject,
+  loadRemoteProjects,
+  saveRemoteProject,
+  saveRemoteProjects,
+} from "~/repositories/projectRepository";
 
 const STORAGE_KEY = "doujin-progress-projects";
 
@@ -34,6 +40,8 @@ type UpdatePageStatusOptions = {
   workDate?: string;
   syncDailyActual?: boolean;
 };
+
+let remoteProjectWriteQueue: Promise<void> = Promise.resolve();
 
 const defaultBookSpec = (): BookSpec => ({
   colorMode: "モノクロ",
@@ -113,52 +121,164 @@ const normalizeStatusForSteps = (
   return "未着手";
 };
 
+const normalizeProject = (project: Project): Project => {
+  const pages = project.pages ?? [];
+  const hasLegacyProgress = pages.some((page) => "progress" in page);
+  const processFields = {
+    workProcessId: project.workProcessId ?? DEFAULT_WORK_PROCESS.id,
+    workProcessName: project.workProcessName ?? DEFAULT_WORK_PROCESS.name,
+    workProcessSteps: normalizeProjectSteps(project.workProcessSteps),
+  };
+
+  return {
+    ...project,
+    id: project.id || crypto.randomUUID(),
+    eventName: project.eventName ?? "",
+    startDate: project.startDate ?? "",
+    eventDate: project.eventDate ?? "",
+    totalPages: Math.max(1, Number(project.totalPages) || pages.length || 1),
+    createdAt: project.createdAt ?? new Date().toISOString(),
+    ...processFields,
+    bookSpec: {
+      ...defaultBookSpec(),
+      ...(project.bookSpec ?? {}),
+    },
+    pages: pages.map((page, index) => ({
+      pageNumber: page.pageNumber ?? index + 1,
+      status: page.status ?? "未着手",
+    })),
+    dailyWorkEntries: normalizeDailyWorkEntries(
+      project.dailyWorkEntries,
+      hasLegacyProgress
+    ),
+  };
+};
+
+const readLocalProjects = () => {
+  if (import.meta.server) return null;
+
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return null;
+
+  return (JSON.parse(saved) as Project[]).map(normalizeProject);
+};
+
+const writeLocalProjects = (projects: Project[]) => {
+  if (import.meta.server) return;
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+};
+
+const cloneProject = (project: Project): Project => {
+  return JSON.parse(JSON.stringify(project)) as Project;
+};
+
 export const useProjects = () => {
   const projects = useState<Project[]>("projects", () => []);
   const { settings, loadSettings, getWorkProcessById } = useSettings();
+  const isProjectsLoading = useState("projects-loading", () => false);
+  const projectsError = useState<string>("projects-error", () => "");
+  const { ensureAuthenticated } = useFirebaseAuth();
 
-  const loadProjects = () => {
-    if (import.meta.server) return;
+  const enqueueRemoteWrite = (
+    write: () => Promise<void>,
+    failureMessage = "プロジェクトの保存に失敗しました。"
+  ) => {
+    if (import.meta.server) return Promise.resolve();
 
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return;
+    remoteProjectWriteQueue = remoteProjectWriteQueue
+      .catch(() => undefined)
+      .then(write)
+      .then(() => {
+        projectsError.value = "";
+      })
+      .catch((error) => {
+        projectsError.value = error instanceof Error ? error.message : failureMessage;
+      });
 
-    loadSettings();
+    return remoteProjectWriteQueue;
+  };
 
-    projects.value = JSON.parse(saved).map((project: Project) => {
-      const hasLegacyProgress = project.pages.some((page) => "progress" in page);
-      const processFields = {
-        workProcessId: project.workProcessId ?? DEFAULT_WORK_PROCESS.id,
-        workProcessName: project.workProcessName ?? DEFAULT_WORK_PROCESS.name,
-        workProcessSteps: normalizeProjectSteps(project.workProcessSteps),
-      };
+  const persistProjects = () => {
+    const projectSnapshots = projects.value.map(cloneProject);
 
-      return {
-        ...project,
-        eventName: project.eventName ?? "",
-        startDate: project.startDate ?? "",
-        eventDate: project.eventDate ?? "",
-        ...processFields,
-        bookSpec: {
-          ...defaultBookSpec(),
-          ...(project.bookSpec ?? {}),
-        },
-        pages: project.pages.map((page) => ({
-          pageNumber: page.pageNumber,
-          status: page.status,
-        })),
-        dailyWorkEntries: normalizeDailyWorkEntries(
-          project.dailyWorkEntries,
-          hasLegacyProgress
-        ),
-      };
+    return enqueueRemoteWrite(async () => {
+      const user = await ensureAuthenticated();
+      if (!user) return;
+
+      const { $firestore } = useNuxtApp();
+      await saveRemoteProjects($firestore, user.uid, projectSnapshots);
     });
   };
 
-  const saveProjects = () => {
-    if (import.meta.server) return;
+  const persistProject = (project: Project) => {
+    const projectSnapshot = cloneProject(project);
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects.value));
+    return enqueueRemoteWrite(async () => {
+      const user = await ensureAuthenticated();
+      if (!user) return;
+
+      const { $firestore } = useNuxtApp();
+      await saveRemoteProject($firestore, user.uid, projectSnapshot);
+    });
+  };
+
+  const persistProjectDeletes = (projectIds: string[]) => {
+    return enqueueRemoteWrite(async () => {
+      const user = await ensureAuthenticated();
+      if (!user) return;
+
+      const { $firestore } = useNuxtApp();
+      await Promise.all(
+        projectIds.map((projectId) => deleteRemoteProject($firestore, user.uid, projectId))
+      );
+    }, "プロジェクトの削除に失敗しました。");
+  };
+
+  const loadProjects = () => {
+    if (import.meta.server) return Promise.resolve();
+
+    const localProjects = readLocalProjects();
+    if (localProjects) {
+      projects.value = localProjects;
+    }
+
+    return (async () => {
+      isProjectsLoading.value = true;
+
+      try {
+        await loadSettings();
+
+        const user = await ensureAuthenticated();
+        if (!user) return;
+
+        const { $firestore } = useNuxtApp();
+        const remoteProjects = await loadRemoteProjects($firestore, user.uid);
+
+        if (remoteProjects.length > 0) {
+          projects.value = remoteProjects.map(normalizeProject);
+          writeLocalProjects(projects.value);
+        } else if (projects.value.length > 0) {
+          await persistProjects();
+        }
+
+        projectsError.value = "";
+      } catch (error) {
+        projectsError.value = error instanceof Error ? error.message : "プロジェクトの読み込みに失敗しました。";
+      } finally {
+        isProjectsLoading.value = false;
+      }
+    })();
+  };
+
+  const saveProjects = () => {
+    writeLocalProjects(projects.value);
+    void persistProjects();
+  };
+
+  const saveProject = (project: Project) => {
+    writeLocalProjects(projects.value);
+    void persistProject(project);
   };
 
   const createProject = (input: CreateProjectInput) => {
@@ -193,7 +313,7 @@ export const useProjects = () => {
     };
 
     projects.value.push(project);
-    saveProjects();
+    saveProject(project);
 
     return project;
   };
@@ -209,7 +329,8 @@ export const useProjects = () => {
     if (projectIndex === -1) return false;
 
     projects.value.splice(projectIndex, 1);
-    saveProjects();
+    writeLocalProjects(projects.value);
+    void persistProjectDeletes([projectId]);
 
     return true;
   };
@@ -265,7 +386,7 @@ export const useProjects = () => {
     project.workProcessSteps = nextProcessFields.workProcessSteps;
     project.pages = nextPages;
 
-    saveProjects();
+    saveProject(project);
 
     return true;
   };
@@ -301,7 +422,7 @@ export const useProjects = () => {
       budget: Math.max(0, Number(input.budget) || 0),
     };
 
-    saveProjects();
+    saveProject(project);
 
     return true;
   };
@@ -335,7 +456,7 @@ export const useProjects = () => {
       applyDailyActualDelta(project, options.workDate, actualDelta);
     }
 
-    saveProjects();
+    saveProject(project);
   };
 
   const applyDailyActualDelta = (
@@ -382,11 +503,11 @@ export const useProjects = () => {
       };
     }
 
-    saveProjects();
+    saveProject(project);
   };
 
   const applyWorkProcessToProjects = (process: WorkProcess) => {
-    let hasUpdatedProject = false;
+    const updatedProjects: Project[] = [];
 
     projects.value.forEach((project) => {
       if (project.workProcessId !== process.id) return;
@@ -403,18 +524,23 @@ export const useProjects = () => {
           nextProcessFields.workProcessSteps
         ),
       }));
-      hasUpdatedProject = true;
+      updatedProjects.push(project);
     });
 
-    if (hasUpdatedProject) {
-      saveProjects();
+    if (updatedProjects.length > 0) {
+      writeLocalProjects(projects.value);
+      updatedProjects.forEach((project) => {
+        void persistProject(project);
+      });
     }
 
-    return hasUpdatedProject;
+    return updatedProjects.length > 0;
   };
 
   return {
     projects,
+    isProjectsLoading,
+    projectsError,
     loadProjects,
     saveProjects,
     createProject,

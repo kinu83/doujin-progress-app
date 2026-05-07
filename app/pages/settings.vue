@@ -268,6 +268,49 @@
                 </div>
               </form>
 
+              <section
+                v-else-if="section.id === 'account'"
+                class="mt-8 grid gap-4"
+              >
+                <div class="rounded-2xl border border-gray-200 p-4">
+                  <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 class="text-base font-bold text-gray-900">
+                        {{ accountName }}
+                      </h3>
+                      <p class="mt-1 text-sm font-semibold text-gray-500">
+                        {{ accountStatusLabel }}
+                      </p>
+                    </div>
+                    <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600">
+                      {{ isAuthReady ? "接続中" : "確認中" }}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="mt-5 w-fit rounded-xl bg-gray-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="isGoogleAuthLoading || isGoogleLinked"
+                    @click="handleGoogleSignIn"
+                  >
+                    {{ googleButtonLabel }}
+                  </button>
+                </div>
+
+                <p
+                  v-if="accountMessage"
+                  class="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700"
+                >
+                  {{ accountMessage }}
+                </p>
+                <p
+                  v-if="authError"
+                  class="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+                >
+                  {{ authError }}
+                </p>
+              </section>
+
               <div
                 v-else
                 class="mt-8 rounded-2xl border border-dashed border-gray-300 p-6 text-sm font-semibold text-gray-500"
@@ -502,6 +545,49 @@
             </div>
           </form>
 
+          <section
+            v-else-if="selectedSection.id === 'account'"
+            class="mt-8 grid gap-4"
+          >
+            <div class="rounded-2xl border border-gray-200 p-4">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 class="text-base font-bold text-gray-900">
+                    {{ accountName }}
+                  </h3>
+                  <p class="mt-1 text-sm font-semibold text-gray-500">
+                    {{ accountStatusLabel }}
+                  </p>
+                </div>
+                <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600">
+                  {{ isAuthReady ? "接続中" : "確認中" }}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                class="mt-5 w-fit rounded-xl bg-gray-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="isGoogleAuthLoading || isGoogleLinked"
+                @click="handleGoogleSignIn"
+              >
+                {{ googleButtonLabel }}
+              </button>
+            </div>
+
+            <p
+              v-if="accountMessage"
+              class="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700"
+            >
+              {{ accountMessage }}
+            </p>
+            <p
+              v-if="authError"
+              class="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+            >
+              {{ authError }}
+            </p>
+          </section>
+
           <div
             v-else
             class="mt-8 rounded-2xl border border-dashed border-gray-300 p-6 text-sm font-semibold text-gray-500"
@@ -571,6 +657,13 @@ const {
   loadProjects,
   applyWorkProcessToProjects,
 } = useProjects();
+const {
+  user,
+  isAuthReady,
+  authError,
+  initAuth,
+  signInWithGoogle,
+} = useFirebaseAuth();
 
 const settingSections = [
   {
@@ -588,11 +681,11 @@ const settingSections = [
     available: false,
   },
   {
-    id: "profile",
-    title: "プロフィール",
-    description: "ユーザー情報",
-    detail: "名前やプロフィール表示の設定を追加予定です。",
-    available: false,
+    id: "account",
+    title: "アカウント",
+    description: "Google 連携",
+    detail: "Google アカウントとの接続状態を管理します。",
+    available: true,
   },
   {
     id: "other",
@@ -618,7 +711,29 @@ const workProcessSteps = ref<WorkProcessStep[]>([
   { name: "", minutesPerPage: 60 },
 ]);
 const savedMessage = ref("");
+const accountMessage = ref("");
+const isGoogleAuthLoading = ref(false);
 const isConfirmingReset = ref(false);
+
+const isGoogleLinked = computed(() => {
+  return user.value?.providerData.some((provider) => provider.providerId === "google.com") ?? false;
+});
+
+const accountName = computed(() => {
+  return user.value?.displayName || user.value?.email || "匿名アカウント";
+});
+
+const accountStatusLabel = computed(() => {
+  if (!isAuthReady.value) return "認証状態を確認しています。";
+  if (isGoogleLinked.value) return user.value?.email ? `Google 連携済み: ${user.value.email}` : "Google 連携済みです。";
+  return "匿名アカウントで利用中です。";
+});
+
+const googleButtonLabel = computed(() => {
+  if (isGoogleLinked.value) return "Google 連携済み";
+  if (isGoogleAuthLoading.value) return "接続中...";
+  return "Google で連携する";
+});
 
 const syncForm = () => {
   defaultTotalPages.value = settings.value.defaultTotalPages;
@@ -631,6 +746,7 @@ const resetWorkProcessForm = () => {
 };
 
 onMounted(() => {
+  initAuth();
   loadSettings();
   loadProjects();
   syncForm();
@@ -714,6 +830,25 @@ const handleDeleteWorkProcess = (processId: string) => {
     resetWorkProcessForm();
   }
   savedMessage.value = "作業工程を削除しました。";
+};
+
+const handleGoogleSignIn = async () => {
+  isGoogleAuthLoading.value = true;
+  accountMessage.value = "";
+
+  try {
+    await signInWithGoogle();
+    await loadSettings();
+    await loadProjects();
+    syncForm();
+    accountMessage.value = isGoogleLinked.value
+      ? "Google アカウントと連携しました。"
+      : "Google アカウントでログインしました。";
+  } catch {
+    accountMessage.value = "";
+  } finally {
+    isGoogleAuthLoading.value = false;
+  }
 };
 
 const formatWorkProcessSteps = (steps: WorkProcessStep[]) => {
