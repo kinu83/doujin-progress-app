@@ -1,18 +1,163 @@
-rules_version='2'
+rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2026, 6, 3);
+    function isSignedInUser(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function hasOnlyKeys(keys) {
+      return request.resource.data.keys().hasOnly(keys);
+    }
+
+    function hasRequiredKeys(keys) {
+      return request.resource.data.keys().hasAll(keys);
+    }
+
+    function isString(value, maxLength) {
+      return value is string && value.size() <= maxLength;
+    }
+
+    function isDateString(value) {
+      return isString(value, 40);
+    }
+
+    function isUpdatedAt(value) {
+      return isString(value, 40);
+    }
+
+    function isPositiveInt(value, maxValue) {
+      return value is int && value >= 1 && value <= maxValue;
+    }
+
+    function isNonNegativeInt(value, maxValue) {
+      return value is int && value >= 0 && value <= maxValue;
+    }
+
+    function isValidUserDocument() {
+      return hasOnlyKeys(["updatedAt"])
+        && hasRequiredKeys(["updatedAt"])
+        && isUpdatedAt(request.resource.data.updatedAt);
+    }
+
+    function isValidBookSpec(bookSpec) {
+      return bookSpec is map
+        && bookSpec.keys().hasOnly([
+          "colorMode",
+          "coverPaper",
+          "bodyPaper",
+          "printer",
+          "printRun",
+          "budget"
+        ])
+        && bookSpec.keys().hasAll([
+          "colorMode",
+          "coverPaper",
+          "bodyPaper",
+          "printer",
+          "printRun",
+          "budget"
+        ])
+        && bookSpec.colorMode in ["フルカラー", "モノクロ"]
+        && isString(bookSpec.coverPaper, 120)
+        && isString(bookSpec.bodyPaper, 120)
+        && isString(bookSpec.printer, 120)
+        && isNonNegativeInt(bookSpec.printRun, 1000000)
+        && isNonNegativeInt(bookSpec.budget, 100000000);
+    }
+
+    function isValidProject(projectId) {
+      return hasOnlyKeys([
+          "id",
+          "eventName",
+          "title",
+          "startDate",
+          "eventDate",
+          "deadline",
+          "totalPages",
+          "workProcessId",
+          "workProcessName",
+          "workProcessSteps",
+          "bookSpec",
+          "pages",
+          "dailyWorkEntries",
+          "createdAt",
+          "updatedAt"
+        ])
+        && hasRequiredKeys([
+          "id",
+          "eventName",
+          "title",
+          "startDate",
+          "eventDate",
+          "deadline",
+          "totalPages",
+          "workProcessId",
+          "workProcessName",
+          "workProcessSteps",
+          "bookSpec",
+          "pages",
+          "dailyWorkEntries",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.id == projectId
+        && isString(request.resource.data.eventName, 200)
+        && isString(request.resource.data.title, 200)
+        && isDateString(request.resource.data.startDate)
+        && isDateString(request.resource.data.eventDate)
+        && isDateString(request.resource.data.deadline)
+        && isPositiveInt(request.resource.data.totalPages, 500)
+        && isString(request.resource.data.workProcessId, 120)
+        && isString(request.resource.data.workProcessName, 120)
+        && request.resource.data.workProcessSteps is list
+        && request.resource.data.workProcessSteps.size() >= 1
+        && request.resource.data.workProcessSteps.size() <= 50
+        && isValidBookSpec(request.resource.data.bookSpec)
+        && request.resource.data.pages is list
+        && request.resource.data.pages.size() == request.resource.data.totalPages
+        && request.resource.data.dailyWorkEntries is map
+        && request.resource.data.dailyWorkEntries.keys().size() <= 800
+        && isDateString(request.resource.data.createdAt)
+        && isUpdatedAt(request.resource.data.updatedAt);
+    }
+
+    function isValidSettings() {
+      return hasOnlyKeys([
+          "defaultTotalPages",
+          "defaultWorkProcessId",
+          "workProcesses",
+          "updatedAt"
+        ])
+        && hasRequiredKeys([
+          "defaultTotalPages",
+          "defaultWorkProcessId",
+          "workProcesses",
+          "updatedAt"
+        ])
+        && isPositiveInt(request.resource.data.defaultTotalPages, 500)
+        && isString(request.resource.data.defaultWorkProcessId, 120)
+        && request.resource.data.workProcesses is list
+        && request.resource.data.workProcesses.size() >= 1
+        && request.resource.data.workProcesses.size() <= 50
+        && isUpdatedAt(request.resource.data.updatedAt);
+    }
+
+    match /users/{userId} {
+      allow create, update: if isSignedInUser(userId) && isValidUserDocument();
+      allow read, delete: if false;
+
+      match /projects/{projectId} {
+        allow read: if isSignedInUser(userId);
+        allow create, update: if isSignedInUser(userId) && isValidProject(projectId);
+        allow delete: if isSignedInUser(userId);
+      }
+
+      match /settings/app {
+        allow read: if isSignedInUser(userId);
+        allow create, update: if isSignedInUser(userId) && isValidSettings();
+        allow delete: if isSignedInUser(userId);
+      }
     }
   }
 }

@@ -173,7 +173,7 @@ export const useProgress = () => {
       return {
         label: dailyWork >= 360 ? "限界修羅場" : "締切当日",
         tone: dailyWork >= 360 ? "red" : "orange",
-        message: "締切当日です。全力を出して、全てを片付けましょう！",
+        message: "締切当日です。全力を出して完成させましょう！",
         intensity: dailyWork >= 360 ? 5 : 4,
       };
     }

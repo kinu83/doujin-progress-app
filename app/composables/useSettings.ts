@@ -1,7 +1,14 @@
 import type { AppSettings, WorkProcess, WorkProcessStep } from "~/types/settings";
 import { useState } from "#app";
+import {
+  deleteRemoteSettings,
+  loadRemoteSettings,
+  saveRemoteSettings,
+} from "~/repositories/settingsRepository";
 
 const STORAGE_KEY = "doujin-progress-settings";
+
+let remoteSettingsWriteQueue: Promise<void> = Promise.resolve();
 
 export const DEFAULT_WORK_PROCESS: WorkProcess = {
   id: "manga",
@@ -79,38 +86,135 @@ const normalizeSettings = (settings: Partial<AppSettings> = {}): AppSettings => 
   };
 };
 
+const cloneDefaultSettings = (): AppSettings => ({
+  ...DEFAULT_SETTINGS,
+  workProcesses: DEFAULT_SETTINGS.workProcesses.map((process) => ({
+    ...process,
+    steps: process.steps.map((step) => ({ ...step })),
+  })),
+});
+
+const readLocalSettings = () => {
+  if (import.meta.server) return null;
+
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return null;
+
+  return normalizeSettings(JSON.parse(saved));
+};
+
+const writeLocalSettings = (settings: AppSettings) => {
+  if (import.meta.server) return;
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+};
+
+const cloneSettings = (settings: AppSettings): AppSettings => {
+  return {
+    ...settings,
+    workProcesses: settings.workProcesses.map((process) => ({
+      ...process,
+      steps: process.steps.map((step) => ({ ...step })),
+    })),
+  };
+};
+
 export const useSettings = () => {
-  const settings = useState<AppSettings>("settings", () => ({ ...DEFAULT_SETTINGS }));
+  const settings = useState<AppSettings>("settings", () => cloneDefaultSettings());
+  const isSettingsLoading = useState("settings-loading", () => false);
+  const settingsError = useState<string>("settings-error", () => "");
+  const { ensureAuthenticated } = useFirebaseAuth();
+
+  const enqueueRemoteWrite = (
+    write: () => Promise<void>,
+    failureMessage = "設定の保存に失敗しました。"
+  ) => {
+    if (import.meta.server) return Promise.resolve();
+
+    remoteSettingsWriteQueue = remoteSettingsWriteQueue
+      .catch(() => undefined)
+      .then(write)
+      .then(() => {
+        settingsError.value = "";
+      })
+      .catch((error) => {
+        settingsError.value = error instanceof Error ? error.message : failureMessage;
+      });
+
+    return remoteSettingsWriteQueue;
+  };
+
+  const persistSettings = () => {
+    const settingsSnapshot = cloneSettings(settings.value);
+
+    return enqueueRemoteWrite(async () => {
+      const user = await ensureAuthenticated();
+      if (!user) return;
+
+      const { $firestore } = useNuxtApp();
+      await saveRemoteSettings($firestore, user.uid, settingsSnapshot);
+    });
+  };
+
+  const persistSettingsDelete = () => {
+    return enqueueRemoteWrite(async () => {
+      const user = await ensureAuthenticated();
+      if (!user) return;
+
+      const { $firestore } = useNuxtApp();
+      await deleteRemoteSettings($firestore, user.uid);
+    }, "設定の削除に失敗しました。");
+  };
 
   const loadSettings = () => {
-    if (import.meta.server) return;
+    if (import.meta.server) return Promise.resolve();
 
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return;
+    const localSettings = readLocalSettings();
+    if (localSettings) {
+      settings.value = localSettings;
+    }
 
-    settings.value = normalizeSettings(JSON.parse(saved));
+    return (async () => {
+      isSettingsLoading.value = true;
+
+      try {
+        const user = await ensureAuthenticated();
+        if (!user) return;
+
+        const { $firestore } = useNuxtApp();
+        const remoteSettings = await loadRemoteSettings($firestore, user.uid);
+
+        if (remoteSettings) {
+          settings.value = normalizeSettings(remoteSettings);
+          writeLocalSettings(settings.value);
+        } else {
+          await persistSettings();
+        }
+
+        settingsError.value = "";
+      } catch (error) {
+        settingsError.value = error instanceof Error ? error.message : "設定の読み込みに失敗しました。";
+      } finally {
+        isSettingsLoading.value = false;
+      }
+    })();
   };
 
   const saveSettings = (input: Partial<AppSettings>) => {
     settings.value = normalizeSettings(input);
+    writeLocalSettings(settings.value);
 
-    if (import.meta.server) return;
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings.value));
+    void persistSettings();
   };
 
   const resetSettings = () => {
-    settings.value = {
-      ...DEFAULT_SETTINGS,
-      workProcesses: DEFAULT_SETTINGS.workProcesses.map((process) => ({
-        ...process,
-        steps: process.steps.map((step) => ({ ...step })),
-      })),
-    };
+    settings.value = cloneDefaultSettings();
 
-    if (import.meta.server) return;
+    if (import.meta.client) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
 
-    localStorage.removeItem(STORAGE_KEY);
+    void persistSettingsDelete();
   };
 
   const saveWorkProcess = (input: { id?: string; name: string; steps: WorkProcessStep[] }) => {
@@ -158,6 +262,8 @@ export const useSettings = () => {
 
   return {
     settings,
+    isSettingsLoading,
+    settingsError,
     loadSettings,
     saveSettings,
     resetSettings,
