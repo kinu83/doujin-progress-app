@@ -655,7 +655,6 @@ const {
 } = useSettings();
 const {
   loadProjects,
-  applyWorkProcessToProjects,
 } = useProjects();
 const {
   user,
@@ -810,7 +809,6 @@ const handleSaveWorkProcess = () => {
   });
 
   editWorkProcess(process);
-  applyWorkProcessToProjects(process);
   savedMessage.value = "作業工程を保存しました。";
 };
 

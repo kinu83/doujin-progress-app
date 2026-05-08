@@ -10,6 +10,22 @@ export type DailyWorkEntry = {
   actual: number;
 };
 
+export type WorkLogKind = "pageStatus" | "manualActual" | "legacyActual";
+
+export type WorkLog = {
+  id: string;
+  projectId: string;
+  workDate: string;
+  kind: WorkLogKind;
+  minutes: number;
+  pageNumber?: number;
+  fromStatus?: PageStatus;
+  toStatus?: PageStatus;
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type PrintColorMode = "フルカラー" | "モノクロ";
 
 export type BookSpec = {
@@ -35,5 +51,6 @@ export type Project = {
   bookSpec: BookSpec;
   pages: ManuscriptPage[];
   dailyWorkEntries: Record<string, DailyWorkEntry>;
+  workLogs: WorkLog[];
   createdAt: string;
 };

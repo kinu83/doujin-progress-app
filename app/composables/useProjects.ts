@@ -1,13 +1,15 @@
-import type { BookSpec, DailyWorkEntry, Project, PageStatus } from "~/types/project";
+import type { BookSpec, DailyWorkEntry, Project, PageStatus, WorkLog } from "~/types/project";
 import type { WorkProcess, WorkProcessStep } from "~/types/settings";
 import { calculateStatusCompletedMinutes } from "~/composables/useProgress";
 import { DEFAULT_WORK_PROCESS, useSettings } from "~/composables/useSettings";
 import { useState } from "#app";
 import {
   deleteRemoteProject,
+  deleteRemoteWorkLog,
   loadRemoteProjects,
   saveRemoteProject,
   saveRemoteProjects,
+  saveRemoteWorkLog,
 } from "~/repositories/projectRepository";
 
 const STORAGE_KEY = "doujin-progress-projects";
@@ -41,6 +43,12 @@ type UpdatePageStatusOptions = {
   syncDailyActual?: boolean;
 };
 
+type ManualActualUpdateResult = {
+  project: Project;
+  workLog?: WorkLog;
+  deletedWorkLog?: WorkLog;
+};
+
 let remoteProjectWriteQueue: Promise<void> = Promise.resolve();
 
 const defaultBookSpec = (): BookSpec => ({
@@ -69,6 +77,106 @@ const normalizeDailyWorkEntries = (
       ];
     })
   );
+};
+
+const normalizeWorkLogs = (
+  logs: WorkLog[] | undefined,
+  projectId: string
+) => {
+  return (logs ?? []).reduce<WorkLog[]>((result, log) => {
+    const workDate = String(log.workDate ?? "");
+    if (!workDate) return result;
+
+    const now = new Date().toISOString();
+    const id = String(log.id || crypto.randomUUID());
+
+    result.push({
+      id,
+      projectId,
+      workDate,
+      kind: log.kind ?? "manualActual",
+      minutes: Math.round(Number(log.minutes) || 0),
+      pageNumber: log.pageNumber === undefined
+        ? undefined
+        : Math.max(1, Math.round(Number(log.pageNumber) || 1)),
+      fromStatus: log.fromStatus,
+      toStatus: log.toStatus,
+      note: log.note,
+      createdAt: log.createdAt ?? now,
+      updatedAt: log.updatedAt ?? log.createdAt ?? now,
+    });
+
+    return result;
+  }, []);
+};
+
+const createLegacyActualWorkLogs = (
+  projectId: string,
+  entries: Record<string, DailyWorkEntry>,
+  existingLogs: WorkLog[]
+) => {
+  return Object.entries(entries).reduce<WorkLog[]>((result, [date, entry]) => {
+    const actual = Math.max(0, Math.round(Number(entry.actual) || 0));
+    if (actual === 0) return result;
+
+    const hasLogForDate = existingLogs.some((log) => log.workDate === date);
+    if (hasLogForDate) return result;
+
+    const now = new Date().toISOString();
+    result.push({
+      id: `legacy-actual-${date}`,
+      projectId,
+      workDate: date,
+      kind: "legacyActual",
+      minutes: actual,
+      note: "dailyWorkEntries.actual から移行",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return result;
+  }, []);
+};
+
+const sumWorkLogMinutes = (logs: WorkLog[]) => {
+  return Math.max(
+    0,
+    logs.reduce((sum, log) => sum + Math.round(Number(log.minutes) || 0), 0)
+  );
+};
+
+const hasWorkLogsForDate = (project: Project, date: string) => {
+  return project.workLogs.some((log) => log.workDate === date);
+};
+
+const getActualMinutesFromLogs = (project: Project, date: string) => {
+  return sumWorkLogMinutes(project.workLogs.filter((log) => log.workDate === date));
+};
+
+const getDailyActualMinutes = (project: Project, date: string) => {
+  if (hasWorkLogsForDate(project, date)) {
+    return getActualMinutesFromLogs(project, date);
+  }
+
+  return Math.max(0, Number(project.dailyWorkEntries[date]?.actual) || 0);
+};
+
+const refreshDailyActualCache = (project: Project, date: string) => {
+  const current = project.dailyWorkEntries[date] ?? {
+    planned: 0,
+    actual: 0,
+  };
+  const actual = getActualMinutesFromLogs(project, date);
+
+  if (current.planned === 0 && actual === 0) {
+    delete project.dailyWorkEntries[date];
+    return;
+  }
+
+  project.dailyWorkEntries[date] = {
+    planned: current.planned,
+    actual,
+  };
 };
 
 const workProcessToProjectFields = (process: WorkProcess) => {
@@ -124,6 +232,12 @@ const normalizeStatusForSteps = (
 const normalizeProject = (project: Project): Project => {
   const pages = project.pages ?? [];
   const hasLegacyProgress = pages.some((page) => "progress" in page);
+  const projectId = project.id || crypto.randomUUID();
+  const dailyWorkEntries = normalizeDailyWorkEntries(
+    project.dailyWorkEntries,
+    hasLegacyProgress
+  );
+  const workLogs = normalizeWorkLogs(project.workLogs, projectId);
   const processFields = {
     workProcessId: project.workProcessId ?? DEFAULT_WORK_PROCESS.id,
     workProcessName: project.workProcessName ?? DEFAULT_WORK_PROCESS.name,
@@ -132,7 +246,7 @@ const normalizeProject = (project: Project): Project => {
 
   return {
     ...project,
-    id: project.id || crypto.randomUUID(),
+    id: projectId,
     eventName: project.eventName ?? "",
     startDate: project.startDate ?? "",
     eventDate: project.eventDate ?? "",
@@ -147,10 +261,11 @@ const normalizeProject = (project: Project): Project => {
       pageNumber: page.pageNumber ?? index + 1,
       status: page.status ?? "未着手",
     })),
-    dailyWorkEntries: normalizeDailyWorkEntries(
-      project.dailyWorkEntries,
-      hasLegacyProgress
-    ),
+    dailyWorkEntries,
+    workLogs: [
+      ...workLogs,
+      ...createLegacyActualWorkLogs(projectId, dailyWorkEntries, workLogs),
+    ],
   };
 };
 
@@ -169,8 +284,12 @@ const writeLocalProjects = (projects: Project[]) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
 };
 
+const cloneJson = <T>(value: T): T => {
+  return JSON.parse(JSON.stringify(value)) as T;
+};
+
 const cloneProject = (project: Project): Project => {
-  return JSON.parse(JSON.stringify(project)) as Project;
+  return cloneJson(project);
 };
 
 export const useProjects = () => {
@@ -223,6 +342,35 @@ export const useProjects = () => {
     });
   };
 
+  const persistWorkLog = (workLog: WorkLog) => {
+    const workLogSnapshot = cloneJson(workLog);
+
+    return enqueueRemoteWrite(async () => {
+      const user = await ensureAuthenticated();
+      if (!user) return;
+
+      const { $firestore } = useNuxtApp();
+      await saveRemoteWorkLog($firestore, user.uid, workLogSnapshot);
+    }, "作業履歴の保存に失敗しました。");
+  };
+
+  const persistWorkLogDelete = (workLog: WorkLog) => {
+    const workLogSnapshot = cloneJson(workLog);
+
+    return enqueueRemoteWrite(async () => {
+      const user = await ensureAuthenticated();
+      if (!user) return;
+
+      const { $firestore } = useNuxtApp();
+      await deleteRemoteWorkLog(
+        $firestore,
+        user.uid,
+        workLogSnapshot.projectId,
+        workLogSnapshot.id
+      );
+    }, "作業履歴の削除に失敗しました。");
+  };
+
   const persistProjectDeletes = (projectIds: string[]) => {
     return enqueueRemoteWrite(async () => {
       const user = await ensureAuthenticated();
@@ -258,8 +406,20 @@ export const useProjects = () => {
         if (remoteProjects.length > 0) {
           projects.value = remoteProjects.map(normalizeProject);
           writeLocalProjects(projects.value);
+          projects.value.forEach((project) => {
+            project.workLogs
+              .filter((workLog) => workLog.kind === "legacyActual")
+              .forEach((workLog) => {
+                void persistWorkLog(workLog);
+              });
+          });
         } else if (projects.value.length > 0) {
           await persistProjects();
+          projects.value.forEach((project) => {
+            project.workLogs.forEach((workLog) => {
+              void persistWorkLog(workLog);
+            });
+          });
         }
 
         projectsError.value = "";
@@ -309,6 +469,7 @@ export const useProjects = () => {
       bookSpec: defaultBookSpec(),
       pages,
       dailyWorkEntries: {},
+      workLogs: [],
       createdAt: new Date().toISOString(),
     };
 
@@ -445,8 +606,10 @@ export const useProjects = () => {
       page.status,
       project.workProcessSteps
     );
+    const previousStatus = page.status;
     page.status = status;
 
+    let workLog: WorkLog | undefined;
     if (options.syncDailyActual && options.workDate) {
       const actualDelta =
         calculateStatusCompletedMinutes(
@@ -454,9 +617,30 @@ export const useProjects = () => {
           project.workProcessSteps
         ) - previousActualMinutes;
       applyDailyActualDelta(project, options.workDate, actualDelta);
+
+      if (actualDelta !== 0) {
+        const now = new Date().toISOString();
+        workLog = {
+          id: crypto.randomUUID(),
+          projectId: project.id,
+          workDate: options.workDate,
+          kind: "pageStatus",
+          minutes: actualDelta,
+          pageNumber,
+          fromStatus: previousStatus,
+          toStatus: page.status,
+          createdAt: now,
+          updatedAt: now,
+        };
+        project.workLogs.push(workLog);
+        refreshDailyActualCache(project, options.workDate);
+      }
     }
 
     saveProject(project);
+    if (workLog) {
+      void persistWorkLog(workLog);
+    }
   };
 
   const applyDailyActualDelta = (
@@ -492,7 +676,9 @@ export const useProjects = () => {
     if (!project) return;
 
     const planned = Math.max(0, Number(entry.planned) || 0);
-    const actual = Math.max(0, Number(entry.actual) || 0);
+    const actual = hasWorkLogsForDate(project, date)
+      ? getActualMinutesFromLogs(project, date)
+      : Math.max(0, Number(entry.actual) || 0);
 
     if (planned === 0 && actual === 0) {
       delete project.dailyWorkEntries[date];
@@ -504,6 +690,80 @@ export const useProjects = () => {
     }
 
     saveProject(project);
+  };
+
+  const getProjectDailyActualMinutes = (projectId: string, date: string) => {
+    const project = getProjectById(projectId);
+    if (!project) return 0;
+
+    return getDailyActualMinutes(project, date);
+  };
+
+  const getProjectManualActualMinutes = (projectId: string, date: string) => {
+    const project = getProjectById(projectId);
+    if (!project) return 0;
+
+    return sumWorkLogMinutes(
+      project.workLogs.filter((log) => {
+        return log.workDate === date && ["manualActual", "legacyActual"].includes(log.kind);
+      })
+    );
+  };
+
+  const updateManualActualWorkLog = (
+    projectId: string,
+    date: string,
+    minutes: number
+  ): ManualActualUpdateResult | undefined => {
+    const project = getProjectById(projectId);
+    if (!project) return;
+
+    const actual = Math.max(0, Math.round(Number(minutes) || 0));
+    const existingLog = project.workLogs.find((log) => {
+      return log.workDate === date && ["manualActual", "legacyActual"].includes(log.kind);
+    });
+
+    let workLog: WorkLog | undefined;
+    let deletedWorkLog: WorkLog | undefined;
+    const now = new Date().toISOString();
+
+    if (actual === 0 && existingLog) {
+      deletedWorkLog = existingLog;
+      project.workLogs = project.workLogs.filter((log) => log.id !== existingLog.id);
+    } else if (actual > 0 && existingLog) {
+      existingLog.kind = "manualActual";
+      existingLog.minutes = actual;
+      existingLog.updatedAt = now;
+      workLog = existingLog;
+    } else if (actual > 0) {
+      workLog = {
+        id: `manual-actual-${date}`,
+        projectId,
+        workDate: date,
+        kind: "manualActual",
+        minutes: actual,
+        createdAt: now,
+        updatedAt: now,
+      };
+      project.workLogs.push(workLog);
+    }
+
+    refreshDailyActualCache(project, date);
+    saveProject(project);
+
+    if (workLog) {
+      void persistWorkLog(workLog);
+    }
+
+    if (deletedWorkLog) {
+      void persistWorkLogDelete(deletedWorkLog);
+    }
+
+    return {
+      project,
+      workLog,
+      deletedWorkLog,
+    };
   };
 
   const applyWorkProcessToProjects = (process: WorkProcess) => {
@@ -550,6 +810,9 @@ export const useProjects = () => {
     updateBookSpec,
     updatePageStatus,
     updateDailyWorkEntry,
+    getProjectDailyActualMinutes,
+    getProjectManualActualMinutes,
+    updateManualActualWorkLog,
     applyWorkProcessToProjects,
   };
 };

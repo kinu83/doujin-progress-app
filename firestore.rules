@@ -34,6 +34,10 @@ service cloud.firestore {
       return value is int && value >= 0 && value <= maxValue;
     }
 
+    function isBoundedInt(value, minValue, maxValue) {
+      return value is int && value >= minValue && value <= maxValue;
+    }
+
     function isValidUserDocument() {
       return hasOnlyKeys(["updatedAt"])
         && hasRequiredKeys(["updatedAt"])
@@ -122,6 +126,54 @@ service cloud.firestore {
         && isUpdatedAt(request.resource.data.updatedAt);
     }
 
+    function isValidWorkLog(workLogId, projectId) {
+      return hasOnlyKeys([
+          "id",
+          "projectId",
+          "workDate",
+          "kind",
+          "minutes",
+          "pageNumber",
+          "fromStatus",
+          "toStatus",
+          "note",
+          "createdAt",
+          "updatedAt"
+        ])
+        && hasRequiredKeys([
+          "id",
+          "projectId",
+          "workDate",
+          "kind",
+          "minutes",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.id == workLogId
+        && request.resource.data.projectId == projectId
+        && isDateString(request.resource.data.workDate)
+        && request.resource.data.kind in ["pageStatus", "manualActual", "legacyActual"]
+        && isBoundedInt(request.resource.data.minutes, -100000, 100000)
+        && (
+          !request.resource.data.keys().hasAny(["pageNumber"])
+          || isPositiveInt(request.resource.data.pageNumber, 500)
+        )
+        && (
+          !request.resource.data.keys().hasAny(["fromStatus"])
+          || isString(request.resource.data.fromStatus, 120)
+        )
+        && (
+          !request.resource.data.keys().hasAny(["toStatus"])
+          || isString(request.resource.data.toStatus, 120)
+        )
+        && (
+          !request.resource.data.keys().hasAny(["note"])
+          || isString(request.resource.data.note, 400)
+        )
+        && isDateString(request.resource.data.createdAt)
+        && isUpdatedAt(request.resource.data.updatedAt);
+    }
+
     function isValidSettings() {
       return hasOnlyKeys([
           "defaultTotalPages",
@@ -151,6 +203,12 @@ service cloud.firestore {
         allow read: if isSignedInUser(userId);
         allow create, update: if isSignedInUser(userId) && isValidProject(projectId);
         allow delete: if isSignedInUser(userId);
+
+        match /workLogs/{workLogId} {
+          allow read: if isSignedInUser(userId);
+          allow create, update: if isSignedInUser(userId) && isValidWorkLog(workLogId, projectId);
+          allow delete: if isSignedInUser(userId);
+        }
       }
 
       match /settings/app {
