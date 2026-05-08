@@ -119,6 +119,13 @@ const cloneSettings = (settings: AppSettings): AppSettings => {
   };
 };
 
+type SaveWorkProcessInput = {
+  id?: string;
+  name: string;
+  steps: WorkProcessStep[];
+  syncProjects?: boolean;
+};
+
 export const useSettings = () => {
   const settings = useState<AppSettings>("settings", () => cloneDefaultSettings());
   const isSettingsLoading = useState("settings-loading", () => false);
@@ -217,7 +224,7 @@ export const useSettings = () => {
     void persistSettingsDelete();
   };
 
-  const saveWorkProcess = (input: { id?: string; name: string; steps: WorkProcessStep[] }) => {
+  const saveWorkProcess = (input: SaveWorkProcessInput) => {
     const process: WorkProcess = {
       id: input.id || createId(),
       name: input.name.trim() || "名称未設定",
@@ -232,6 +239,10 @@ export const useSettings = () => {
       workProcesses: nextProcesses,
       defaultWorkProcessId: settings.value.defaultWorkProcessId || process.id,
     });
+
+    if (input.syncProjects !== false) {
+      useProjects().applyWorkProcessToProjects(process);
+    }
 
     return process;
   };

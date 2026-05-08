@@ -73,7 +73,7 @@
             <div class="flex flex-wrap items-center justify-end gap-3">
               <div class="flex items-center gap-2 text-xs font-bold text-gray-500">
                 <span class="h-2 w-8 rounded-full bg-gray-900" />
-                今日の作業時間
+                作業時間
               </div>
               <div class="flex items-center gap-2 text-xs font-bold text-gray-500">
                 <span class="h-2 w-8 rounded-full border border-gray-400 bg-white" />
@@ -142,7 +142,7 @@
               <div
                 v-if="workBars(day.dateKey).length"
                 class="mt-auto grid w-full gap-1 pt-2"
-                :aria-label="`${day.dateKey} の今日の作業時間 ${formatWorkDuration(dayTotals(day.dateKey).actual)}、予定 ${formatWorkDuration(dayTotals(day.dateKey).planned)}`"
+                :aria-label="`${day.dateKey} の作業時間 ${formatWorkDuration(dayTotals(day.dateKey).actual)}、予定 ${formatWorkDuration(dayTotals(day.dateKey).planned)}`"
               >
                 <span
                   v-for="bar in workBars(day.dateKey)"
@@ -302,15 +302,72 @@
                   </div>
 
                   <div class="grid gap-2">
-                    <span class="text-xs font-bold text-gray-500">今日の作業時間</span>
+                    <span class="text-xs font-bold text-gray-500">作業時間</span>
                     <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-bold text-gray-800">
-                      {{ formatWorkDuration(dailyEntry(project.id).actual) }}
+                      {{ formatWorkDuration(dailyActual(project.id)) }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-3 grid gap-2">
+                  <span class="text-xs font-bold text-gray-500">実績の手入力（分）</span>
+                  <div class="flex overflow-hidden rounded-xl border border-gray-300 bg-white focus-within:border-gray-900">
+                    <input
+                      :value="workToMinutes(manualActualEntry(project.id))"
+                      type="number"
+                      min="0"
+                      step="any"
+                      inputmode="decimal"
+                      class="min-w-0 flex-1 px-3 py-2 text-sm outline-none"
+                      @input="handleManualActualEntry(project.id, $event)"
+                    >
+                    <div class="grid w-9 shrink-0 border-l border-gray-200">
+                      <button
+                        type="button"
+                        aria-label="実績を30分増やす"
+                        title="実績を30分増やす"
+                        class="grid place-items-center text-gray-700 transition hover:bg-gray-100"
+                        @click="adjustManualActualEntry(project.id, 30)"
+                      >
+                        <svg
+                          class="h-3 w-3"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="m18 15-6-6-6 6" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="実績を30分減らす"
+                        title="実績を30分減らす"
+                        class="grid place-items-center border-t border-gray-200 text-gray-700 transition hover:bg-gray-100"
+                        @click="adjustManualActualEntry(project.id, -30)"
+                      >
+                        <svg
+                          class="h-3 w-3"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </div>
 
                 <NuxtLink
-                  :to="`/projects/${project.id}`"
+                  :to="{ path: `/projects/${project.id}`, query: { workDate: selectedDate } }"
                   class="ml-auto mt-4 flex w-fit items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-gray-700"
                 >
                   作業時間入力
@@ -337,7 +394,14 @@ type ScheduleItem = {
   kind: ScheduleKind;
 };
 
-const { projects, loadProjects, updateDailyWorkEntry } = useProjects();
+const {
+  projects,
+  loadProjects,
+  updateDailyWorkEntry,
+  getProjectDailyActualMinutes,
+  getProjectManualActualMinutes,
+  updateManualActualWorkLog,
+} = useProjects();
 const {
   calculateTotalProgress,
   calculateRemainingWork,
@@ -360,10 +424,12 @@ const scheduleClasses: Record<ScheduleKind, string> = {
   start: "bg-blue-50 text-blue-700",
 };
 
+const route = useRoute();
 const today = new Date();
-const selectedDate = ref(formatDateKey(today));
-const visibleYear = ref(today.getFullYear());
-const visibleMonth = ref(today.getMonth());
+const initialDate = parseDateKeyFromQuery(route.query.date) ?? today;
+const selectedDate = ref(formatDateKey(initialDate));
+const visibleYear = ref(initialDate.getFullYear());
+const visibleMonth = ref(initialDate.getMonth());
 
 onMounted(() => {
   loadProjects();
@@ -439,6 +505,15 @@ function parseDateKey(dateKey: string) {
   return new Date(year, month - 1, day);
 }
 
+function parseDateKeyFromQuery(value: unknown) {
+  const dateKey = Array.isArray(value) ? value[0] : value;
+  if (typeof dateKey !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+    return null;
+  }
+
+  return parseDateKey(dateKey);
+}
+
 function moveMonth(amount: number) {
   const next = new Date(visibleYear.value, visibleMonth.value + amount, 1);
   visibleYear.value = next.getFullYear();
@@ -488,11 +563,12 @@ function dayTotals(dateKey: string) {
   return projects.value.reduce(
     (sum, project) => {
       const entry = project.dailyWorkEntries[dateKey];
-      if (!entry) return sum;
-      if (!isWithinWorkPeriod(project, dateKey) && entry.planned === 0 && entry.actual === 0) return sum;
+      const actual = getProjectDailyActualMinutes(project.id, dateKey);
+      if (!entry && actual === 0) return sum;
+      if (!isWithinWorkPeriod(project, dateKey) && (entry?.planned ?? 0) === 0 && actual === 0) return sum;
 
-      sum.planned += entry.planned;
-      sum.actual += entry.actual;
+      sum.planned += entry?.planned ?? 0;
+      sum.actual += actual;
       return sum;
     },
     { planned: 0, actual: 0 }
@@ -624,8 +700,9 @@ function isWithinWorkPeriod(project: Project, dateKey: string) {
 
 function hasDailyEntry(project: Project, dateKey: string) {
   const entry = project.dailyWorkEntries[dateKey];
+  const actual = getProjectDailyActualMinutes(project.id, dateKey);
 
-  return Boolean(entry && (entry.planned > 0 || entry.actual > 0));
+  return Boolean((entry && entry.planned > 0) || actual > 0);
 }
 
 function dailyEntry(projectId: string): DailyWorkEntry {
@@ -635,6 +712,14 @@ function dailyEntry(projectId: string): DailyWorkEntry {
     planned: 0,
     actual: 0,
   };
+}
+
+function dailyActual(projectId: string) {
+  return getProjectDailyActualMinutes(projectId, selectedDate.value);
+}
+
+function manualActualEntry(projectId: string) {
+  return getProjectManualActualMinutes(projectId, selectedDate.value);
 }
 
 function projectRequiredWork(project: Project) {
@@ -683,5 +768,23 @@ function adjustPlannedEntry(projectId: string, amount: number) {
     ...current,
     planned,
   });
+}
+
+function normalizeManualActualEntry(value: number) {
+  return Math.max(0, Number.isFinite(value) ? value : 0);
+}
+
+function handleManualActualEntry(projectId: string, event: Event) {
+  const input = event.target as HTMLInputElement;
+  const actual = normalizeManualActualEntry(minutesToWork(Number(input.value)));
+  input.value = String(workToMinutes(actual));
+
+  updateManualActualWorkLog(projectId, selectedDate.value, actual);
+}
+
+function adjustManualActualEntry(projectId: string, amount: number) {
+  const actual = normalizeManualActualEntry(manualActualEntry(projectId) + amount);
+
+  updateManualActualWorkLog(projectId, selectedDate.value, actual);
 }
 </script>

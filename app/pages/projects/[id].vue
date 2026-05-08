@@ -184,10 +184,10 @@
               残ページ数: {{ formatRemainingPages(project) }}P
             </div>
             <NuxtLink
-              to="/calendar"
+              :to="{ path: '/calendar', query: { date: selectedWorkDateKey } }"
               class="rounded-2xl bg-gray-50 p-4 transition hover:bg-gray-100"
             >
-              今日の作業時間: {{ formatWorkDuration(todayDailyEntry.actual) }} / 予定 {{ formatWorkDuration(todayDailyEntry.planned) }}
+              {{ selectedWorkDateSummaryLabel }}: {{ formatWorkDuration(selectedWorkDailyEntry.actual) }} / 予定 {{ formatWorkDuration(selectedWorkDailyEntry.planned) }}
             </NuxtLink>
           </div>
         </section>
@@ -196,6 +196,9 @@
           <h2 class="text-lg font-bold text-gray-900">
             ページ別進捗
           </h2>
+          <p class="mt-1 text-sm font-semibold text-gray-500">
+            入力対象日: {{ selectedWorkDateLabel }}
+          </p>
 
           <div class="mt-6 grid gap-4 md:grid-cols-2">
             <div
@@ -599,6 +602,7 @@ const {
   updatePageStatus,
   updateProjectInfo,
   updateBookSpec,
+  getProjectDailyActualMinutes,
 } = useProjects();
 const { settings, loadSettings } = useSettings();
 const {
@@ -623,11 +627,42 @@ const statuses = computed<PageStatus[]>(() => {
   return createStatusList(project.value?.workProcessSteps);
 });
 const todayKey = computed(() => formatDateKey(new Date()));
-const todayDailyEntry = computed(() => {
-  return project.value?.dailyWorkEntries[todayKey.value] ?? {
+const selectedWorkDateKey = computed(() => {
+  const queryValue = Array.isArray(route.query.workDate)
+    ? route.query.workDate[0]
+    : route.query.workDate;
+
+  return isDateKey(queryValue) ? queryValue : todayKey.value;
+});
+const selectedWorkDailyEntry = computed(() => {
+  if (!project.value) {
+    return {
+      planned: 0,
+      actual: 0,
+    };
+  }
+
+  const entry = project.value.dailyWorkEntries[selectedWorkDateKey.value] ?? {
     planned: 0,
     actual: 0,
   };
+
+  return {
+    planned: entry.planned,
+    actual: getProjectDailyActualMinutes(project.value.id, selectedWorkDateKey.value),
+  };
+});
+const selectedWorkDateLabel = computed(() => {
+  return new Intl.DateTimeFormat("ja-JP", {
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  }).format(parseDateKey(selectedWorkDateKey.value));
+});
+const selectedWorkDateSummaryLabel = computed(() => {
+  return selectedWorkDateKey.value === todayKey.value
+    ? "今日の作業時間"
+    : `${selectedWorkDateLabel.value}の作業時間`;
 });
 
 const formatRemainingPages = (project: NonNullable<typeof project.value>) => {
@@ -816,7 +851,7 @@ const updatePageStatusWithDailySync = (
   nextStatus: PageStatus
 ) => {
   updatePageStatus(String(route.params.id), pageNumber, nextStatus, {
-    workDate: todayKey.value,
+    workDate: selectedWorkDateKey.value,
     syncDailyActual: true,
   });
 };
@@ -880,5 +915,15 @@ function formatDateKey(date: Date) {
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+}
+
+function isDateKey(value: unknown): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function parseDateKey(dateKey: string) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+
+  return new Date(year, month - 1, day);
 }
 </script>
