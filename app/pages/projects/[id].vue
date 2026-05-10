@@ -148,7 +148,7 @@
 
           <div
             class="mt-5 rounded-2xl border p-4"
-            :class="getCrunchLevelClasses(calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps).tone)"
+            :class="getCrunchLevelClasses(calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).tone)"
           >
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -156,7 +156,7 @@
                   修羅場レベル
                 </p>
                 <p class="mt-1 text-2xl font-bold">
-                  {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps).label }}
+                  {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).label }}
                 </p>
               </div>
               <div class="flex gap-1" aria-hidden="true">
@@ -164,12 +164,12 @@
                   v-for="level in 5"
                   :key="level"
                   class="h-3 w-3 rounded-full"
-                  :class="level <= calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps).intensity ? 'bg-current' : 'bg-current/20'"
+                  :class="level <= calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).intensity ? 'bg-current' : 'bg-current/20'"
                 />
               </div>
             </div>
             <p class="mt-2 text-sm leading-6">
-              {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps).message }}
+              {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).message }}
             </p>
           </div>
 

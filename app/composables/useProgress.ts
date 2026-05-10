@@ -1,6 +1,9 @@
 import type { ManuscriptPage, PageStatus } from "~/types/project";
-import type { WorkProcessStep } from "~/types/settings";
-import { DEFAULT_WORK_PROCESS } from "~/composables/useSettings";
+import type { CrunchThresholds, WorkProcessStep } from "~/types/settings";
+import {
+  DEFAULT_CRUNCH_THRESHOLDS,
+  DEFAULT_WORK_STEPS,
+} from "~/constants/defaultSettings";
 
 export type CrunchLevelTone = "emerald" | "sky" | "amber" | "orange" | "red";
 
@@ -11,7 +14,7 @@ export type CrunchLevel = {
   intensity: number;
 };
 
-export const createStatusList = (workSteps = DEFAULT_WORK_PROCESS.steps) => {
+export const createStatusList = (workSteps = DEFAULT_WORK_STEPS) => {
   return ["未着手", ...workSteps.map((step) => step.name)];
 };
 
@@ -19,26 +22,26 @@ export const completedStepMap = Object.fromEntries(
   createStatusList().map((status, index) => [status, index])
 ) as Record<PageStatus, number>;
 
-export const totalStepCount = DEFAULT_WORK_PROCESS.steps.length;
+export const totalStepCount = DEFAULT_WORK_STEPS.length;
 
-const getStatusIndex = (status: PageStatus, workSteps = DEFAULT_WORK_PROCESS.steps) => {
+const getStatusIndex = (status: PageStatus, workSteps = DEFAULT_WORK_STEPS) => {
   const statuses = createStatusList(workSteps);
   const index = statuses.indexOf(status);
 
   return Math.max(0, index);
 };
 
-const getStepCount = (workSteps = DEFAULT_WORK_PROCESS.steps) => {
+const getStepCount = (workSteps = DEFAULT_WORK_STEPS) => {
   return Math.max(workSteps.length, 1);
 };
 
-const getTotalStepMinutes = (workSteps = DEFAULT_WORK_PROCESS.steps) => {
+const getTotalStepMinutes = (workSteps = DEFAULT_WORK_STEPS) => {
   return workSteps.reduce((sum, step) => sum + step.minutesPerPage, 0);
 };
 
 const getCompletedStepMinutes = (
   status: PageStatus,
-  workSteps = DEFAULT_WORK_PROCESS.steps
+  workSteps = DEFAULT_WORK_STEPS
 ) => {
   return workSteps.slice(0, getStatusIndex(status, workSteps)).reduce((sum, step) => {
     return sum + step.minutesPerPage;
@@ -47,14 +50,14 @@ const getCompletedStepMinutes = (
 
 export const calculatePageProgress = (
   page: ManuscriptPage,
-  workSteps = DEFAULT_WORK_PROCESS.steps
+  workSteps = DEFAULT_WORK_STEPS
 ) => {
   return Math.round((getStatusIndex(page.status, workSteps) / getStepCount(workSteps)) * 100);
 };
 
 export const calculateStatusCompletedMinutes = (
   status: PageStatus,
-  workSteps = DEFAULT_WORK_PROCESS.steps
+  workSteps = DEFAULT_WORK_STEPS
 ) => {
   return getCompletedStepMinutes(status, workSteps);
 };
@@ -81,7 +84,7 @@ export const useProgress = () => {
 
   const calculateTotalProgress = (
     pages: ManuscriptPage[],
-    workSteps: WorkProcessStep[] = DEFAULT_WORK_PROCESS.steps
+    workSteps: WorkProcessStep[] = DEFAULT_WORK_STEPS
   ) => {
     if (pages.length === 0) return 0;
 
@@ -94,7 +97,7 @@ export const useProgress = () => {
 
   const calculateRemainingWork = (
     pages: ManuscriptPage[],
-    workSteps: WorkProcessStep[] = DEFAULT_WORK_PROCESS.steps
+    workSteps: WorkProcessStep[] = DEFAULT_WORK_STEPS
   ) => {
     const totalWork = pages.length * getTotalStepMinutes(workSteps);
     const currentWork = pages.reduce((sum, page) => {
@@ -130,7 +133,7 @@ export const useProgress = () => {
   const calculateDailyWork = (
     pages: ManuscriptPage[],
     deadline: string,
-    workSteps = DEFAULT_WORK_PROCESS.steps
+    workSteps = DEFAULT_WORK_STEPS
   ) => {
     const remainingWork = calculateRemainingWork(pages, workSteps);
     const daysLeft = calculateDaysLeft(deadline);
@@ -144,12 +147,24 @@ export const useProgress = () => {
     pages: ManuscriptPage[],
     deadline: string,
     startDate = "",
-    workSteps = DEFAULT_WORK_PROCESS.steps
+    workSteps = DEFAULT_WORK_STEPS,
+    crunchThresholds: CrunchThresholds = DEFAULT_CRUNCH_THRESHOLDS
   ): CrunchLevel => {
     const totalProgress = calculateTotalProgress(pages, workSteps);
     const remainingWork = calculateRemainingWork(pages, workSteps);
     const dailyWork = calculateDailyWork(pages, deadline, workSteps);
     const daysLeft = calculateDaysLeft(deadline);
+    const thresholds = {
+      warningMinutes: Math.max(1, Math.round(crunchThresholds.warningMinutes)),
+      crunchMinutes: Math.max(
+        Math.round(crunchThresholds.warningMinutes) + 1,
+        Math.round(crunchThresholds.crunchMinutes)
+      ),
+      extremeMinutes: Math.max(
+        Math.round(crunchThresholds.crunchMinutes) + 1,
+        Math.round(crunchThresholds.extremeMinutes)
+      ),
+    };
 
     if (remainingWork <= 0) {
       return {
@@ -171,10 +186,10 @@ export const useProgress = () => {
 
     if (daysLeft === 0) {
       return {
-        label: dailyWork >= 360 ? "限界修羅場" : "締切当日",
-        tone: dailyWork >= 360 ? "red" : "orange",
+        label: dailyWork >= thresholds.extremeMinutes ? "限界修羅場" : "締切当日",
+        tone: dailyWork >= thresholds.extremeMinutes ? "red" : "orange",
         message: "締切当日です。全力を出して完成させましょう！",
-        intensity: dailyWork >= 360 ? 5 : 4,
+        intensity: dailyWork >= thresholds.extremeMinutes ? 5 : 4,
       };
     }
 
@@ -187,7 +202,7 @@ export const useProgress = () => {
       };
     }
 
-    if (dailyWork < 120) {
+    if (dailyWork < thresholds.warningMinutes) {
       return {
         label: "通常",
         tone: "sky",
@@ -196,7 +211,7 @@ export const useProgress = () => {
       };
     }
 
-    if (dailyWork < 180 || (totalProgress >= 30 && daysLeft <= 5)) {
+    if (dailyWork < thresholds.crunchMinutes || (totalProgress >= 30 && daysLeft <= 5)) {
       return {
         label: "修羅場一歩手前",
         tone: "amber",
@@ -205,7 +220,7 @@ export const useProgress = () => {
       };
     }
 
-    if (dailyWork < 360 || (totalProgress >= 50 && daysLeft <= 3)) {
+    if (dailyWork < thresholds.extremeMinutes || (totalProgress >= 50 && daysLeft <= 3)) {
       return {
         label: "修羅場",
         tone: "orange",

@@ -81,6 +81,57 @@
                 <section class="grid gap-4 border-t border-gray-200 pt-6">
                   <div>
                     <h3 class="text-base font-bold text-gray-900">
+                      修羅場メーター
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                      1日あたりの必要作業時間で、メーターが進む境界を決めます。
+                    </p>
+                  </div>
+
+                  <div class="grid gap-3 md:grid-cols-3">
+                    <label class="grid gap-2">
+                      <span class="text-sm font-semibold text-gray-700">一歩手前（分/日）</span>
+                      <input
+                        v-model.number="crunchThresholds.warningMinutes"
+                        type="number"
+                        min="1"
+                        required
+                        class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                      >
+                    </label>
+                    <label class="grid gap-2">
+                      <span class="text-sm font-semibold text-gray-700">修羅場（分/日）</span>
+                      <input
+                        v-model.number="crunchThresholds.crunchMinutes"
+                        type="number"
+                        min="1"
+                        required
+                        class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                      >
+                    </label>
+                    <label class="grid gap-2">
+                      <span class="text-sm font-semibold text-gray-700">限界修羅場（分/日）</span>
+                      <input
+                        v-model.number="crunchThresholds.extremeMinutes"
+                        type="number"
+                        min="1"
+                        required
+                        class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                      >
+                    </label>
+                  </div>
+
+                  <p
+                    v-if="crunchThresholdError"
+                    class="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+                  >
+                    {{ crunchThresholdError }}
+                  </p>
+                </section>
+
+                <section class="grid gap-4 border-t border-gray-200 pt-6">
+                  <div>
+                    <h3 class="text-base font-bold text-gray-900">
                       作業工程
                     </h3>
                     <p class="mt-1 text-sm text-gray-500">
@@ -255,6 +306,8 @@
                   <button
                     type="submit"
                     class="rounded-xl bg-gray-900 px-4 py-3 text-sm font-bold text-white"
+                    :disabled="Boolean(crunchThresholdError)"
+                    :class="{ 'cursor-not-allowed opacity-50': crunchThresholdError }"
                   >
                     保存する
                   </button>
@@ -354,6 +407,57 @@
                 class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
               >
             </label>
+
+            <section class="grid gap-4 border-t border-gray-200 pt-6">
+              <div>
+                <h3 class="text-base font-bold text-gray-900">
+                  修羅場メーター
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">
+                  1日あたりの必要作業時間で、メーターが進む境界を決めます。
+                </p>
+              </div>
+
+              <div class="grid gap-3 md:grid-cols-3">
+                <label class="grid gap-2">
+                  <span class="text-sm font-semibold text-gray-700">一歩手前（分/日）</span>
+                  <input
+                    v-model.number="crunchThresholds.warningMinutes"
+                    type="number"
+                    min="1"
+                    required
+                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                  >
+                </label>
+                <label class="grid gap-2">
+                  <span class="text-sm font-semibold text-gray-700">修羅場（分/日）</span>
+                  <input
+                    v-model.number="crunchThresholds.crunchMinutes"
+                    type="number"
+                    min="1"
+                    required
+                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                  >
+                </label>
+                <label class="grid gap-2">
+                  <span class="text-sm font-semibold text-gray-700">限界修羅場（分/日）</span>
+                  <input
+                    v-model.number="crunchThresholds.extremeMinutes"
+                    type="number"
+                    min="1"
+                    required
+                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                  >
+                </label>
+              </div>
+
+              <p
+                v-if="crunchThresholdError"
+                class="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+              >
+                {{ crunchThresholdError }}
+              </p>
+            </section>
 
             <section class="grid gap-4 border-t border-gray-200 pt-6">
               <div>
@@ -532,6 +636,8 @@
               <button
                 type="submit"
                 class="rounded-xl bg-gray-900 px-4 py-3 text-sm font-bold text-white"
+                :disabled="Boolean(crunchThresholdError)"
+                :class="{ 'cursor-not-allowed opacity-50': crunchThresholdError }"
               >
                 保存する
               </button>
@@ -610,13 +716,13 @@
               初期値に戻す前の確認
             </p>
             <h2 class="mt-1 text-lg font-bold text-gray-900">
-              新規作成時の初期ページ数を戻しますか？
+              作業カスタムの基本値を戻しますか？
             </h2>
           </div>
 
           <div class="px-6 py-5">
             <p class="text-sm leading-6 text-gray-600">
-              現在の初期ページ数は、標準の {{ DEFAULT_SETTINGS.defaultTotalPages }}P に戻ります。作業工程の保存内容は変更されません。
+              初期ページ数は {{ DEFAULT_SETTINGS.defaultTotalPages }}P、修羅場メーターは中設定（{{ DEFAULT_CRUNCH_THRESHOLDS.warningMinutes }}分 / {{ DEFAULT_CRUNCH_THRESHOLDS.crunchMinutes }}分 / {{ DEFAULT_CRUNCH_THRESHOLDS.extremeMinutes }}分）に戻ります。作業工程の保存内容は変更されません。
             </p>
           </div>
 
@@ -644,7 +750,10 @@
 
 <script setup lang="ts">
 import type { WorkProcess, WorkProcessStep } from "~/types/settings";
-import { DEFAULT_SETTINGS } from "~/composables/useSettings";
+import {
+  DEFAULT_CRUNCH_THRESHOLDS,
+  DEFAULT_SETTINGS,
+} from "~/constants/defaultSettings";
 
 const {
   settings,
@@ -704,6 +813,7 @@ const selectedSection = computed(() => {
 });
 
 const defaultTotalPages = ref(settings.value.defaultTotalPages);
+const crunchThresholds = reactive({ ...settings.value.crunchThresholds });
 const editingWorkProcessId = ref("");
 const workProcessName = ref("");
 const workProcessSteps = ref<WorkProcessStep[]>([
@@ -736,6 +846,9 @@ const googleButtonLabel = computed(() => {
 
 const syncForm = () => {
   defaultTotalPages.value = settings.value.defaultTotalPages;
+  crunchThresholds.warningMinutes = settings.value.crunchThresholds.warningMinutes;
+  crunchThresholds.crunchMinutes = settings.value.crunchThresholds.crunchMinutes;
+  crunchThresholds.extremeMinutes = settings.value.crunchThresholds.extremeMinutes;
 };
 
 const resetWorkProcessForm = () => {
@@ -752,9 +865,12 @@ onMounted(() => {
 });
 
 const handleSubmit = () => {
+  if (crunchThresholdError.value) return;
+
   saveSettings({
     ...settings.value,
     defaultTotalPages: defaultTotalPages.value,
+    crunchThresholds: { ...crunchThresholds },
   });
   syncForm();
   savedMessage.value = "設定を保存しました。";
@@ -772,6 +888,7 @@ const handleReset = () => {
   saveSettings({
     ...settings.value,
     defaultTotalPages: DEFAULT_SETTINGS.defaultTotalPages,
+    crunchThresholds: { ...DEFAULT_CRUNCH_THRESHOLDS },
   });
   syncForm();
   closeResetConfirm();
@@ -829,6 +946,22 @@ const handleDeleteWorkProcess = (processId: string) => {
   }
   savedMessage.value = "作業工程を削除しました。";
 };
+
+const crunchThresholdError = computed(() => {
+  const warning = Math.round(Number(crunchThresholds.warningMinutes) || 0);
+  const crunch = Math.round(Number(crunchThresholds.crunchMinutes) || 0);
+  const extreme = Math.round(Number(crunchThresholds.extremeMinutes) || 0);
+
+  if (warning < 1 || crunch < 1 || extreme < 1) {
+    return "修羅場メーターの値は1分以上で設定してください。";
+  }
+
+  if (!(warning < crunch && crunch < extreme)) {
+    return "一歩手前、修羅場、限界修羅場の順に大きい数値を設定してください。";
+  }
+
+  return "";
+});
 
 const handleGoogleSignIn = async () => {
   isGoogleAuthLoading.value = true;

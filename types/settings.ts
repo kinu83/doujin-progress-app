@@ -9,8 +9,15 @@ export type WorkProcess = {
   steps: WorkProcessStep[];
 };
 
+export type CrunchThresholds = {
+  warningMinutes: number;
+  crunchMinutes: number;
+  extremeMinutes: number;
+};
+
 export type AppSettings = {
   defaultTotalPages: number;
   defaultWorkProcessId: string;
   workProcesses: WorkProcess[];
+  crunchThresholds: CrunchThresholds;
 };
