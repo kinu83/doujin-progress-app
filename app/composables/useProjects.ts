@@ -1,7 +1,8 @@
 import type { BookSpec, DailyWorkEntry, Project, PageStatus, WorkLog } from "~/types/project";
 import type { WorkProcess, WorkProcessStep } from "~/types/settings";
 import { calculateStatusCompletedMinutes } from "~/composables/useProgress";
-import { DEFAULT_WORK_PROCESS, useSettings } from "~/composables/useSettings";
+import { DEFAULT_WORK_PROCESS } from "~/constants/defaultSettings";
+import { useSettings } from "~/composables/useSettings";
 import { useState } from "#app";
 import {
   deleteRemoteProject,

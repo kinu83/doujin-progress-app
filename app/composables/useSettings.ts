@@ -1,4 +1,14 @@
-import type { AppSettings, WorkProcess, WorkProcessStep } from "~/types/settings";
+import type {
+  AppSettings,
+  CrunchThresholds,
+  WorkProcess,
+  WorkProcessStep,
+} from "~/types/settings";
+import {
+  DEFAULT_CRUNCH_THRESHOLDS,
+  DEFAULT_SETTINGS,
+  DEFAULT_WORK_PROCESS,
+} from "~/constants/defaultSettings";
 import { useState } from "#app";
 import {
   deleteRemoteSettings,
@@ -9,24 +19,6 @@ import {
 const STORAGE_KEY = "doujin-progress-settings";
 
 let remoteSettingsWriteQueue: Promise<void> = Promise.resolve();
-
-export const DEFAULT_WORK_PROCESS: WorkProcess = {
-  id: "manga",
-  name: "漫画",
-  steps: [
-    { name: "ネーム", minutesPerPage: 60 },
-    { name: "下描き", minutesPerPage: 60 },
-    { name: "ペン入れ", minutesPerPage: 60 },
-    { name: "仕上げ", minutesPerPage: 60 },
-    { name: "完成", minutesPerPage: 60 },
-  ],
-};
-
-export const DEFAULT_SETTINGS: AppSettings = {
-  defaultTotalPages: 16,
-  defaultWorkProcessId: DEFAULT_WORK_PROCESS.id,
-  workProcesses: [DEFAULT_WORK_PROCESS],
-};
 
 const createId = () => {
   if (import.meta.client && "randomUUID" in crypto) {
@@ -68,6 +60,29 @@ const normalizeWorkProcesses = (processes: WorkProcess[] | undefined) => {
   return hasDefault ? normalized : [DEFAULT_WORK_PROCESS, ...normalized];
 };
 
+const normalizeCrunchThresholds = (
+  thresholds: Partial<CrunchThresholds> | undefined
+): CrunchThresholds => {
+  const warningMinutes = Math.max(
+    1,
+    Math.round(Number(thresholds?.warningMinutes) || DEFAULT_CRUNCH_THRESHOLDS.warningMinutes)
+  );
+  const crunchMinutes = Math.max(
+    warningMinutes + 1,
+    Math.round(Number(thresholds?.crunchMinutes) || DEFAULT_CRUNCH_THRESHOLDS.crunchMinutes)
+  );
+  const extremeMinutes = Math.max(
+    crunchMinutes + 1,
+    Math.round(Number(thresholds?.extremeMinutes) || DEFAULT_CRUNCH_THRESHOLDS.extremeMinutes)
+  );
+
+  return {
+    warningMinutes,
+    crunchMinutes,
+    extremeMinutes,
+  };
+};
+
 const normalizeSettings = (settings: Partial<AppSettings> = {}): AppSettings => {
   const workProcesses = normalizeWorkProcesses(settings.workProcesses);
   const defaultWorkProcessId = workProcesses.some(
@@ -83,6 +98,7 @@ const normalizeSettings = (settings: Partial<AppSettings> = {}): AppSettings => 
     ),
     defaultWorkProcessId,
     workProcesses,
+    crunchThresholds: normalizeCrunchThresholds(settings.crunchThresholds),
   };
 };
 
@@ -116,6 +132,7 @@ const cloneSettings = (settings: AppSettings): AppSettings => {
       ...process,
       steps: process.steps.map((step) => ({ ...step })),
     })),
+    crunchThresholds: { ...settings.crunchThresholds },
   };
 };
 

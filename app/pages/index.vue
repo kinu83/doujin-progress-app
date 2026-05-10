@@ -115,9 +115,9 @@
               </span>
               <span
                 class="rounded-full px-3 py-1 text-xs font-bold"
-                :class="getCrunchLevelClasses(calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps).tone)"
+                :class="getCrunchLevelClasses(calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).tone)"
               >
-                修羅場レベル: {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps).label }}
+                修羅場レベル: {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).label }}
               </span>
             </div>
           </div>
@@ -146,6 +146,7 @@
 import { formatEventLabel, formatProjectDate } from "~/utils/projectDisplay";
 
 const { projects, loadProjects } = useProjects();
+const { settings, loadSettings } = useSettings();
 const {
   calculateTotalProgress,
   calculateRemainingWork,
@@ -169,6 +170,7 @@ const getCrunchLevelClasses = (tone: string) => {
 };
 
 onMounted(() => {
+  loadSettings();
   loadProjects();
 });
 </script>

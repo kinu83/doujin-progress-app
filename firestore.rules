@@ -179,12 +179,14 @@ service cloud.firestore {
           "defaultTotalPages",
           "defaultWorkProcessId",
           "workProcesses",
+          "crunchThresholds",
           "updatedAt"
         ])
         && hasRequiredKeys([
           "defaultTotalPages",
           "defaultWorkProcessId",
           "workProcesses",
+          "crunchThresholds",
           "updatedAt"
         ])
         && isPositiveInt(request.resource.data.defaultTotalPages, 500)
@@ -192,6 +194,22 @@ service cloud.firestore {
         && request.resource.data.workProcesses is list
         && request.resource.data.workProcesses.size() >= 1
         && request.resource.data.workProcesses.size() <= 50
+        && request.resource.data.crunchThresholds is map
+        && request.resource.data.crunchThresholds.keys().hasOnly([
+          "warningMinutes",
+          "crunchMinutes",
+          "extremeMinutes"
+        ])
+        && request.resource.data.crunchThresholds.keys().hasAll([
+          "warningMinutes",
+          "crunchMinutes",
+          "extremeMinutes"
+        ])
+        && isPositiveInt(request.resource.data.crunchThresholds.warningMinutes, 1440)
+        && isPositiveInt(request.resource.data.crunchThresholds.crunchMinutes, 1440)
+        && isPositiveInt(request.resource.data.crunchThresholds.extremeMinutes, 1440)
+        && request.resource.data.crunchThresholds.warningMinutes < request.resource.data.crunchThresholds.crunchMinutes
+        && request.resource.data.crunchThresholds.crunchMinutes < request.resource.data.crunchThresholds.extremeMinutes
         && isUpdatedAt(request.resource.data.updatedAt);
     }
 
