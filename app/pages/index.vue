@@ -82,34 +82,34 @@
 
       <div v-else class="grid gap-4">
         <article
-          v-for="project in projects"
-          :key="project.id"
+          v-for="card in projectCards"
+          :key="card.project.id"
           class="rounded-3xl px-12 border-4 border-[#2c8d98] bg-white p-5 shadow-[5px_5px_0_rgba(44,141,152,0.16)] transition hover:-translate-y-0.5 hover:shadow-[7px_7px_0_rgba(44,141,152,0.2)]"
         >
           <div class="flex items-start justify-between gap-4">
             <div>
               <div class="flex flex-wrap items-center gap-2 font-bold">
                 <NuxtLink
-                  :to="`/projects/${project.id}`"
+                  :to="`/projects/${card.project.id}`"
                   class="text-3xl font-black text-[#263236] transition hover:text-[#2c8d98]"
                 >
-                  {{ project.title }}
+                  {{ card.project.title }}
                 </NuxtLink>
                 <span
-                  v-if="formatEventLabel(project)"
+                  v-if="formatEventLabel(card.project)"
                   class="rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-3 py-1 text-xs font-black text-[#2c8d98]"
                 >
-                  {{ formatEventLabel(project) }}
+                  {{ formatEventLabel(card.project) }}
                 </span>
               </div>
               <div class="mt-4 flex flex-wrap gap-x-4 gap-y-1 border-b-2 border-dashed border-[#2c8d98] pb-3 text-sm font-black text-[#263236]">
                 <span class="space-x-2">
                   <span class="text-xs text-[#263236]/60">入稿締切日</span>
-                  <span>{{ formatProjectDate(project.deadline) }}</span>
+                  <span>{{ formatProjectDate(card.project.deadline) }}</span>
                 </span>
-                <span v-if="project.startDate" class="border-l-2 border-[#2c8d98]/50 pl-4">
+                <span v-if="card.project.startDate" class="border-l-2 border-[#2c8d98]/50 pl-4">
                   <span class="text-xs text-[#263236]/60">作業開始日</span>
-                  <span class="ml-2">{{ formatProjectDate(project.startDate) }}</span>
+                  <span class="ml-2">{{ formatProjectDate(card.project.startDate) }}</span>
                 </span>
               </div>
             </div>
@@ -117,13 +117,13 @@
             <div class="flex shrink-0 flex-col items-end gap-2">
               <span
                 class="rounded-xl border-2 px-3 py-1 text-xs font-black shadow-[3px_3px_0_rgba(38,50,54,0.16)]"
-                :class="getCrunchLevelClasses(calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).tone)"
+                :class="getCrunchLevelClasses(card.crunchLevel.tone)"
               >
-                修羅場レベル: {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).label }}
+                修羅場レベル: {{ card.crunchLevel.label }}
               </span>
               <span class="text-right text-xs font-black text-[#263236]">
                 進捗
-                <span class="block text-4xl leading-none">{{ calculateTotalProgress(project.pages, project.workProcessSteps) }}%</span>
+                <span class="block text-4xl leading-none">{{ card.progress }}%</span>
               </span>
             </div>
           </div>
@@ -131,25 +131,25 @@
           <div class="mt-6 h-5 overflow-hidden rounded-full bg-[#d7d7d7] shadow-inner">
             <div
               class="h-full rounded-full bg-[#2c8d98] shadow-[inset_0_2px_4px_rgba(0,0,0,0.18)]"
-              :style="{ width: `${calculateTotalProgress(project.pages, project.workProcessSteps)}%` }"
+              :style="{ width: `${card.progress}%` }"
             />
           </div>
 
           <div class="mt-6 flex flex-wrap gap-3 text-sm text-[#263236]">
             <span
-              v-if="!isBeforeStartDate(project.startDate)"
+              v-if="!card.isBeforeStart"
               class="min-w-0 flex-1 rounded-2xl border-2 border-[#ff4b1f] bg-[#fff2e3] px-4 py-3 font-black shadow-[3px_3px_0_rgba(255,75,31,0.22)]"
             >
               <span class="block text-xs">今日の必要時間</span>
-              <span class="text-3xl leading-tight text-[#f36b00]">{{ formatWorkDuration(calculateDailyWork(project.pages, project.deadline, project.workProcessSteps)) }}</span>
+              <span class="text-3xl leading-tight text-[#f36b00]">{{ formatWorkDuration(card.dailyWork) }}</span>
             </span>
             <span class="min-w-0 flex-1 rounded-2xl border-2 border-[#2c8d98] bg-white px-4 py-3 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)]">
               <span class="block text-xs">残り日数</span>
-              <span class="text-3xl leading-tight text-[#2c8d98]">{{ calculateDaysLeft(project.deadline) }}日</span>
+              <span class="text-3xl leading-tight text-[#2c8d98]">{{ card.daysLeft }}日</span>
             </span>
             <span class="min-w-0 flex-1 rounded-2xl border-2 border-[#2c8d98] bg-white px-4 py-3 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)]">
               <span class="block text-xs">残作業時間</span>
-              <span class="text-3xl leading-tight text-[#2c8d98]">{{ formatWorkDuration(calculateRemainingWork(project.pages, project.workProcessSteps)) }}</span>
+              <span class="text-3xl leading-tight text-[#2c8d98]">{{ formatWorkDuration(card.remainingWork) }}</span>
             </span>
           </div>
         </article>
@@ -159,6 +159,8 @@
 </template>
 
 <script setup lang="ts">
+import type { Project } from "~/types/project";
+import { getCrunchLevelClasses } from "~/utils/crunchLevelDisplay";
 import { formatEventLabel, formatProjectDate } from "~/utils/projectDisplay";
 
 const { projects, loadProjects } = useProjects();
@@ -173,17 +175,23 @@ const {
   formatWorkDuration,
 } = useProgress();
 
-const getCrunchLevelClasses = (tone: string) => {
-  const classes: Record<string, string> = {
-    emerald: "border-emerald-500 bg-emerald-50 text-emerald-700",
-    sky: "border-[#2c8d98] bg-[#edf6fa] text-[#2c8d98]",
-    amber: "border-amber-500 bg-amber-50 text-amber-700",
-    orange: "border-[#ff8a00] bg-orange-50 text-[#f36b00]",
-    red: "border-red-500 bg-red-50 text-red-700",
-  };
+const toProjectCard = (project: Project) => ({
+  project,
+  progress: calculateTotalProgress(project.pages, project.workProcessSteps),
+  crunchLevel: calculateCrunchLevel(
+    project.pages,
+    project.deadline,
+    project.startDate,
+    project.workProcessSteps,
+    settings.value.crunchThresholds
+  ),
+  dailyWork: calculateDailyWork(project.pages, project.deadline, project.workProcessSteps),
+  daysLeft: calculateDaysLeft(project.deadline),
+  remainingWork: calculateRemainingWork(project.pages, project.workProcessSteps),
+  isBeforeStart: isBeforeStartDate(project.startDate),
+});
 
-  return classes[tone] ?? classes.sky;
-};
+const projectCards = computed(() => projects.value.map(toProjectCard));
 
 onMounted(() => {
   loadSettings();

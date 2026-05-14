@@ -136,7 +136,7 @@
 
             <div class="shrink-0 text-right font-black text-[#263236]">
               <p class="text-4xl leading-none">
-                {{ calculateTotalProgress(project.pages, project.workProcessSteps) }}%
+                {{ projectProgress }}%
               </p>
               <p class="text-sm">
                 全体進捗
@@ -147,13 +147,13 @@
           <div class="mt-5 h-5 overflow-hidden rounded-full bg-[#d7d7d7] shadow-inner">
             <div
               class="h-full rounded-full bg-[#2c8d98] shadow-[inset_0_2px_4px_rgba(0,0,0,0.18)]"
-              :style="{ width: `${calculateTotalProgress(project.pages, project.workProcessSteps)}%` }"
+              :style="{ width: `${projectProgress}%` }"
             />
           </div>
 
           <div
             class="mt-5 rounded-2xl border-2 p-4 font-bold shadow-[3px_3px_0_rgba(38,50,54,0.12)]"
-            :class="getCrunchLevelClasses(calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).tone)"
+            :class="getCrunchLevelClasses(projectCrunchLevel.tone)"
           >
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -161,7 +161,7 @@
                   修羅場レベル
                 </p>
                 <p class="mt-1 text-2xl font-black">
-                  {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).label }}
+                  {{ projectCrunchLevel.label }}
                 </p>
               </div>
               <div class="flex gap-1" aria-hidden="true">
@@ -169,12 +169,12 @@
                   v-for="level in 5"
                   :key="level"
                   class="h-3 w-3 rounded-full"
-                  :class="level <= calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).intensity ? 'bg-current' : 'bg-current/20'"
+                  :class="level <= projectCrunchLevel.intensity ? 'bg-current' : 'bg-current/20'"
                 />
               </div>
             </div>
             <p class="mt-2 text-sm leading-6">
-              {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).message }}
+              {{ projectCrunchLevel.message }}
             </p>
           </div>
 
@@ -185,7 +185,7 @@
             </div>
             <div class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)]">
               <span class="block text-xs">残作業時間</span>
-              <span class="text-2xl leading-tight text-[#2c8d98]">{{ formatWorkDuration(calculateRemainingWork(project.pages, project.workProcessSteps)) }}</span>
+              <span class="text-2xl leading-tight text-[#2c8d98]">{{ formatWorkDuration(projectRemainingWork) }}</span>
             </div>
             <div class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)]">
               <span class="block text-xs">残ページ数</span>
@@ -597,10 +597,10 @@
 </template>
 
 <script setup lang="ts">
-import { useProgress } from "~/composables/useProgress";
+import { createStatusList, useProgress } from "~/composables/useProgress";
 import { useProjects } from "~/composables/useProjects";
-import { createStatusList } from "~/composables/useProgress";
 import type { PageStatus, PrintColorMode } from "~/types/project";
+import { getCrunchLevelClasses } from "~/utils/crunchLevelDisplay";
 import { formatEventLabel, formatProjectDate } from "~/utils/projectDisplay";
 
 const route = useRoute();
@@ -619,7 +619,6 @@ const {
   calculateTotalProgress,
   calculateRemainingWork,
   calculateDaysLeft,
-  isBeforeStartDate,
   calculateCrunchLevel,
   calculatePageProgress,
   formatWorkDuration,
@@ -633,6 +632,27 @@ onMounted(() => {
 });
 
 const project = computed(() => getProjectById(String(route.params.id)));
+const projectProgress = computed(() => {
+  if (!project.value) return 0;
+
+  return calculateTotalProgress(project.value.pages, project.value.workProcessSteps);
+});
+const projectRemainingWork = computed(() => {
+  if (!project.value) return 0;
+
+  return calculateRemainingWork(project.value.pages, project.value.workProcessSteps);
+});
+const projectCrunchLevel = computed(() => {
+  const currentProject = project.value;
+
+  return calculateCrunchLevel(
+    currentProject?.pages ?? [],
+    currentProject?.deadline ?? "",
+    currentProject?.startDate ?? "",
+    currentProject?.workProcessSteps,
+    settings.value.crunchThresholds
+  );
+});
 const statuses = computed<PageStatus[]>(() => {
   return createStatusList(project.value?.workProcessSteps);
 });
@@ -724,18 +744,6 @@ const infoEditError = computed(() => {
 const canSaveInfo = computed(() => {
   return !infoEditError.value;
 });
-
-const getCrunchLevelClasses = (tone: string) => {
-  const classes: Record<string, string> = {
-    emerald: "border-emerald-500 bg-emerald-50 text-emerald-700",
-    sky: "border-[#2c8d98] bg-[#edf6fa] text-[#2c8d98]",
-    amber: "border-amber-500 bg-amber-50 text-amber-700",
-    orange: "border-[#ff8a00] bg-orange-50 text-[#f36b00]",
-    red: "border-red-500 bg-red-50 text-red-700",
-  };
-
-  return classes[tone] ?? classes.sky;
-};
 
 const fillInfoForm = () => {
   if (!project.value) return;

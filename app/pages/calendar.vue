@@ -1,7 +1,7 @@
 <template>
   <main class="min-h-screen bg-[#edf6fa] px-4 py-6 text-[#263236] sm:px-6">
-    <div class="mx-auto max-w-5xl">
-      <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div class="mx-auto max-w-7xl">
+      <div class="mb-5 flex flex-wrap items-center gap-3">
         <div class="items-center gap-3">
           <NuxtLink
             to="/"
@@ -10,64 +10,65 @@
             ← 一覧に戻る
           </NuxtLink>
         </div>
-
-        <div class="flex items-center gap-2 rounded-xl border-2 border-[#263236] bg-white p-1 shadow-[3px_3px_0_rgba(38,50,54,0.18)]">
-          <button
-            type="button"
-            aria-label="前の月"
-            title="前の月"
-            class="grid h-9 w-9 place-items-center rounded-lg text-[#263236] transition hover:bg-[#edf6fa]"
-            @click="moveMonth(-1)"
-          >
-            <svg
-              class="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            class="rounded-lg px-4 py-2 text-sm font-black text-[#263236] transition hover:bg-[#edf6fa]"
-            @click="goToday"
-          >
-            今日
-          </button>
-          <button
-            type="button"
-            aria-label="次の月"
-            title="次の月"
-            class="grid h-9 w-9 place-items-center rounded-lg text-[#263236] transition hover:bg-[#edf6fa]"
-            @click="moveMonth(1)"
-          >
-            <svg
-              class="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-          </button>
-        </div>
       </div>
 
-      <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div>
         <section class="overflow-hidden rounded-3xl border-4 border-[#2c8d98] bg-white shadow-[5px_5px_0_rgba(44,141,152,0.16)]">
-          <div class="flex items-center justify-between border-b-2 border-dashed border-[#2c8d98] px-5 py-4">
-            <h2 class="text-xl font-black text-[#263236]">
-              {{ monthTitle }}
-            </h2>
+          <div class="flex flex-wrap items-center justify-between gap-4 border-b-2 border-dashed border-[#2c8d98] px-5 py-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex items-center overflow-hidden rounded-xl border-2 border-[#263236] bg-white shadow-[3px_3px_0_rgba(38,50,54,0.14)]">
+                <button
+                  type="button"
+                  aria-label="前の月"
+                  title="前の月"
+                  class="grid h-10 w-10 place-items-center text-[#263236] transition hover:bg-[#edf6fa]"
+                  @click="moveMonth(-1)"
+                >
+                  <svg
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m15 18-6-6 6-6" />
+                  </svg>
+                </button>
+                <h2 class="min-w-36 border-x-2 border-[#263236]/20 px-4 text-center text-xl font-black text-[#263236]">
+                  {{ monthTitle }}
+                </h2>
+                <button
+                  type="button"
+                  aria-label="次の月"
+                  title="次の月"
+                  class="grid h-10 w-10 place-items-center text-[#263236] transition hover:bg-[#edf6fa]"
+                  @click="moveMonth(1)"
+                >
+                  <svg
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </button>
+              </div>
+              <button
+                type="button"
+                class="rounded-xl border-2 border-[#263236] bg-white px-3 py-2 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.14)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
+                @click="goToday"
+              >
+                今日
+              </button>
+            </div>
             <div class="flex flex-wrap items-center justify-end gap-3">
               <div class="flex items-center gap-2 text-xs font-black text-[#263236]/60">
                 <span class="h-2 w-8 rounded-full bg-[#2c8d98]" />
@@ -160,107 +161,205 @@
           </div>
         </section>
 
-        <aside class="rounded-3xl border-4 border-[#2c8d98] bg-white shadow-[5px_5px_0_rgba(44,141,152,0.16)]">
-          <div class="border-b-2 border-dashed border-[#2c8d98] px-5 py-5">
-            <p class="text-sm font-black text-[#f36b00]">
-              {{ selectedDateLabel }}
-            </p>
-            <h2 class="mt-1 text-lg font-black text-[#263236]">
-              作業時間
-            </h2>
-          </div>
-
-          <div class="grid gap-5 px-5 py-5">
-            <section v-if="selectedSchedule.length" class="grid gap-2">
-              <h3 class="text-sm font-black text-[#263236]/60">
-                予定日
-              </h3>
-              <div class="grid gap-2">
-                <NuxtLink
-                  v-for="item in selectedSchedule"
-                  :key="`${item.projectId}-${item.kind}`"
-                  :to="`/projects/${item.projectId}`"
-                  class="rounded-2xl border-2 px-4 py-3 text-sm font-black shadow-[3px_3px_0_rgba(38,50,54,0.12)]"
-                  :class="scheduleClasses[item.kind]"
-                >
-                  {{ scheduleLabels[item.kind] }} {{ item.title }}
-                </NuxtLink>
-              </div>
-            </section>
-
-            <section class="grid gap-3">
-              <h3 class="text-sm font-black text-[#263236]/60">
-                プロジェクト別予定
-              </h3>
-
-              <div
-                v-if="projects.length === 0"
-                class="rounded-2xl border-2 border-dashed border-[#2c8d98] bg-[#edf6fa] p-5 text-center text-sm font-bold text-[#263236]/60"
-              >
-                プロジェクトを作成すると、日別予定を入力できます。
-              </div>
-
-              <div
-                v-else-if="editableProjects.length === 0"
-                class="rounded-2xl border-2 border-dashed border-[#2c8d98] bg-[#edf6fa] p-5 text-center text-sm font-bold text-[#263236]/60"
-              >
-                この日は作業期間内のプロジェクトがありません。
-              </div>
-
-              <div
-                v-for="project in editableProjects"
-                :key="project.id"
-                class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 shadow-[3px_3px_0_rgba(44,141,152,0.14)]"
-              >
-                <div class="flex items-start justify-between gap-3">
-                  <NuxtLink
-                    :to="`/projects/${project.id}`"
-                    class="min-w-0 font-black text-[#263236] hover:text-[#2c8d98]"
-                  >
-                    {{ project.title }}
-                  </NuxtLink>
-                  <span class="shrink-0 rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-2 py-1 text-xs font-black text-[#2c8d98]">
-                    {{ project.totalPages }}P
-                  </span>
-                </div>
-
-                <div class="mt-3 grid grid-cols-2 gap-2 text-xs font-black text-[#263236]/70">
-                  <span class="rounded-xl border-2 border-[#2c8d98]/40 bg-[#edf6fa] px-3 py-2">
-                    進捗 {{ calculateTotalProgress(project.pages, project.workProcessSteps) }}%
-                  </span>
-                  <span class="rounded-xl border-2 border-[#2c8d98]/40 bg-[#edf6fa] px-3 py-2">
-                    残り {{ formatWorkDuration(calculateRemainingWork(project.pages, project.workProcessSteps)) }}
-                  </span>
-                </div>
-
-                <p
-                  v-if="projectUnplannedWork(project) > 0"
-                  class="mt-3 rounded-xl border-2 border-amber-400 bg-amber-50 px-3 py-2 text-xs font-black text-amber-700"
-                >
-                  必要な作業時間分の予定を入力してください。あと {{ formatWorkDuration(projectUnplannedWork(project)) }} 割り振れます。
+        <div
+          v-if="isWorkPanelOpen"
+          class="fixed inset-0 z-40 bg-[#263236]/20 backdrop-blur-[1px]"
+          @click.self="closeWorkPanel"
+        >
+          <aside
+            class="ml-auto flex h-full min-h-0 w-full max-w-[420px] flex-col border-l-4 border-[#2c8d98] bg-white shadow-[-8px_0_0_rgba(44,141,152,0.16)]"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="work-panel-title"
+          >
+            <div class="flex items-start justify-between gap-4 border-b-2 border-dashed border-[#2c8d98] px-5 py-5">
+              <div>
+                <p class="text-sm font-black text-[#f36b00]">
+                  {{ selectedDateLabel }}
                 </p>
+                <h2 id="work-panel-title" class="mt-1 text-lg font-black text-[#263236]">
+                  作業時間
+                </h2>
+              </div>
+              <button
+                type="button"
+                aria-label="作業時間入力を閉じる"
+                title="閉じる"
+                class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 border-[#263236] bg-white text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.14)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
+                @click="closeWorkPanel"
+              >
+                <svg
+                  class="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
+              </button>
+            </div>
 
-                <div class="mt-4 grid grid-cols-2 gap-3">
-                  <div class="grid gap-2">
-                    <span class="text-xs font-black text-[#263236]/60">予定（分）</span>
+            <div class="grid min-h-0 flex-1 auto-rows-max content-start gap-5 overflow-y-auto px-5 py-5">
+              <section v-if="selectedSchedule.length" class="grid gap-2">
+                <h3 class="text-sm font-black text-[#263236]/60">
+                  予定日
+                </h3>
+                <div class="grid gap-2">
+                  <NuxtLink
+                    v-for="item in selectedSchedule"
+                    :key="`${item.projectId}-${item.kind}`"
+                    :to="`/projects/${item.projectId}`"
+                    class="rounded-2xl border-2 px-4 py-3 text-sm font-black shadow-[3px_3px_0_rgba(38,50,54,0.12)]"
+                    :class="scheduleClasses[item.kind]"
+                  >
+                    {{ scheduleLabels[item.kind] }} {{ item.title }}
+                  </NuxtLink>
+                </div>
+              </section>
+
+              <section class="grid auto-rows-max content-start gap-3">
+                <h3 class="text-sm font-black text-[#263236]/60">
+                  プロジェクト別予定
+                </h3>
+
+                <div
+                  v-if="projects.length === 0"
+                  class="rounded-2xl border-2 border-dashed border-[#2c8d98] bg-[#edf6fa] p-5 text-center text-sm font-bold text-[#263236]/60"
+                >
+                  プロジェクトを作成すると、日別予定を入力できます。
+                </div>
+
+                <div
+                  v-else-if="editableProjects.length === 0"
+                  class="rounded-2xl border-2 border-dashed border-[#2c8d98] bg-[#edf6fa] p-5 text-center text-sm font-bold text-[#263236]/60"
+                >
+                  この日は作業期間内のプロジェクトがありません。
+                </div>
+
+                <div
+                  v-for="project in editableProjects"
+                  :key="project.id"
+                  class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 shadow-[3px_3px_0_rgba(44,141,152,0.14)]"
+                >
+                  <div class="flex items-start justify-between gap-3">
+                    <NuxtLink
+                      :to="`/projects/${project.id}`"
+                      class="min-w-0 font-black text-[#263236] hover:text-[#2c8d98]"
+                    >
+                      {{ project.title }}
+                    </NuxtLink>
+                    <span class="shrink-0 rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-2 py-1 text-xs font-black text-[#2c8d98]">
+                      {{ project.totalPages }}P
+                    </span>
+                  </div>
+
+                  <div class="mt-3 grid grid-cols-2 gap-2 text-xs font-black text-[#263236]/70">
+                    <span class="rounded-xl border-2 border-[#2c8d98]/40 bg-[#edf6fa] px-3 py-2">
+                      進捗 {{ calculateTotalProgress(project.pages, project.workProcessSteps) }}%
+                    </span>
+                    <span class="rounded-xl border-2 border-[#2c8d98]/40 bg-[#edf6fa] px-3 py-2">
+                      残り {{ formatWorkDuration(calculateRemainingWork(project.pages, project.workProcessSteps)) }}
+                    </span>
+                  </div>
+
+                  <p
+                    v-if="projectUnplannedWork(project) > 0"
+                    class="mt-3 rounded-xl border-2 border-amber-400 bg-amber-50 px-3 py-2 text-xs font-black text-amber-700"
+                  >
+                    必要な作業時間分の予定を入力してください。あと {{ formatWorkDuration(projectUnplannedWork(project)) }} 割り振れます。
+                  </p>
+
+                  <div class="mt-4 grid grid-cols-2 gap-3">
+                    <div class="grid gap-2">
+                      <span class="text-xs font-black text-[#263236]/60">予定（分）</span>
+                      <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
+                        <input
+                          :value="workToMinutes(dailyEntry(project.id).planned)"
+                          type="number"
+                          min="0"
+                          step="any"
+                          :max="workToMinutes(maxPlannedEntry(project.id))"
+                          inputmode="decimal"
+                          class="min-w-0 flex-1 px-3 py-2 text-sm font-bold text-[#263236] outline-none"
+                          @input="handlePlannedEntry(project.id, $event)"
+                        >
+                        <div class="grid w-9 shrink-0 border-l-2 border-[#2c8d98]/30">
+                          <button
+                            type="button"
+                            aria-label="予定を30分増やす"
+                            title="予定を30分増やす"
+                            class="grid place-items-center text-[#263236] transition hover:bg-[#edf6fa]"
+                            @click="adjustPlannedEntry(project.id, 30)"
+                          >
+                            <svg
+                              class="h-3 w-3"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              aria-hidden="true"
+                            >
+                              <path d="m18 15-6-6-6 6" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="予定を30分減らす"
+                            title="予定を30分減らす"
+                            class="grid place-items-center border-t-2 border-[#2c8d98]/30 text-[#263236] transition hover:bg-[#edf6fa]"
+                            @click="adjustPlannedEntry(project.id, -30)"
+                          >
+                            <svg
+                              class="h-3 w-3"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              aria-hidden="true"
+                            >
+                              <path d="m6 9 6 6 6-6" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="grid gap-2">
+                      <span class="text-xs font-black text-[#263236]/60">作業時間</span>
+                      <div class="rounded-xl border-2 border-[#2c8d98]/40 bg-[#edf6fa] px-3 py-2 text-sm font-black text-[#263236]">
+                        {{ formatWorkDuration(dailyActual(project.id)) }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-3 grid gap-2">
+                    <span class="text-xs font-black text-[#263236]/60">実績の手入力（分）</span>
                     <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
                       <input
-                        :value="workToMinutes(dailyEntry(project.id).planned)"
+                        :value="workToMinutes(manualActualEntry(project.id))"
                         type="number"
                         min="0"
                         step="any"
-                        :max="workToMinutes(maxPlannedEntry(project.id))"
                         inputmode="decimal"
                         class="min-w-0 flex-1 px-3 py-2 text-sm font-bold text-[#263236] outline-none"
-                        @input="handlePlannedEntry(project.id, $event)"
+                        @input="handleManualActualEntry(project.id, $event)"
                       >
                       <div class="grid w-9 shrink-0 border-l-2 border-[#2c8d98]/30">
                         <button
                           type="button"
-                          aria-label="予定を30分増やす"
-                          title="予定を30分増やす"
+                          aria-label="実績を30分増やす"
+                          title="実績を30分増やす"
                           class="grid place-items-center text-[#263236] transition hover:bg-[#edf6fa]"
-                          @click="adjustPlannedEntry(project.id, 30)"
+                          @click="adjustManualActualEntry(project.id, 30)"
                         >
                           <svg
                             class="h-3 w-3"
@@ -277,10 +376,10 @@
                         </button>
                         <button
                           type="button"
-                          aria-label="予定を30分減らす"
-                          title="予定を30分減らす"
+                          aria-label="実績を30分減らす"
+                          title="実績を30分減らす"
                           class="grid place-items-center border-t-2 border-[#2c8d98]/30 text-[#263236] transition hover:bg-[#edf6fa]"
-                          @click="adjustPlannedEntry(project.id, -30)"
+                          @click="adjustManualActualEntry(project.id, -30)"
                         >
                           <svg
                             class="h-3 w-3"
@@ -299,81 +398,17 @@
                     </div>
                   </div>
 
-                  <div class="grid gap-2">
-                    <span class="text-xs font-black text-[#263236]/60">作業時間</span>
-                    <div class="rounded-xl border-2 border-[#2c8d98]/40 bg-[#edf6fa] px-3 py-2 text-sm font-black text-[#263236]">
-                      {{ formatWorkDuration(dailyActual(project.id)) }}
-                    </div>
-                  </div>
+                  <NuxtLink
+                    :to="{ path: `/projects/${project.id}`, query: { workDate: selectedDate } }"
+                    class="ml-auto mt-4 flex w-fit items-center justify-center rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-4 py-2 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984]"
+                  >
+                    作業時間入力
+                  </NuxtLink>
                 </div>
-
-                <div class="mt-3 grid gap-2">
-                  <span class="text-xs font-black text-[#263236]/60">実績の手入力（分）</span>
-                  <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
-                    <input
-                      :value="workToMinutes(manualActualEntry(project.id))"
-                      type="number"
-                      min="0"
-                      step="any"
-                      inputmode="decimal"
-                      class="min-w-0 flex-1 px-3 py-2 text-sm font-bold text-[#263236] outline-none"
-                      @input="handleManualActualEntry(project.id, $event)"
-                    >
-                    <div class="grid w-9 shrink-0 border-l-2 border-[#2c8d98]/30">
-                      <button
-                        type="button"
-                        aria-label="実績を30分増やす"
-                        title="実績を30分増やす"
-                        class="grid place-items-center text-[#263236] transition hover:bg-[#edf6fa]"
-                        @click="adjustManualActualEntry(project.id, 30)"
-                      >
-                        <svg
-                          class="h-3 w-3"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          aria-hidden="true"
-                        >
-                          <path d="m18 15-6-6-6 6" />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="実績を30分減らす"
-                        title="実績を30分減らす"
-                        class="grid place-items-center border-t-2 border-[#2c8d98]/30 text-[#263236] transition hover:bg-[#edf6fa]"
-                        @click="adjustManualActualEntry(project.id, -30)"
-                      >
-                        <svg
-                          class="h-3 w-3"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          aria-hidden="true"
-                        >
-                          <path d="m6 9 6 6 6-6" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <NuxtLink
-                  :to="{ path: `/projects/${project.id}`, query: { workDate: selectedDate } }"
-                  class="ml-auto mt-4 flex w-fit items-center justify-center rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-4 py-2 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984]"
-                >
-                  作業時間入力
-                </NuxtLink>
-              </div>
-            </section>
-          </div>
-        </aside>
+              </section>
+            </div>
+          </aside>
+        </div>
       </div>
     </div>
   </main>
@@ -428,6 +463,7 @@ const initialDate = parseDateKeyFromQuery(route.query.date) ?? today;
 const selectedDate = ref(formatDateKey(initialDate));
 const visibleYear = ref(initialDate.getFullYear());
 const visibleMonth = ref(initialDate.getMonth());
+const isWorkPanelOpen = ref(Boolean(route.query.date));
 
 onMounted(() => {
   loadProjects();
@@ -523,10 +559,16 @@ function goToday() {
   selectedDate.value = formatDateKey(now);
   visibleYear.value = now.getFullYear();
   visibleMonth.value = now.getMonth();
+  isWorkPanelOpen.value = true;
 }
 
 function selectDate(dateKey: string) {
   selectedDate.value = dateKey;
+  isWorkPanelOpen.value = true;
+}
+
+function closeWorkPanel() {
+  isWorkPanelOpen.value = false;
 }
 
 function daySchedule(dateKey: string): ScheduleItem[] {

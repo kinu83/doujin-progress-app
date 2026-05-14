@@ -18,12 +18,6 @@ export const createStatusList = (workSteps = DEFAULT_WORK_STEPS) => {
   return ["未着手", ...workSteps.map((step) => step.name)];
 };
 
-export const completedStepMap = Object.fromEntries(
-  createStatusList().map((status, index) => [status, index])
-) as Record<PageStatus, number>;
-
-export const totalStepCount = DEFAULT_WORK_STEPS.length;
-
 const getStatusIndex = (status: PageStatus, workSteps = DEFAULT_WORK_STEPS) => {
   const statuses = createStatusList(workSteps);
   const index = statuses.indexOf(status);
@@ -238,7 +232,6 @@ export const useProgress = () => {
   };
 
   return {
-    completedStepMap,
     calculatePageProgress,
     calculateStatusCompletedMinutes,
     calculateTotalProgress,

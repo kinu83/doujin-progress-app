@@ -230,6 +230,23 @@ const normalizeStatusForSteps = (
   return "未着手";
 };
 
+const resizePages = (
+  pages: Project["pages"],
+  totalPages: number,
+  normalizeStatus: (status: PageStatus) => PageStatus = (status) => status
+) => {
+  return Array.from({ length: totalPages }, (_, index) => {
+    return pages[index] ?? {
+      pageNumber: index + 1,
+      status: "未着手",
+    };
+  }).map((page, index) => ({
+    ...page,
+    pageNumber: index + 1,
+    status: normalizeStatus(page.status),
+  }));
+};
+
 const normalizeProject = (project: Project): Project => {
   const pages = project.pages ?? [];
   const hasLegacyProgress = pages.some((page) => "progress" in page);
@@ -432,11 +449,6 @@ export const useProjects = () => {
     })();
   };
 
-  const saveProjects = () => {
-    writeLocalProjects(projects.value);
-    void persistProjects();
-  };
-
   const saveProject = (project: Project) => {
     writeLocalProjects(projects.value);
     void persistProject(project);
@@ -517,25 +529,13 @@ export const useProjects = () => {
       name: project.workProcessName,
       steps: project.workProcessSteps,
     });
-    const currentPages = project.pages;
-    const nextPages = Array.from({ length: totalPages }, (_, index) => {
-      const existingPage = currentPages[index];
-      if (existingPage) return existingPage;
-
-      const status: PageStatus = "未着手";
-      return {
-        pageNumber: index + 1,
+    const nextPages = resizePages(project.pages, totalPages, (status) => {
+      return normalizeStatusForSteps(
         status,
-      };
-    }).map((page, index) => ({
-      ...page,
-      pageNumber: index + 1,
-      status: normalizeStatusForSteps(
-        page.status,
         project.workProcessSteps,
         nextProcessFields.workProcessSteps
-      ),
-    }));
+      );
+    });
 
     project.eventName = input.eventName;
     project.title = input.title;
@@ -558,20 +558,7 @@ export const useProjects = () => {
     if (!project) return false;
 
     const totalPages = Math.max(1, Number(input.totalPages) || 1);
-    const currentPages = project.pages;
-    const nextPages = Array.from({ length: totalPages }, (_, index) => {
-      const existingPage = currentPages[index];
-      if (existingPage) return existingPage;
-
-      const status: PageStatus = "未着手";
-      return {
-        pageNumber: index + 1,
-        status,
-      };
-    }).map((page, index) => ({
-      ...page,
-      pageNumber: index + 1,
-    }));
+    const nextPages = resizePages(project.pages, totalPages);
 
     project.totalPages = totalPages;
     project.pages = nextPages;
@@ -803,7 +790,6 @@ export const useProjects = () => {
     isProjectsLoading,
     projectsError,
     loadProjects,
-    saveProjects,
     createProject,
     getProjectById,
     deleteProject,
