@@ -1,5 +1,5 @@
 import type { Firestore } from "firebase/firestore";
-import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import type { AppSettings } from "~/types/settings";
 
 const userSettingsDoc = (db: Firestore, uid: string) => {
@@ -34,10 +34,5 @@ export const saveRemoteSettings = async (
     },
     { merge: true }
   );
-  await touchUser(db, uid);
-};
-
-export const deleteRemoteSettings = async (db: Firestore, uid: string) => {
-  await deleteDoc(userSettingsDoc(db, uid));
   await touchUser(db, uid);
 };

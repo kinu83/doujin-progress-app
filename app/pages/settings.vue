@@ -1,12 +1,15 @@
 <template>
-  <main class="min-h-screen bg-gray-50 px-6 py-8">
+  <main class="min-h-screen bg-[#edf6fa] px-6 py-8 text-[#263236]">
     <div class="mx-auto max-w-5xl">
-      <NuxtLink to="/" class="text-sm font-semibold text-gray-500">
+      <NuxtLink
+        to="/"
+        class="inline-flex items-center rounded-xl border-2 border-[#263236] bg-white px-4 py-2 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] hover:shadow-[4px_4px_0_rgba(38,50,54,0.22)]"
+      >
         ← 一覧に戻る
       </NuxtLink>
 
       <div class="mt-4">
-        <h1 class="text-2xl font-bold text-gray-900">
+        <h1 class="text-3xl font-black text-[#263236]">
           設定
         </h1>
       </div>
@@ -19,22 +22,22 @@
           >
             <button
               type="button"
-              class="rounded-2xl bg-white p-4 text-left shadow-sm ring-1 transition"
-              :class="selectedSectionId === section.id ? 'ring-gray-900' : 'ring-gray-200 hover:ring-gray-300'"
+              class="rounded-2xl border-2 bg-white p-4 text-left shadow-[3px_3px_0_rgba(44,141,152,0.14)] transition hover:-translate-y-0.5"
+              :class="selectedSectionId === section.id ? 'border-[#263236] shadow-[4px_4px_0_rgba(38,50,54,0.18)]' : 'border-[#2c8d98] hover:bg-[#f7fcfd]'"
               @click="selectedSectionId = section.id"
             >
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <h2 class="text-base font-bold text-gray-900">
+                  <h2 class="text-base font-black text-[#263236]">
                     {{ section.title }}
                   </h2>
-                  <p class="mt-1 text-sm font-semibold text-gray-500">
+                  <p class="mt-1 text-sm font-bold text-[#263236]/60">
                     {{ section.description }}
                   </p>
                 </div>
                 <span
-                  class="shrink-0 rounded-full px-3 py-1 text-xs font-bold"
-                  :class="section.available ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'"
+                  class="shrink-0 rounded-full border-2 px-3 py-1 text-xs font-black"
+                  :class="section.available ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-[#d7d7d7] bg-[#edf6fa] text-[#263236]/50'"
                 >
                   {{ section.available ? "設定可" : "準備中" }}
                 </span>
@@ -43,20 +46,20 @@
 
             <section
               v-if="selectedSectionId === section.id"
-              class="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-gray-200 lg:hidden"
+              class="rounded-3xl border-4 border-[#2c8d98] bg-white p-8 shadow-[5px_5px_0_rgba(44,141,152,0.16)] lg:hidden"
             >
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h2 class="text-xl font-bold text-gray-900">
+                  <h2 class="text-xl font-black text-[#263236]">
                     {{ section.title }}
                   </h2>
-                  <p class="mt-2 text-sm text-gray-500">
+                  <p class="mt-2 text-sm font-bold text-[#263236]/60">
                     {{ section.detail }}
                   </p>
                 </div>
                 <span
-                  class="rounded-full px-3 py-1 text-xs font-bold"
-                  :class="section.available ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'"
+                  class="rounded-full border-2 px-3 py-1 text-xs font-black"
+                  :class="section.available ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-[#d7d7d7] bg-[#edf6fa] text-[#263236]/50'"
                 >
                   {{ section.available ? "利用できます" : "今後追加予定" }}
                 </span>
@@ -68,73 +71,73 @@
                 @submit.prevent="handleSubmit"
               >
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">新規作成時の初期ページ数</span>
+                  <span class="text-sm font-black text-[#263236]">新規作成時の初期ページ数</span>
                   <input
                     v-model.number="defaultTotalPages"
                     type="number"
                     min="1"
                     required
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                   >
                 </label>
 
-                <section class="grid gap-4 border-t border-gray-200 pt-6">
+                <section class="grid gap-4 border-t-2 border-dashed border-[#2c8d98] pt-6">
                   <div>
-                    <h3 class="text-base font-bold text-gray-900">
+                    <h3 class="text-base font-black text-[#263236]">
                       修羅場メーター
                     </h3>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <p class="mt-1 text-sm font-bold text-[#263236]/60">
                       1日あたりの必要作業時間で、メーターが進む境界を決めます。
                     </p>
                   </div>
 
                   <div class="grid gap-3 md:grid-cols-3">
                     <label class="grid gap-2">
-                      <span class="text-sm font-semibold text-gray-700">一歩手前（分/日）</span>
+                      <span class="text-sm font-black text-[#263236]">一歩手前（分/日）</span>
                       <input
                         v-model.number="crunchThresholds.warningMinutes"
                         type="number"
                         min="1"
                         required
-                        class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                        class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                       >
                     </label>
                     <label class="grid gap-2">
-                      <span class="text-sm font-semibold text-gray-700">修羅場（分/日）</span>
+                      <span class="text-sm font-black text-[#263236]">修羅場（分/日）</span>
                       <input
                         v-model.number="crunchThresholds.crunchMinutes"
                         type="number"
                         min="1"
                         required
-                        class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                        class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                       >
                     </label>
                     <label class="grid gap-2">
-                      <span class="text-sm font-semibold text-gray-700">限界修羅場（分/日）</span>
+                      <span class="text-sm font-black text-[#263236]">限界修羅場（分/日）</span>
                       <input
                         v-model.number="crunchThresholds.extremeMinutes"
                         type="number"
                         min="1"
                         required
-                        class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                        class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                       >
                     </label>
                   </div>
 
                   <p
                     v-if="crunchThresholdError"
-                    class="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+                    class="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700"
                   >
                     {{ crunchThresholdError }}
                   </p>
                 </section>
 
-                <section class="grid gap-4 border-t border-gray-200 pt-6">
+                <section class="grid gap-4 border-t-2 border-dashed border-[#2c8d98] pt-6">
                   <div>
-                    <h3 class="text-base font-bold text-gray-900">
+                    <h3 class="text-base font-black text-[#263236]">
                       作業工程
                     </h3>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <p class="mt-1 text-sm font-bold text-[#263236]/60">
                       制作物ごとの工程と作業時間を保存できます。
                     </p>
                   </div>
@@ -143,43 +146,43 @@
                     <article
                       v-for="process in settings.workProcesses"
                       :key="process.id"
-                      class="rounded-2xl border border-gray-200 p-4"
+                      class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 shadow-[3px_3px_0_rgba(44,141,152,0.14)]"
                     >
                       <div class="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <div class="flex flex-wrap items-center gap-2">
-                            <h4 class="font-bold text-gray-900">
+                            <h4 class="font-black text-[#263236]">
                               {{ process.name }}
                             </h4>
                             <span
                               v-if="settings.defaultWorkProcessId === process.id"
-                              class="rounded-full bg-gray-900 px-2 py-1 text-xs font-bold text-white"
+                              class="rounded-full border-2 border-[#263236] bg-[#2c8d98] px-2 py-1 text-xs font-black text-white"
                             >
                               既定
                             </span>
                           </div>
-                          <p class="mt-2 text-sm font-semibold text-gray-500">
+                          <p class="mt-2 text-sm font-bold text-[#263236]/60">
                             未着手 → {{ formatWorkProcessSteps(process.steps) }}
                           </p>
                         </div>
                         <div class="flex flex-wrap gap-2">
                           <button
                             type="button"
-                            class="rounded-xl border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 transition hover:bg-gray-100"
+                            class="rounded-xl border-2 border-[#263236] bg-white px-3 py-2 text-xs font-black text-[#263236] shadow-[2px_2px_0_rgba(38,50,54,0.16)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
                             @click="editWorkProcess(process)"
                           >
                             編集
                           </button>
                           <button
                             type="button"
-                            class="rounded-xl border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 transition hover:bg-gray-100"
+                            class="rounded-xl border-2 border-[#263236] bg-white px-3 py-2 text-xs font-black text-[#263236] shadow-[2px_2px_0_rgba(38,50,54,0.16)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
                             @click="setDefaultWorkProcess(process.id)"
                           >
                             既定にする
                           </button>
                           <button
                             type="button"
-                            class="rounded-xl border border-red-200 px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-50"
+                            class="rounded-xl border-2 border-red-500 bg-white px-3 py-2 text-xs font-black text-red-700 shadow-[2px_2px_0_rgba(220,38,38,0.16)] transition hover:-translate-y-0.5 hover:bg-red-50"
                             :disabled="settings.workProcesses.length <= 1"
                             :class="{ 'cursor-not-allowed opacity-40': settings.workProcesses.length <= 1 }"
                             @click="handleDeleteWorkProcess(process.id)"
@@ -191,15 +194,15 @@
                     </article>
                   </div>
 
-                  <div class="rounded-2xl bg-gray-50 p-4">
+                  <div class="rounded-2xl border-2 border-[#2c8d98] bg-[#edf6fa] p-4 shadow-[3px_3px_0_rgba(44,141,152,0.14)]">
                     <div class="flex flex-wrap items-center justify-between gap-3">
-                      <h4 class="font-bold text-gray-900">
+                      <h4 class="font-black text-[#263236]">
                         {{ editingWorkProcessId ? "作業工程を編集" : "作業工程を追加" }}
                       </h4>
                       <button
                         v-if="editingWorkProcessId"
                         type="button"
-                        class="text-xs font-bold text-gray-500 underline-offset-2 hover:text-gray-900 hover:underline"
+                        class="text-xs font-black text-[#2c8d98] underline-offset-2 hover:text-[#237984] hover:underline"
                         @click="resetWorkProcessForm"
                       >
                         新規追加に戻す
@@ -208,17 +211,17 @@
 
                     <div class="mt-4 grid gap-4">
                       <label class="grid gap-2">
-                        <span class="text-sm font-semibold text-gray-700">工程セット名</span>
+                        <span class="text-sm font-black text-[#263236]">工程セット名</span>
                         <input
                           v-model="workProcessName"
                           type="text"
                           placeholder="例: 小説"
-                          class="rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                          class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                         >
                       </label>
 
                       <div class="grid gap-2">
-                        <span class="text-sm font-semibold text-gray-700">工程項目・作業時間(分/1P)</span>
+                        <span class="text-sm font-black text-[#263236]">工程項目・作業時間(分/1P)</span>
                         <div class="grid gap-2">
                           <div
                             v-for="(_, index) in workProcessSteps"
@@ -229,9 +232,9 @@
                               v-model="workProcessSteps[index].name"
                               type="text"
                               :placeholder="`工程${index + 1}`"
-                              class="min-w-0 flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                              class="min-w-0 flex-1 rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                             >
-                            <div class="flex overflow-hidden rounded-xl border border-gray-300 bg-white focus-within:border-gray-900">
+                            <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
                               <input
                                 v-model.number="workProcessSteps[index].minutesPerPage"
                                 type="number"
@@ -241,12 +244,12 @@
                                 aria-label="1Pあたりの作業時間（分）"
                                 class="min-w-0 flex-1 border-0 px-4 py-3 outline-none"
                               >
-                              <div class="grid w-10 shrink-0 border-l border-gray-200">
+                              <div class="grid w-10 shrink-0 border-l-2 border-[#2c8d98]/30">
                                 <button
                                   type="button"
                                   aria-label="作業時間を10分増やす"
                                   title="10分増やす"
-                                  class="grid place-items-center text-xs font-bold text-gray-600 transition hover:bg-gray-50"
+                                  class="grid place-items-center text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
                                   @click="adjustWorkProcessMinutes(index, 10)"
                                 >
                                   ▲
@@ -255,7 +258,7 @@
                                   type="button"
                                   aria-label="作業時間を10分減らす"
                                   title="10分減らす"
-                                  class="grid place-items-center border-t border-gray-200 text-xs font-bold text-gray-600 transition hover:bg-gray-50"
+                                  class="grid place-items-center border-t-2 border-[#2c8d98]/30 text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
                                   @click="adjustWorkProcessMinutes(index, -10)"
                                 >
                                   ▼
@@ -266,7 +269,7 @@
                               type="button"
                               aria-label="工程を削除"
                               title="工程を削除"
-                              class="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-gray-300 bg-white text-gray-700 transition hover:bg-gray-100"
+                              class="grid h-12 w-12 shrink-0 place-items-center rounded-xl border-2 border-[#263236] bg-white text-[#263236] shadow-[2px_2px_0_rgba(38,50,54,0.16)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
                               :disabled="workProcessSteps.length <= 1"
                               :class="{ 'cursor-not-allowed opacity-40': workProcessSteps.length <= 1 }"
                               @click="removeWorkProcessStep(index)"
@@ -277,7 +280,7 @@
                         </div>
                         <button
                           type="button"
-                          class="w-fit rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 transition hover:bg-gray-100"
+                          class="w-fit rounded-xl border-2 border-[#263236] bg-white px-4 py-2 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
                           @click="addWorkProcessStep"
                         >
                           工程を追加
@@ -286,7 +289,7 @@
 
                       <button
                         type="button"
-                        class="w-fit rounded-xl bg-gray-900 px-4 py-3 text-sm font-bold text-white"
+                        class="w-fit rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-4 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984]"
                         @click="handleSaveWorkProcess"
                       >
                         作業工程を保存
@@ -297,7 +300,7 @@
 
                 <p
                   v-if="savedMessage"
-                  class="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700"
+                  class="rounded-xl border-2 border-emerald-500 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700"
                 >
                   {{ savedMessage }}
                 </p>
@@ -305,7 +308,7 @@
                 <div class="mt-2 flex flex-wrap gap-3">
                   <button
                     type="submit"
-                    class="rounded-xl bg-gray-900 px-4 py-3 text-sm font-bold text-white"
+                    class="rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-4 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984]"
                     :disabled="Boolean(crunchThresholdError)"
                     :class="{ 'cursor-not-allowed opacity-50': crunchThresholdError }"
                   >
@@ -313,7 +316,7 @@
                   </button>
                   <button
                     type="button"
-                    class="rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-100"
+                    class="rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
                     @click="openResetConfirm"
                   >
                     初期値に戻す
@@ -325,24 +328,24 @@
                 v-else-if="section.id === 'account'"
                 class="mt-8 grid gap-4"
               >
-                <div class="rounded-2xl border border-gray-200 p-4">
+                <div class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 shadow-[3px_3px_0_rgba(44,141,152,0.14)]">
                   <div class="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h3 class="text-base font-bold text-gray-900">
+                      <h3 class="text-base font-black text-[#263236]">
                         {{ accountName }}
                       </h3>
-                      <p class="mt-1 text-sm font-semibold text-gray-500">
+                      <p class="mt-1 text-sm font-bold text-[#263236]/60">
                         {{ accountStatusLabel }}
                       </p>
                     </div>
-                    <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600">
+                    <span class="rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-3 py-1 text-xs font-black text-[#2c8d98]">
                       {{ isAuthReady ? "接続中" : "確認中" }}
                     </span>
                   </div>
 
                   <button
                     type="button"
-                    class="mt-5 w-fit rounded-xl bg-gray-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="mt-5 w-fit rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-4 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984] disabled:cursor-not-allowed disabled:opacity-50"
                     :disabled="isGoogleAuthLoading || isGoogleLinked"
                     @click="handleGoogleSignIn"
                   >
@@ -352,13 +355,13 @@
 
                 <p
                   v-if="accountMessage"
-                  class="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700"
+                  class="rounded-xl border-2 border-emerald-500 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700"
                 >
                   {{ accountMessage }}
                 </p>
                 <p
                   v-if="authError"
-                  class="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+                  class="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700"
                 >
                   {{ authError }}
                 </p>
@@ -366,7 +369,7 @@
 
               <div
                 v-else
-                class="mt-8 rounded-2xl border border-dashed border-gray-300 p-6 text-sm font-semibold text-gray-500"
+                class="mt-8 rounded-2xl border-2 border-dashed border-[#2c8d98] bg-[#edf6fa] p-6 text-sm font-bold text-[#263236]/60"
               >
                 この設定はまだ準備中です。
               </div>
@@ -374,19 +377,19 @@
           </template>
         </aside>
 
-        <section class="hidden rounded-3xl bg-white p-8 shadow-sm ring-1 ring-gray-200 lg:block">
+        <section class="hidden rounded-3xl border-4 border-[#2c8d98] bg-white p-8 shadow-[5px_5px_0_rgba(44,141,152,0.16)] lg:block">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 class="text-xl font-bold text-gray-900">
+              <h2 class="text-xl font-black text-[#263236]">
                 {{ selectedSection.title }}
               </h2>
-              <p class="mt-2 text-sm text-gray-500">
+              <p class="mt-2 text-sm font-bold text-[#263236]/60">
                 {{ selectedSection.detail }}
               </p>
             </div>
             <span
-              class="rounded-full px-3 py-1 text-xs font-bold"
-              :class="selectedSection.available ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'"
+              class="rounded-full border-2 px-3 py-1 text-xs font-black"
+              :class="selectedSection.available ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-[#d7d7d7] bg-[#edf6fa] text-[#263236]/50'"
             >
               {{ selectedSection.available ? "利用できます" : "今後追加予定" }}
             </span>
@@ -398,73 +401,73 @@
             @submit.prevent="handleSubmit"
           >
             <label class="grid gap-2">
-              <span class="text-sm font-semibold text-gray-700">新規作成時の初期ページ数</span>
+              <span class="text-sm font-black text-[#263236]">新規作成時の初期ページ数</span>
               <input
                 v-model.number="defaultTotalPages"
                 type="number"
                 min="1"
                 required
-                class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
               >
             </label>
 
-            <section class="grid gap-4 border-t border-gray-200 pt-6">
+            <section class="grid gap-4 border-t-2 border-dashed border-[#2c8d98] pt-6">
               <div>
-                <h3 class="text-base font-bold text-gray-900">
+                <h3 class="text-base font-black text-[#263236]">
                   修羅場メーター
                 </h3>
-                <p class="mt-1 text-sm text-gray-500">
+                <p class="mt-1 text-sm font-bold text-[#263236]/60">
                   1日あたりの必要作業時間で、メーターが進む境界を決めます。
                 </p>
               </div>
 
               <div class="grid gap-3 md:grid-cols-3">
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">一歩手前（分/日）</span>
+                  <span class="text-sm font-black text-[#263236]">一歩手前（分/日）</span>
                   <input
                     v-model.number="crunchThresholds.warningMinutes"
                     type="number"
                     min="1"
                     required
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                   >
                 </label>
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">修羅場（分/日）</span>
+                  <span class="text-sm font-black text-[#263236]">修羅場（分/日）</span>
                   <input
                     v-model.number="crunchThresholds.crunchMinutes"
                     type="number"
                     min="1"
                     required
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                   >
                 </label>
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">限界修羅場（分/日）</span>
+                  <span class="text-sm font-black text-[#263236]">限界修羅場（分/日）</span>
                   <input
                     v-model.number="crunchThresholds.extremeMinutes"
                     type="number"
                     min="1"
                     required
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                   >
                 </label>
               </div>
 
               <p
                 v-if="crunchThresholdError"
-                class="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+                class="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700"
               >
                 {{ crunchThresholdError }}
               </p>
             </section>
 
-            <section class="grid gap-4 border-t border-gray-200 pt-6">
+            <section class="grid gap-4 border-t-2 border-dashed border-[#2c8d98] pt-6">
               <div>
-                <h3 class="text-base font-bold text-gray-900">
+                <h3 class="text-base font-black text-[#263236]">
                   作業工程
                 </h3>
-                <p class="mt-1 text-sm text-gray-500">
+                <p class="mt-1 text-sm font-bold text-[#263236]/60">
                   制作物ごとの工程と作業時間を保存できます。
                 </p>
               </div>
@@ -473,43 +476,43 @@
                 <article
                   v-for="process in settings.workProcesses"
                   :key="process.id"
-                  class="rounded-2xl border border-gray-200 p-4"
+                  class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 shadow-[3px_3px_0_rgba(44,141,152,0.14)]"
                 >
                   <div class="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div class="flex flex-wrap items-center gap-2">
-                        <h4 class="font-bold text-gray-900">
+                        <h4 class="font-black text-[#263236]">
                           {{ process.name }}
                         </h4>
                         <span
                           v-if="settings.defaultWorkProcessId === process.id"
-                          class="rounded-full bg-gray-900 px-2 py-1 text-xs font-bold text-white"
+                          class="rounded-full border-2 border-[#263236] bg-[#2c8d98] px-2 py-1 text-xs font-black text-white"
                         >
                           既定
                         </span>
                       </div>
-                      <p class="mt-2 text-sm font-semibold text-gray-500">
+                      <p class="mt-2 text-sm font-bold text-[#263236]/60">
                         未着手 → {{ formatWorkProcessSteps(process.steps) }}
                       </p>
                     </div>
                     <div class="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        class="rounded-xl border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 transition hover:bg-gray-100"
+                        class="rounded-xl border-2 border-[#263236] bg-white px-3 py-2 text-xs font-black text-[#263236] shadow-[2px_2px_0_rgba(38,50,54,0.16)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
                         @click="editWorkProcess(process)"
                       >
                         編集
                       </button>
                       <button
                         type="button"
-                        class="rounded-xl border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 transition hover:bg-gray-100"
+                        class="rounded-xl border-2 border-[#263236] bg-white px-3 py-2 text-xs font-black text-[#263236] shadow-[2px_2px_0_rgba(38,50,54,0.16)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
                         @click="setDefaultWorkProcess(process.id)"
                       >
                         既定にする
                       </button>
                       <button
                         type="button"
-                        class="rounded-xl border border-red-200 px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-50"
+                        class="rounded-xl border-2 border-red-500 bg-white px-3 py-2 text-xs font-black text-red-700 shadow-[2px_2px_0_rgba(220,38,38,0.16)] transition hover:-translate-y-0.5 hover:bg-red-50"
                         :disabled="settings.workProcesses.length <= 1"
                         :class="{ 'cursor-not-allowed opacity-40': settings.workProcesses.length <= 1 }"
                         @click="handleDeleteWorkProcess(process.id)"
@@ -521,15 +524,15 @@
                 </article>
               </div>
 
-              <div class="rounded-2xl bg-gray-50 p-4">
+              <div class="rounded-2xl border-2 border-[#2c8d98] bg-[#edf6fa] p-4 shadow-[3px_3px_0_rgba(44,141,152,0.14)]">
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                  <h4 class="font-bold text-gray-900">
+                  <h4 class="font-black text-[#263236]">
                     {{ editingWorkProcessId ? "作業工程を編集" : "作業工程を追加" }}
                   </h4>
                   <button
                     v-if="editingWorkProcessId"
                     type="button"
-                    class="text-xs font-bold text-gray-500 underline-offset-2 hover:text-gray-900 hover:underline"
+                    class="text-xs font-black text-[#2c8d98] underline-offset-2 hover:text-[#237984] hover:underline"
                     @click="resetWorkProcessForm"
                   >
                     新規追加に戻す
@@ -538,17 +541,17 @@
 
                 <div class="mt-4 grid gap-4">
                   <label class="grid gap-2">
-                    <span class="text-sm font-semibold text-gray-700">工程セット名</span>
+                    <span class="text-sm font-black text-[#263236]">工程セット名</span>
                     <input
                       v-model="workProcessName"
                       type="text"
                       placeholder="例: 小説"
-                      class="rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                      class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                     >
                   </label>
 
                   <div class="grid gap-2">
-                    <span class="text-sm font-semibold text-gray-700">工程項目・作業時間(分/1P)</span>
+                    <span class="text-sm font-black text-[#263236]">工程項目・作業時間(分/1P)</span>
                     <div class="grid gap-2">
                       <div
                         v-for="(_, index) in workProcessSteps"
@@ -559,9 +562,9 @@
                           v-model="workProcessSteps[index].name"
                           type="text"
                           :placeholder="`工程${index + 1}`"
-                          class="min-w-0 flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none ring-0 transition focus:border-gray-900"
+                          class="min-w-0 flex-1 rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                         >
-                        <div class="flex overflow-hidden rounded-xl border border-gray-300 bg-white focus-within:border-gray-900">
+                        <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
                           <input
                             v-model.number="workProcessSteps[index].minutesPerPage"
                             type="number"
@@ -571,12 +574,12 @@
                             aria-label="1Pあたりの作業時間（分）"
                             class="min-w-0 flex-1 border-0 px-4 py-3 outline-none"
                           >
-                          <div class="grid w-10 shrink-0 border-l border-gray-200">
+                          <div class="grid w-10 shrink-0 border-l-2 border-[#2c8d98]/30">
                             <button
                               type="button"
                               aria-label="作業時間を10分増やす"
                               title="10分増やす"
-                              class="grid place-items-center text-xs font-bold text-gray-600 transition hover:bg-gray-50"
+                              class="grid place-items-center text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
                               @click="adjustWorkProcessMinutes(index, 10)"
                             >
                               ▲
@@ -585,7 +588,7 @@
                               type="button"
                               aria-label="作業時間を10分減らす"
                               title="10分減らす"
-                              class="grid place-items-center border-t border-gray-200 text-xs font-bold text-gray-600 transition hover:bg-gray-50"
+                              class="grid place-items-center border-t-2 border-[#2c8d98]/30 text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
                               @click="adjustWorkProcessMinutes(index, -10)"
                             >
                               ▼
@@ -596,7 +599,7 @@
                           type="button"
                           aria-label="工程を削除"
                           title="工程を削除"
-                          class="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-gray-300 bg-white text-gray-700 transition hover:bg-gray-100"
+                          class="grid h-12 w-12 shrink-0 place-items-center rounded-xl border-2 border-[#263236] bg-white text-[#263236] shadow-[2px_2px_0_rgba(38,50,54,0.16)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
                           :disabled="workProcessSteps.length <= 1"
                           :class="{ 'cursor-not-allowed opacity-40': workProcessSteps.length <= 1 }"
                           @click="removeWorkProcessStep(index)"
@@ -607,7 +610,7 @@
                     </div>
                     <button
                       type="button"
-                      class="w-fit rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 transition hover:bg-gray-100"
+                      class="w-fit rounded-xl border-2 border-[#263236] bg-white px-4 py-2 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
                       @click="addWorkProcessStep"
                     >
                       工程を追加
@@ -616,7 +619,7 @@
 
                   <button
                     type="button"
-                    class="w-fit rounded-xl bg-gray-900 px-4 py-3 text-sm font-bold text-white"
+                    class="w-fit rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-4 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984]"
                     @click="handleSaveWorkProcess"
                   >
                     作業工程を保存
@@ -627,7 +630,7 @@
 
             <p
               v-if="savedMessage"
-              class="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700"
+              class="rounded-xl border-2 border-emerald-500 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700"
             >
               {{ savedMessage }}
             </p>
@@ -635,7 +638,7 @@
             <div class="mt-2 flex flex-wrap gap-3">
               <button
                 type="submit"
-                class="rounded-xl bg-gray-900 px-4 py-3 text-sm font-bold text-white"
+                class="rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-4 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984]"
                 :disabled="Boolean(crunchThresholdError)"
                 :class="{ 'cursor-not-allowed opacity-50': crunchThresholdError }"
               >
@@ -643,7 +646,7 @@
               </button>
               <button
                 type="button"
-                class="rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-100"
+                class="rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
                 @click="openResetConfirm"
               >
                 初期値に戻す
@@ -655,24 +658,24 @@
             v-else-if="selectedSection.id === 'account'"
             class="mt-8 grid gap-4"
           >
-            <div class="rounded-2xl border border-gray-200 p-4">
+            <div class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 shadow-[3px_3px_0_rgba(44,141,152,0.14)]">
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h3 class="text-base font-bold text-gray-900">
+                  <h3 class="text-base font-black text-[#263236]">
                     {{ accountName }}
                   </h3>
-                  <p class="mt-1 text-sm font-semibold text-gray-500">
+                  <p class="mt-1 text-sm font-bold text-[#263236]/60">
                     {{ accountStatusLabel }}
                   </p>
                 </div>
-                <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600">
+                <span class="rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-3 py-1 text-xs font-black text-[#2c8d98]">
                   {{ isAuthReady ? "接続中" : "確認中" }}
                 </span>
               </div>
 
               <button
                 type="button"
-                class="mt-5 w-fit rounded-xl bg-gray-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                class="mt-5 w-fit rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-4 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984] disabled:cursor-not-allowed disabled:opacity-50"
                 :disabled="isGoogleAuthLoading || isGoogleLinked"
                 @click="handleGoogleSignIn"
               >
@@ -682,13 +685,13 @@
 
             <p
               v-if="accountMessage"
-              class="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700"
+              class="rounded-xl border-2 border-emerald-500 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700"
             >
               {{ accountMessage }}
             </p>
             <p
               v-if="authError"
-              class="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+              class="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700"
             >
               {{ authError }}
             </p>
@@ -696,7 +699,7 @@
 
           <div
             v-else
-            class="mt-8 rounded-2xl border border-dashed border-gray-300 p-6 text-sm font-semibold text-gray-500"
+            class="mt-8 rounded-2xl border-2 border-dashed border-[#2c8d98] bg-[#edf6fa] p-6 text-sm font-bold text-[#263236]/60"
           >
             この設定はまだ準備中です。
           </div>
@@ -707,36 +710,36 @@
     <Teleport to="body">
       <div
         v-if="isConfirmingReset"
-        class="fixed inset-0 z-50 grid place-items-center bg-gray-900/50 px-4 py-6"
+        class="fixed inset-0 z-50 grid place-items-center bg-[#263236]/50 px-4 py-6"
         @click.self="closeResetConfirm"
       >
-        <section class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-gray-200">
-          <div class="border-b border-amber-100 bg-amber-50 px-6 py-5">
-            <p class="text-sm font-bold text-amber-700">
+        <section class="w-full max-w-md overflow-hidden rounded-3xl border-4 border-amber-500 bg-white shadow-[5px_5px_0_rgba(245,158,11,0.18)]">
+          <div class="border-b-2 border-amber-500 bg-amber-50 px-6 py-5">
+            <p class="text-sm font-black text-amber-700">
               初期値に戻す前の確認
             </p>
-            <h2 class="mt-1 text-lg font-bold text-gray-900">
+            <h2 class="mt-1 text-lg font-black text-[#263236]">
               作業カスタムの基本値を戻しますか？
             </h2>
           </div>
 
           <div class="px-6 py-5">
-            <p class="text-sm leading-6 text-gray-600">
+            <p class="text-sm font-bold leading-6 text-[#263236]/70">
               初期ページ数は {{ DEFAULT_SETTINGS.defaultTotalPages }}P、修羅場メーターは中設定（{{ DEFAULT_CRUNCH_THRESHOLDS.warningMinutes }}分 / {{ DEFAULT_CRUNCH_THRESHOLDS.crunchMinutes }}分 / {{ DEFAULT_CRUNCH_THRESHOLDS.extremeMinutes }}分）に戻ります。作業工程の保存内容は変更されません。
             </p>
           </div>
 
-          <div class="flex flex-col-reverse gap-3 border-t border-gray-200 px-6 py-4 sm:flex-row sm:justify-end">
+          <div class="flex flex-col-reverse gap-3 border-t-2 border-amber-100 px-6 py-4 sm:flex-row sm:justify-end">
             <button
               type="button"
-              class="rounded-xl border border-gray-300 px-4 py-3 text-sm font-bold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
+              class="rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
               @click="closeResetConfirm"
             >
               キャンセル
             </button>
             <button
               type="button"
-              class="rounded-xl bg-amber-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-amber-700"
+              class="rounded-xl border-2 border-amber-700 bg-amber-600 px-5 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(245,158,11,0.28)] transition hover:-translate-y-0.5 hover:bg-amber-700"
               @click="handleReset"
             >
               初期値に戻す

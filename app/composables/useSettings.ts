@@ -11,7 +11,6 @@ import {
 } from "~/constants/defaultSettings";
 import { useState } from "#app";
 import {
-  deleteRemoteSettings,
   loadRemoteSettings,
   saveRemoteSettings,
 } from "~/repositories/settingsRepository";
@@ -180,16 +179,6 @@ export const useSettings = () => {
     });
   };
 
-  const persistSettingsDelete = () => {
-    return enqueueRemoteWrite(async () => {
-      const user = await ensureAuthenticated();
-      if (!user) return;
-
-      const { $firestore } = useNuxtApp();
-      await deleteRemoteSettings($firestore, user.uid);
-    }, "設定の削除に失敗しました。");
-  };
-
   const loadSettings = () => {
     if (import.meta.server) return Promise.resolve();
 
@@ -229,16 +218,6 @@ export const useSettings = () => {
     writeLocalSettings(settings.value);
 
     void persistSettings();
-  };
-
-  const resetSettings = () => {
-    settings.value = cloneDefaultSettings();
-
-    if (import.meta.client) {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-
-    void persistSettingsDelete();
   };
 
   const saveWorkProcess = (input: SaveWorkProcessInput) => {
@@ -294,7 +273,6 @@ export const useSettings = () => {
     settingsError,
     loadSettings,
     saveSettings,
-    resetSettings,
     saveWorkProcess,
     deleteWorkProcess,
     getWorkProcessById,

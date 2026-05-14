@@ -1,14 +1,14 @@
 <template>
-  <main class="min-h-screen bg-gray-50 px-6 py-8">
+  <main class="min-h-screen bg-[#edf6fa] px-6 py-8 text-[#263236]">
     <div class="mx-auto max-w-4xl">
-      <div class="mb-8 flex items-center justify-between">
+      <div class="mb-8 flex items-center justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">
-            同人原稿進捗管理
-          </h1>
-          <p class="mt-2 text-sm text-gray-600">
-            締切から逆算して、今日必要な作業時間を確認できます。
-          </p>
+          <h1 class="sr-only">同人原稿進捗管理</h1>
+          <img
+            src="/logo.png"
+            alt="修羅場メーター"
+            class="h-auto w-full max-w-[320px] drop-shadow-[3px_3px_0_#ffffff] sm:max-w-[320px]"
+          >
         </div>
 
         <div class="flex items-center gap-2">
@@ -16,7 +16,7 @@
             to="/calendar"
             aria-label="カレンダーを表示"
             title="カレンダー"
-            class="grid h-10 w-10 place-items-center rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:border-gray-400 hover:bg-gray-100"
+            class="inline-flex h-10 w-10 items-center justify-center gap-2 rounded-xl border-2 border-[#263236] bg-white text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] hover:shadow-[4px_4px_0_rgba(38,50,54,0.22)] lg:w-auto lg:px-3"
           >
             <svg
               class="h-5 w-5"
@@ -33,13 +33,14 @@
               <rect width="18" height="18" x="3" y="4" rx="3" />
               <path d="M3 10h18" />
             </svg>
+            <span class="hidden lg:inline">カレンダー</span>
           </NuxtLink>
 
           <NuxtLink
             to="/settings"
             aria-label="設定を開く"
             title="設定"
-            class="grid h-10 w-10 place-items-center rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:border-gray-400 hover:bg-gray-100"
+            class="inline-flex h-10 w-10 items-center justify-center gap-2 rounded-xl border-2 border-[#263236] bg-white text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] hover:shadow-[4px_4px_0_rgba(38,50,54,0.22)] lg:w-auto lg:px-3"
           >
             <svg
               class="h-5 w-5"
@@ -54,86 +55,101 @@
               <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
               <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15Z" />
             </svg>
+            <span class="hidden lg:inline">設定</span>
           </NuxtLink>
 
           <NuxtLink
             to="/projects/new"
-            class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-bold text-white"
+            class="inline-flex h-10 w-10 items-center justify-center gap-2 rounded-xl border-2 border-[#263236] bg-[#2c8d98] text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.38)] transition hover:-translate-y-0.5 hover:bg-[#237984] hover:shadow-[4px_4px_0_rgba(38,50,54,0.42)] lg:w-auto lg:px-4"
           >
-            新規作成
+            <span class="grid h-6 w-6 place-items-center rounded-full bg-white text-[#2c8d98]">+</span>
+            <span class="hidden lg:inline">新規作成</span>
           </NuxtLink>
         </div>
       </div>
 
       <div
         v-if="projects.length === 0"
-        class="rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center"
+        class="rounded-3xl border-4 border-dashed border-[#2c8d98] bg-white p-8 text-center shadow-[5px_5px_0_rgba(44,141,152,0.18)]"
       >
-        <p class="text-base font-semibold text-gray-800">
+        <p class="text-base font-black text-[#263236]">
           まだプロジェクトがありません
         </p>
-        <p class="mt-2 text-sm text-gray-500">
+        <p class="mt-2 text-sm font-bold text-[#263236]/60">
           まずは 1 件作成して、1 日あたりの必要作業時間を確認しましょう。
         </p>
       </div>
 
       <div v-else class="grid gap-4">
         <article
-          v-for="project in projects"
-          :key="project.id"
-          class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-200 transition hover:-translate-y-0.5 hover:shadow-md"
+          v-for="card in projectCards"
+          :key="card.project.id"
+          class="rounded-3xl px-12 border-4 border-[#2c8d98] bg-white p-5 shadow-[5px_5px_0_rgba(44,141,152,0.16)] transition hover:-translate-y-0.5 hover:shadow-[7px_7px_0_rgba(44,141,152,0.2)]"
         >
           <div class="flex items-start justify-between gap-4">
             <div>
               <div class="flex flex-wrap items-center gap-2 font-bold">
                 <NuxtLink
-                  :to="`/projects/${project.id}`"
-                  class="text-lg text-gray-900 transition hover:text-gray-600"
+                  :to="`/projects/${card.project.id}`"
+                  class="text-3xl font-black text-[#263236] transition hover:text-[#2c8d98]"
                 >
-                  {{ project.title }}
+                  {{ card.project.title }}
                 </NuxtLink>
                 <span
-                  v-if="formatEventLabel(project)"
-                  class="rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700 ring-1 ring-sky-100"
+                  v-if="formatEventLabel(card.project)"
+                  class="rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-3 py-1 text-xs font-black text-[#2c8d98]"
                 >
-                  {{ formatEventLabel(project) }}
+                  {{ formatEventLabel(card.project) }}
                 </span>
               </div>
-              <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
-                <span>
-                  締切日 {{ formatProjectDate(project.deadline) }}
+              <div class="mt-4 flex flex-wrap gap-x-4 gap-y-1 border-b-2 border-dashed border-[#2c8d98] pb-3 text-sm font-black text-[#263236]">
+                <span class="space-x-2">
+                  <span class="text-xs text-[#263236]/60">入稿締切日</span>
+                  <span>{{ formatProjectDate(card.project.deadline) }}</span>
                 </span>
-                <span v-if="project.startDate">
-                  作業開始日 {{ formatProjectDate(project.startDate) }}
+                <span v-if="card.project.startDate" class="border-l-2 border-[#2c8d98]/50 pl-4">
+                  <span class="text-xs text-[#263236]/60">作業開始日</span>
+                  <span class="ml-2">{{ formatProjectDate(card.project.startDate) }}</span>
                 </span>
               </div>
             </div>
 
             <div class="flex shrink-0 flex-col items-end gap-2">
-              <span class="rounded-full bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-700">
-                {{ calculateTotalProgress(project.pages, project.workProcessSteps) }}%
-              </span>
               <span
-                class="rounded-full px-3 py-1 text-xs font-bold"
-                :class="getCrunchLevelClasses(calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).tone)"
+                class="rounded-xl border-2 px-3 py-1 text-xs font-black shadow-[3px_3px_0_rgba(38,50,54,0.16)]"
+                :class="getCrunchLevelClasses(card.crunchLevel.tone)"
               >
-                修羅場レベル: {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).label }}
+                修羅場レベル: {{ card.crunchLevel.label }}
+              </span>
+              <span class="text-right text-xs font-black text-[#263236]">
+                進捗
+                <span class="block text-4xl leading-none">{{ card.progress }}%</span>
               </span>
             </div>
           </div>
 
-          <div class="mt-4 h-3 overflow-hidden rounded-full bg-gray-200">
+          <div class="mt-6 h-5 overflow-hidden rounded-full bg-[#d7d7d7] shadow-inner">
             <div
-              class="h-full rounded-full bg-gray-900"
-              :style="{ width: `${calculateTotalProgress(project.pages, project.workProcessSteps)}%` }"
+              class="h-full rounded-full bg-[#2c8d98] shadow-[inset_0_2px_4px_rgba(0,0,0,0.18)]"
+              :style="{ width: `${card.progress}%` }"
             />
           </div>
 
-          <div class="mt-4 flex flex-wrap gap-3 text-sm text-gray-600">
-            <span>残作業時間: {{ formatWorkDuration(calculateRemainingWork(project.pages, project.workProcessSteps)) }}</span>
-            <span>残り日数: {{ calculateDaysLeft(project.deadline) }}日</span>
-            <span v-if="!isBeforeStartDate(project.startDate)">
-              今日の必要時間: {{ formatWorkDuration(calculateDailyWork(project.pages, project.deadline, project.workProcessSteps)) }}
+          <div class="mt-6 flex flex-wrap gap-3 text-sm text-[#263236]">
+            <span
+              v-if="!card.isBeforeStart"
+              class="min-w-0 flex-1 rounded-2xl border-2 border-[#ff4b1f] bg-[#fff2e3] px-4 py-3 font-black shadow-[3px_3px_0_rgba(255,75,31,0.22)]"
+            >
+              <span class="block text-xs">今日の必要時間</span>
+              <span class="text-3xl leading-tight text-[#f36b00]">{{ formatWorkDuration(card.dailyWork) }}</span>
+            </span>
+            <span class="min-w-0 flex-1 rounded-2xl border-2 border-[#2c8d98] bg-white px-4 py-3 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)]">
+              <span class="block text-xs">残り日数</span>
+              <span class="text-3xl leading-tight text-[#2c8d98]">{{ card.daysLeft }}日</span>
+            </span>
+            <span class="min-w-0 flex-1 rounded-2xl border-2 border-[#2c8d98] bg-white px-4 py-3 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)]">
+              <span class="block text-xs">残作業時間</span>
+              <span class="text-3xl leading-tight text-[#2c8d98]">{{ formatWorkDuration(card.remainingWork) }}</span>
             </span>
           </div>
         </article>
@@ -143,6 +159,8 @@
 </template>
 
 <script setup lang="ts">
+import type { Project } from "~/types/project";
+import { getCrunchLevelClasses } from "~/utils/crunchLevelDisplay";
 import { formatEventLabel, formatProjectDate } from "~/utils/projectDisplay";
 
 const { projects, loadProjects } = useProjects();
@@ -157,17 +175,23 @@ const {
   formatWorkDuration,
 } = useProgress();
 
-const getCrunchLevelClasses = (tone: string) => {
-  const classes: Record<string, string> = {
-    emerald: "bg-emerald-100 text-emerald-700",
-    sky: "bg-sky-100 text-sky-700",
-    amber: "bg-amber-100 text-amber-700",
-    orange: "bg-orange-100 text-orange-700",
-    red: "bg-red-100 text-red-700",
-  };
+const toProjectCard = (project: Project) => ({
+  project,
+  progress: calculateTotalProgress(project.pages, project.workProcessSteps),
+  crunchLevel: calculateCrunchLevel(
+    project.pages,
+    project.deadline,
+    project.startDate,
+    project.workProcessSteps,
+    settings.value.crunchThresholds
+  ),
+  dailyWork: calculateDailyWork(project.pages, project.deadline, project.workProcessSteps),
+  daysLeft: calculateDaysLeft(project.deadline),
+  remainingWork: calculateRemainingWork(project.pages, project.workProcessSteps),
+  isBeforeStart: isBeforeStartDate(project.startDate),
+});
 
-  return classes[tone] ?? classes.sky;
-};
+const projectCards = computed(() => projects.value.map(toProjectCard));
 
 onMounted(() => {
   loadSettings();
