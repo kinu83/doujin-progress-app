@@ -1,24 +1,22 @@
 <template>
-  <main class="min-h-screen bg-gray-100 px-4 py-6 text-gray-900 sm:px-6">
+  <main class="min-h-screen bg-[#edf6fa] px-4 py-6 text-[#263236] sm:px-6">
     <div class="mx-auto max-w-5xl">
       <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div class="items-center gap-3">
-          <NuxtLink to="/" class="text-sm font-semibold text-gray-500">
-        ← 一覧に戻る
+          <NuxtLink
+            to="/"
+            class="inline-flex items-center rounded-xl border-2 border-[#263236] bg-white px-4 py-2 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] hover:shadow-[4px_4px_0_rgba(38,50,54,0.22)]"
+          >
+            ← 一覧に戻る
           </NuxtLink>
-          <div>
-            <h1 class="mt-2 text-2xl font-bold tracking-normal text-gray-950">
-              カレンダー
-            </h1>
-          </div>
         </div>
 
-        <div class="flex items-center gap-2 rounded-full bg-white p-1 shadow-sm ring-1 ring-gray-200">
+        <div class="flex items-center gap-2 rounded-xl border-2 border-[#263236] bg-white p-1 shadow-[3px_3px_0_rgba(38,50,54,0.18)]">
           <button
             type="button"
             aria-label="前の月"
             title="前の月"
-            class="grid h-9 w-9 place-items-center rounded-full text-gray-700 transition hover:bg-gray-100"
+            class="grid h-9 w-9 place-items-center rounded-lg text-[#263236] transition hover:bg-[#edf6fa]"
             @click="moveMonth(-1)"
           >
             <svg
@@ -36,7 +34,7 @@
           </button>
           <button
             type="button"
-            class="rounded-full px-4 py-2 text-sm font-bold text-gray-800 transition hover:bg-gray-100"
+            class="rounded-lg px-4 py-2 text-sm font-black text-[#263236] transition hover:bg-[#edf6fa]"
             @click="goToday"
           >
             今日
@@ -45,7 +43,7 @@
             type="button"
             aria-label="次の月"
             title="次の月"
-            class="grid h-9 w-9 place-items-center rounded-full text-gray-700 transition hover:bg-gray-100"
+            class="grid h-9 w-9 place-items-center rounded-lg text-[#263236] transition hover:bg-[#edf6fa]"
             @click="moveMonth(1)"
           >
             <svg
@@ -65,31 +63,31 @@
       </div>
 
       <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <section class="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-gray-200">
-          <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4">
-            <h2 class="text-xl font-bold text-gray-950">
+        <section class="overflow-hidden rounded-3xl border-4 border-[#2c8d98] bg-white shadow-[5px_5px_0_rgba(44,141,152,0.16)]">
+          <div class="flex items-center justify-between border-b-2 border-dashed border-[#2c8d98] px-5 py-4">
+            <h2 class="text-xl font-black text-[#263236]">
               {{ monthTitle }}
             </h2>
             <div class="flex flex-wrap items-center justify-end gap-3">
-              <div class="flex items-center gap-2 text-xs font-bold text-gray-500">
-                <span class="h-2 w-8 rounded-full bg-gray-900" />
+              <div class="flex items-center gap-2 text-xs font-black text-[#263236]/60">
+                <span class="h-2 w-8 rounded-full bg-[#2c8d98]" />
                 作業時間
               </div>
-              <div class="flex items-center gap-2 text-xs font-bold text-gray-500">
-                <span class="h-2 w-8 rounded-full border border-gray-400 bg-white" />
+              <div class="flex items-center gap-2 text-xs font-black text-[#263236]/60">
+                <span class="h-2 w-8 rounded-full border-2 border-[#2c8d98]/50 bg-white" />
                 予定
               </div>
-              <p class="text-sm font-semibold text-gray-500">
+              <p class="text-sm font-black text-[#263236]/60">
                 {{ formatWorkDuration(monthTotals.actual) }} / {{ formatWorkDuration(monthTotals.planned) }}
               </p>
             </div>
           </div>
 
-          <div class="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
+          <div class="grid grid-cols-7 border-b-2 border-[#2c8d98] bg-[#edf6fa]">
             <div
               v-for="weekday in weekdays"
               :key="weekday"
-              class="px-2 py-2 text-center text-xs font-bold text-gray-500"
+              class="px-2 py-2 text-center text-xs font-black text-[#263236]/60"
             >
               {{ weekday }}
             </div>
@@ -100,23 +98,23 @@
               v-for="day in calendarDays"
               :key="day.dateKey"
               type="button"
-              class="flex min-h-28 flex-col items-start justify-start border-b border-r border-gray-100 p-2 text-left transition hover:bg-gray-50 sm:min-h-32"
+              class="flex min-h-28 flex-col items-start justify-start border-b border-r border-[#2c8d98]/20 p-2 text-left transition hover:bg-[#f7fcfd] sm:min-h-32"
               :class="[
-                day.isCurrentMonth ? 'bg-white' : 'bg-gray-50 text-gray-400',
-                selectedDate === day.dateKey ? 'ring-2 ring-inset ring-gray-900' : '',
+                day.isCurrentMonth ? 'bg-white' : 'bg-[#edf6fa]/60 text-[#263236]/40',
+                selectedDate === day.dateKey ? 'ring-2 ring-inset ring-[#2c8d98]' : '',
               ]"
               @click="selectDate(day.dateKey)"
             >
               <div class="flex w-full items-start justify-between gap-2">
                 <span
-                  class="grid h-7 w-7 place-items-center rounded-full text-sm font-bold"
-                  :class="day.isToday ? 'bg-red-500 text-white' : 'text-gray-800'"
+                  class="grid h-7 w-7 place-items-center rounded-full text-sm font-black"
+                  :class="day.isToday ? 'bg-[#ff4b1f] text-white shadow-[2px_2px_0_rgba(255,75,31,0.24)]' : 'text-[#263236]'"
                 >
                   {{ day.dayNumber }}
                 </span>
                 <span
                   v-if="dayTotals(day.dateKey).planned || dayTotals(day.dateKey).actual"
-                  class="text-[11px] font-bold text-gray-500"
+                  class="text-[11px] font-black text-[#263236]/60"
                 >
                   {{ formatWorkDuration(dayTotals(day.dateKey).actual) }}/{{ formatWorkDuration(dayTotals(day.dateKey).planned) }}
                 </span>
@@ -126,14 +124,14 @@
                 <span
                   v-for="item in daySchedule(day.dateKey).slice(0, 3)"
                   :key="`${item.projectId}-${item.kind}`"
-                  class="truncate rounded-md px-2 py-1 text-[11px] font-bold"
+                  class="truncate rounded-md border px-2 py-1 text-[11px] font-black"
                   :class="scheduleClasses[item.kind]"
                 >
                   {{ scheduleLabels[item.kind] }} {{ item.title }}
                 </span>
                 <span
                   v-if="daySchedule(day.dateKey).length > 3"
-                  class="px-2 text-[11px] font-bold text-gray-400"
+                  class="px-2 text-[11px] font-black text-[#263236]/40"
                 >
                   他 {{ daySchedule(day.dateKey).length - 3 }} 件
                 </span>
@@ -153,7 +151,7 @@
                 />
                 <span
                   v-if="hasHiddenBars(day.dateKey)"
-                  class="text-[10px] font-bold text-gray-400"
+                  class="text-[10px] font-black text-[#263236]/40"
                 >
                   +{{ hiddenBarCount(day.dateKey) }}
                 </span>
@@ -162,19 +160,19 @@
           </div>
         </section>
 
-        <aside class="rounded-3xl bg-white shadow-sm ring-1 ring-gray-200">
-          <div class="border-b border-gray-200 px-5 py-5">
-            <p class="text-sm font-bold text-red-500">
+        <aside class="rounded-3xl border-4 border-[#2c8d98] bg-white shadow-[5px_5px_0_rgba(44,141,152,0.16)]">
+          <div class="border-b-2 border-dashed border-[#2c8d98] px-5 py-5">
+            <p class="text-sm font-black text-[#f36b00]">
               {{ selectedDateLabel }}
             </p>
-            <h2 class="mt-1 text-lg font-bold text-gray-950">
+            <h2 class="mt-1 text-lg font-black text-[#263236]">
               作業時間
             </h2>
           </div>
 
           <div class="grid gap-5 px-5 py-5">
             <section v-if="selectedSchedule.length" class="grid gap-2">
-              <h3 class="text-sm font-bold text-gray-500">
+              <h3 class="text-sm font-black text-[#263236]/60">
                 予定日
               </h3>
               <div class="grid gap-2">
@@ -182,7 +180,7 @@
                   v-for="item in selectedSchedule"
                   :key="`${item.projectId}-${item.kind}`"
                   :to="`/projects/${item.projectId}`"
-                  class="rounded-2xl px-4 py-3 text-sm font-bold"
+                  class="rounded-2xl border-2 px-4 py-3 text-sm font-black shadow-[3px_3px_0_rgba(38,50,54,0.12)]"
                   :class="scheduleClasses[item.kind]"
                 >
                   {{ scheduleLabels[item.kind] }} {{ item.title }}
@@ -191,20 +189,20 @@
             </section>
 
             <section class="grid gap-3">
-              <h3 class="text-sm font-bold text-gray-500">
+              <h3 class="text-sm font-black text-[#263236]/60">
                 プロジェクト別予定
               </h3>
 
               <div
                 v-if="projects.length === 0"
-                class="rounded-2xl border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500"
+                class="rounded-2xl border-2 border-dashed border-[#2c8d98] bg-[#edf6fa] p-5 text-center text-sm font-bold text-[#263236]/60"
               >
                 プロジェクトを作成すると、日別予定を入力できます。
               </div>
 
               <div
                 v-else-if="editableProjects.length === 0"
-                class="rounded-2xl border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500"
+                class="rounded-2xl border-2 border-dashed border-[#2c8d98] bg-[#edf6fa] p-5 text-center text-sm font-bold text-[#263236]/60"
               >
                 この日は作業期間内のプロジェクトがありません。
               </div>
@@ -212,40 +210,40 @@
               <div
                 v-for="project in editableProjects"
                 :key="project.id"
-                class="rounded-2xl border border-gray-200 p-4"
+                class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 shadow-[3px_3px_0_rgba(44,141,152,0.14)]"
               >
                 <div class="flex items-start justify-between gap-3">
                   <NuxtLink
                     :to="`/projects/${project.id}`"
-                    class="min-w-0 font-bold text-gray-900 hover:underline"
+                    class="min-w-0 font-black text-[#263236] hover:text-[#2c8d98]"
                   >
                     {{ project.title }}
                   </NuxtLink>
-                  <span class="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs font-bold text-gray-600">
+                  <span class="shrink-0 rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-2 py-1 text-xs font-black text-[#2c8d98]">
                     {{ project.totalPages }}P
                   </span>
                 </div>
 
-                <div class="mt-3 grid grid-cols-2 gap-2 text-xs font-bold text-gray-500">
-                  <span class="rounded-xl bg-gray-50 px-3 py-2">
+                <div class="mt-3 grid grid-cols-2 gap-2 text-xs font-black text-[#263236]/70">
+                  <span class="rounded-xl border-2 border-[#2c8d98]/40 bg-[#edf6fa] px-3 py-2">
                     進捗 {{ calculateTotalProgress(project.pages, project.workProcessSteps) }}%
                   </span>
-                  <span class="rounded-xl bg-gray-50 px-3 py-2">
+                  <span class="rounded-xl border-2 border-[#2c8d98]/40 bg-[#edf6fa] px-3 py-2">
                     残り {{ formatWorkDuration(calculateRemainingWork(project.pages, project.workProcessSteps)) }}
                   </span>
                 </div>
 
                 <p
                   v-if="projectUnplannedWork(project) > 0"
-                  class="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800"
+                  class="mt-3 rounded-xl border-2 border-amber-400 bg-amber-50 px-3 py-2 text-xs font-black text-amber-700"
                 >
                   必要な作業時間分の予定を入力してください。あと {{ formatWorkDuration(projectUnplannedWork(project)) }} 割り振れます。
                 </p>
 
                 <div class="mt-4 grid grid-cols-2 gap-3">
                   <div class="grid gap-2">
-                    <span class="text-xs font-bold text-gray-500">予定（分）</span>
-                    <div class="flex overflow-hidden rounded-xl border border-gray-300 bg-white focus-within:border-gray-900">
+                    <span class="text-xs font-black text-[#263236]/60">予定（分）</span>
+                    <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
                       <input
                         :value="workToMinutes(dailyEntry(project.id).planned)"
                         type="number"
@@ -253,15 +251,15 @@
                         step="any"
                         :max="workToMinutes(maxPlannedEntry(project.id))"
                         inputmode="decimal"
-                        class="min-w-0 flex-1 px-3 py-2 text-sm outline-none"
+                        class="min-w-0 flex-1 px-3 py-2 text-sm font-bold text-[#263236] outline-none"
                         @input="handlePlannedEntry(project.id, $event)"
                       >
-                      <div class="grid w-9 shrink-0 border-l border-gray-200">
+                      <div class="grid w-9 shrink-0 border-l-2 border-[#2c8d98]/30">
                         <button
                           type="button"
                           aria-label="予定を30分増やす"
                           title="予定を30分増やす"
-                          class="grid place-items-center text-gray-700 transition hover:bg-gray-100"
+                          class="grid place-items-center text-[#263236] transition hover:bg-[#edf6fa]"
                           @click="adjustPlannedEntry(project.id, 30)"
                         >
                           <svg
@@ -281,7 +279,7 @@
                           type="button"
                           aria-label="予定を30分減らす"
                           title="予定を30分減らす"
-                          class="grid place-items-center border-t border-gray-200 text-gray-700 transition hover:bg-gray-100"
+                          class="grid place-items-center border-t-2 border-[#2c8d98]/30 text-[#263236] transition hover:bg-[#edf6fa]"
                           @click="adjustPlannedEntry(project.id, -30)"
                         >
                           <svg
@@ -302,31 +300,31 @@
                   </div>
 
                   <div class="grid gap-2">
-                    <span class="text-xs font-bold text-gray-500">作業時間</span>
-                    <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-bold text-gray-800">
+                    <span class="text-xs font-black text-[#263236]/60">作業時間</span>
+                    <div class="rounded-xl border-2 border-[#2c8d98]/40 bg-[#edf6fa] px-3 py-2 text-sm font-black text-[#263236]">
                       {{ formatWorkDuration(dailyActual(project.id)) }}
                     </div>
                   </div>
                 </div>
 
                 <div class="mt-3 grid gap-2">
-                  <span class="text-xs font-bold text-gray-500">実績の手入力（分）</span>
-                  <div class="flex overflow-hidden rounded-xl border border-gray-300 bg-white focus-within:border-gray-900">
+                  <span class="text-xs font-black text-[#263236]/60">実績の手入力（分）</span>
+                  <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
                     <input
                       :value="workToMinutes(manualActualEntry(project.id))"
                       type="number"
                       min="0"
                       step="any"
                       inputmode="decimal"
-                      class="min-w-0 flex-1 px-3 py-2 text-sm outline-none"
+                      class="min-w-0 flex-1 px-3 py-2 text-sm font-bold text-[#263236] outline-none"
                       @input="handleManualActualEntry(project.id, $event)"
                     >
-                    <div class="grid w-9 shrink-0 border-l border-gray-200">
+                    <div class="grid w-9 shrink-0 border-l-2 border-[#2c8d98]/30">
                       <button
                         type="button"
                         aria-label="実績を30分増やす"
                         title="実績を30分増やす"
-                        class="grid place-items-center text-gray-700 transition hover:bg-gray-100"
+                        class="grid place-items-center text-[#263236] transition hover:bg-[#edf6fa]"
                         @click="adjustManualActualEntry(project.id, 30)"
                       >
                         <svg
@@ -346,7 +344,7 @@
                         type="button"
                         aria-label="実績を30分減らす"
                         title="実績を30分減らす"
-                        class="grid place-items-center border-t border-gray-200 text-gray-700 transition hover:bg-gray-100"
+                        class="grid place-items-center border-t-2 border-[#2c8d98]/30 text-[#263236] transition hover:bg-[#edf6fa]"
                         @click="adjustManualActualEntry(project.id, -30)"
                       >
                         <svg
@@ -368,7 +366,7 @@
 
                 <NuxtLink
                   :to="{ path: `/projects/${project.id}`, query: { workDate: selectedDate } }"
-                  class="ml-auto mt-4 flex w-fit items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-gray-700"
+                  class="ml-auto mt-4 flex w-fit items-center justify-center rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-4 py-2 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984]"
                 >
                   作業時間入力
                 </NuxtLink>
@@ -419,9 +417,9 @@ const scheduleLabels: Record<ScheduleKind, string> = {
   start: "開始",
 };
 const scheduleClasses: Record<ScheduleKind, string> = {
-  event: "bg-red-50 text-red-700",
-  deadline: "bg-orange-50 text-orange-700",
-  start: "bg-blue-50 text-blue-700",
+  event: "border-red-500 bg-red-50 text-red-700",
+  deadline: "border-[#ff4b1f] bg-[#fff2e3] text-[#f36b00]",
+  start: "border-[#2c8d98] bg-[#edf6fa] text-[#2c8d98]",
 };
 
 const route = useRoute();
@@ -648,15 +646,15 @@ function barClass(bar: {
 }) {
   if (bar.isCompressed) {
     return bar.isOverActual
-      ? "border-blue-600 bg-white"
-      : "border-gray-400 bg-white";
+      ? "border-[#f36b00] bg-white"
+      : "border-[#2c8d98]/50 bg-white";
   }
 
-  if (bar.isOverActual) return "border-blue-600";
-  if (bar.isActual) return "border-gray-900";
-  if (bar.isPlanned) return "border-gray-400 bg-white";
+  if (bar.isOverActual) return "border-[#f36b00]";
+  if (bar.isActual) return "border-[#2c8d98]";
+  if (bar.isPlanned) return "border-[#2c8d98]/50 bg-white";
 
-  return "border-gray-200 bg-white";
+  return "border-[#2c8d98]/20 bg-white";
 }
 
 function barStyle(bar: {
@@ -670,11 +668,11 @@ function barStyle(bar: {
 
   if (bar.isCompressed && bar.isOverActual) {
     return {
-      background: `linear-gradient(to right, #111827 ${bar.plannedFillPercent}%, #2563eb ${bar.plannedFillPercent}%, #2563eb ${bar.fillPercent}%, #ffffff ${bar.fillPercent}%)`,
+      background: `linear-gradient(to right, #2c8d98 ${bar.plannedFillPercent}%, #f36b00 ${bar.plannedFillPercent}%, #f36b00 ${bar.fillPercent}%, #ffffff ${bar.fillPercent}%)`,
     };
   }
 
-  const fillColor = bar.isOverActual ? "#2563eb" : "#111827";
+  const fillColor = bar.isOverActual ? "#f36b00" : "#2c8d98";
 
   return {
     background: `linear-gradient(to right, ${fillColor} ${bar.fillPercent}%, #ffffff ${bar.fillPercent}%)`,

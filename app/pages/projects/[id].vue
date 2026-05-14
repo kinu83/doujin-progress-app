@@ -1,15 +1,18 @@
 <template>
-  <main class="min-h-screen bg-gray-50 px-6 py-8">
+  <main class="min-h-screen bg-[#edf6fa] px-6 py-8 text-[#263236]">
     <div class="mx-auto max-w-5xl">
       <div class="flex flex-wrap items-center gap-3">
-        <NuxtLink to="/" class="text-sm font-semibold text-gray-500">
+        <NuxtLink
+          to="/"
+          class="inline-flex items-center rounded-xl border-2 border-[#263236] bg-white px-4 py-2 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] hover:shadow-[4px_4px_0_rgba(38,50,54,0.22)]"
+        >
           ← 一覧に戻る
         </NuxtLink>
         <NuxtLink
           to="/calendar"
           aria-label="カレンダーを表示"
           title="カレンダー"
-          class="grid h-10 w-10 place-items-center rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:border-gray-400 hover:bg-gray-50"
+          class="grid h-10 w-10 place-items-center rounded-xl border-2 border-[#263236] bg-white text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] hover:shadow-[4px_4px_0_rgba(38,50,54,0.22)]"
         >
           <svg
             class="h-5 w-5"
@@ -30,35 +33,37 @@
       </div>
 
       <div v-if="project" class="mt-4 grid gap-6">
-        <section class="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-gray-200">
+        <section class="rounded-3xl border-4 border-[#2c8d98] bg-white p-8 shadow-[5px_5px_0_rgba(44,141,152,0.16)]">
           <div class="flex flex-wrap items-start justify-between gap-6">
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-start gap-3">
                 <div class="min-w-0 flex-1">
                   <div class="flex flex-wrap items-center gap-3">
-                    <h1 class="break-words text-2xl font-bold text-gray-900">
+                    <h1 class="break-words text-3xl font-black text-[#263236]">
                       {{ project.title }}
                     </h1>
                     <span
                       v-if="formatEventLabel(project)"
-                      class="rounded-full bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700 ring-1 ring-rose-100"
+                      class="rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-3 py-1 text-xs font-black text-[#2c8d98]"
                     >
                       {{ formatEventLabel(project) }}
                     </span>
                   </div>
-                  <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+                  <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-b-2 border-dashed border-[#2c8d98] pb-3 text-sm font-black text-[#263236]">
                     <span>
-                      締切日 {{ formatProjectDate(project.deadline) }}
+                      <span class="text-xs text-[#263236]/60">入稿締切日</span>
+                      <span class="ml-2">{{ formatProjectDate(project.deadline) }}</span>
                     </span>
-                    <span v-if="project.startDate">
-                      作業開始日 {{ formatProjectDate(project.startDate) }}
+                    <span v-if="project.startDate" class="border-l-2 border-[#2c8d98]/50 pl-4">
+                      <span class="text-xs text-[#263236]/60">作業開始日</span>
+                      <span class="ml-2">{{ formatProjectDate(project.startDate) }}</span>
                     </span>
-                    <span v-else class="text-gray-400">
+                    <span v-else class="text-[#263236]/50">
                       作業開始日は未設定です
                     </span>
                   </div>
-                  <details class="group mt-1 text-sm text-gray-500">
-                    <summary class="flex cursor-pointer list-none items-center gap-1 font-semibold text-gray-500 hover:text-gray-700">
+                  <details class="group mt-3 text-sm font-bold text-[#263236]/70">
+                    <summary class="flex cursor-pointer list-none items-center gap-1 font-black text-[#263236]/70 hover:text-[#2c8d98]">
                       <span class="text-[10px] transition-transform group-open:rotate-90">
                         ▶
                       </span>
@@ -101,7 +106,7 @@
                       </dl>
                       <button
                         type="button"
-                        class="mt-2 text-xs font-bold text-gray-500 underline-offset-2 hover:text-gray-800 hover:underline"
+                        class="mt-2 rounded-lg border-2 border-[#2c8d98] bg-white px-3 py-1 text-xs font-black text-[#2c8d98] shadow-[2px_2px_0_rgba(44,141,152,0.16)] transition hover:-translate-y-0.5 hover:bg-[#edf6fa]"
                         @click="startBookSpecEdit"
                       >
                         編集
@@ -113,14 +118,14 @@
                 <div class="flex shrink-0 flex-wrap gap-2">
                   <button
                     type="button"
-                    class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-bold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
+                    class="rounded-xl border-2 border-[#263236] bg-white px-4 py-2 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
                     @click="startInfoEdit"
                   >
                     情報を編集
                   </button>
                   <button
                     type="button"
-                    class="rounded-xl border border-red-200 px-4 py-2 text-sm font-bold text-red-700 transition hover:border-red-300 hover:bg-red-50"
+                    class="rounded-xl border-2 border-red-500 bg-white px-4 py-2 text-sm font-black text-red-700 shadow-[3px_3px_0_rgba(220,38,38,0.16)] transition hover:-translate-y-0.5 hover:bg-red-50"
                     @click="openDeleteConfirm"
                   >
                     削除
@@ -129,33 +134,33 @@
               </div>
             </div>
 
-            <div class="shrink-0 text-right">
-              <p class="text-3xl font-bold text-gray-900">
+            <div class="shrink-0 text-right font-black text-[#263236]">
+              <p class="text-4xl leading-none">
                 {{ calculateTotalProgress(project.pages, project.workProcessSteps) }}%
               </p>
-              <p class="text-sm text-gray-500">
+              <p class="text-sm">
                 全体進捗
               </p>
             </div>
           </div>
 
-          <div class="mt-5 h-3 overflow-hidden rounded-full bg-gray-200">
+          <div class="mt-5 h-5 overflow-hidden rounded-full bg-[#d7d7d7] shadow-inner">
             <div
-              class="h-full rounded-full bg-gray-900"
+              class="h-full rounded-full bg-[#2c8d98] shadow-[inset_0_2px_4px_rgba(0,0,0,0.18)]"
               :style="{ width: `${calculateTotalProgress(project.pages, project.workProcessSteps)}%` }"
             />
           </div>
 
           <div
-            class="mt-5 rounded-2xl border p-4"
+            class="mt-5 rounded-2xl border-2 p-4 font-bold shadow-[3px_3px_0_rgba(38,50,54,0.12)]"
             :class="getCrunchLevelClasses(calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).tone)"
           >
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p class="text-sm font-semibold">
+                <p class="text-sm font-black">
                   修羅場レベル
                 </p>
-                <p class="mt-1 text-2xl font-bold">
+                <p class="mt-1 text-2xl font-black">
                   {{ calculateCrunchLevel(project.pages, project.deadline, project.startDate, project.workProcessSteps, settings.crunchThresholds).label }}
                 </p>
               </div>
@@ -173,30 +178,35 @@
             </p>
           </div>
 
-          <div class="mt-5 grid gap-3 text-sm text-gray-600 md:grid-cols-4">
-            <div class="rounded-2xl bg-gray-50 p-4">
-              残日数: {{ calculateDaysLeft(project.deadline) }}日
+          <div class="mt-5 grid gap-3 text-sm text-[#263236] md:grid-cols-4">
+            <div class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)]">
+              <span class="block text-xs">残り日数</span>
+              <span class="text-2xl leading-tight text-[#2c8d98]">{{ calculateDaysLeft(project.deadline) }}日</span>
             </div>
-            <div class="rounded-2xl bg-gray-50 p-4">
-              残作業時間: {{ formatWorkDuration(calculateRemainingWork(project.pages, project.workProcessSteps)) }}
+            <div class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)]">
+              <span class="block text-xs">残作業時間</span>
+              <span class="text-2xl leading-tight text-[#2c8d98]">{{ formatWorkDuration(calculateRemainingWork(project.pages, project.workProcessSteps)) }}</span>
             </div>
-            <div class="rounded-2xl bg-gray-50 p-4">
-              残ページ数: {{ formatRemainingPages(project) }}P
+            <div class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)]">
+              <span class="block text-xs">残ページ数</span>
+              <span class="text-2xl leading-tight text-[#2c8d98]">{{ formatRemainingPages(project) }}P</span>
             </div>
             <NuxtLink
               :to="{ path: '/calendar', query: { date: selectedWorkDateKey } }"
-              class="rounded-2xl bg-gray-50 p-4 transition hover:bg-gray-100"
+              class="rounded-2xl border-2 border-[#ff4b1f] bg-[#fff2e3] p-4 font-black shadow-[3px_3px_0_rgba(255,75,31,0.22)] transition hover:-translate-y-0.5 hover:bg-[#fff7ef]"
             >
-              {{ selectedWorkDateSummaryLabel }}: {{ formatWorkDuration(selectedWorkDailyEntry.actual) }} / 予定 {{ formatWorkDuration(selectedWorkDailyEntry.planned) }}
+              <span class="block text-xs">{{ selectedWorkDateSummaryLabel }}</span>
+              <span class="text-2xl leading-tight text-[#f36b00]">{{ formatWorkDuration(selectedWorkDailyEntry.actual) }}</span>
+              <span class="block text-xs">予定 {{ formatWorkDuration(selectedWorkDailyEntry.planned) }}</span>
             </NuxtLink>
           </div>
         </section>
 
-        <section class="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-gray-200">
-          <h2 class="text-lg font-bold text-gray-900">
+        <section class="rounded-3xl border-4 border-[#2c8d98] bg-white p-8 shadow-[5px_5px_0_rgba(44,141,152,0.16)]">
+          <h2 class="text-xl font-black text-[#263236]">
             ページ別進捗
           </h2>
-          <p class="mt-1 text-sm font-semibold text-gray-500">
+          <p class="mt-1 text-sm font-black text-[#263236]/60">
             入力対象日: {{ selectedWorkDateLabel }}
           </p>
 
@@ -204,20 +214,20 @@
             <div
               v-for="page in project.pages"
               :key="page.pageNumber"
-              class="rounded-2xl border border-gray-200 p-4"
+              class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 shadow-[3px_3px_0_rgba(44,141,152,0.14)]"
             >
               <div class="flex items-center justify-between gap-3">
-                <p class="font-semibold text-gray-900">
+                <p class="font-black text-[#263236]">
                   {{ page.pageNumber }}P
                 </p>
-                <span class="text-sm font-semibold text-gray-600">
+                <span class="text-sm font-black text-[#263236]/70">
                   {{ page.status }}・{{ calculatePageProgress(page, project.workProcessSteps) }}%
                 </span>
               </div>
 
               <button
                 type="button"
-                class="group mt-3 w-full rounded-full py-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
+                class="group mt-3 w-full rounded-full py-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2c8d98] focus-visible:ring-offset-2"
                 role="slider"
                 :aria-label="`${page.pageNumber}Pの進捗ステップ`"
                 :aria-valuemin="0"
@@ -227,9 +237,9 @@
                 @click="handleProgressBarClick(page.pageNumber, $event)"
                 @keydown="handleProgressBarKeydown(page.pageNumber, page.status, $event)"
               >
-                <div class="relative h-2 overflow-hidden rounded-full bg-gray-200">
+                <div class="relative h-3 overflow-hidden rounded-full bg-[#d7d7d7] shadow-inner">
                   <div
-                    class="h-full rounded-full bg-gray-900 transition-[width]"
+                    class="h-full rounded-full bg-[#2c8d98] transition-[width]"
                     :style="{ width: `${getPageStatusPercent(page.status)}%` }"
                   />
                 </div>
@@ -240,8 +250,8 @@
                   <span
                     v-for="(status, index) in statuses"
                     :key="status"
-                    class="absolute top-0 h-3 w-3 -translate-x-1/2 rounded-full border-2 bg-white transition group-hover:border-gray-900"
-                    :class="index <= getPageStatusIndex(page.status) ? 'border-gray-900' : 'border-gray-300'"
+                    class="absolute top-0 h-3 w-3 -translate-x-1/2 rounded-full border-2 bg-white transition group-hover:border-[#2c8d98]"
+                    :class="index <= getPageStatusIndex(page.status) ? 'border-[#2c8d98]' : 'border-[#d7d7d7]'"
                     :style="{ left: `${getStatusIndexPercent(index)}%` }"
                   />
                 </div>
@@ -254,36 +264,36 @@
         <Teleport to="body">
           <div
             v-if="isConfirmingDelete"
-            class="fixed inset-0 z-50 grid place-items-center bg-gray-900/50 px-4 py-6"
+            class="fixed inset-0 z-50 grid place-items-center bg-[#263236]/50 px-4 py-6"
             @click.self="closeDeleteConfirm"
           >
-            <section class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-gray-200">
-              <div class="border-b border-red-100 bg-red-50 px-6 py-5">
-                <p class="text-sm font-bold text-red-700">
+            <section class="w-full max-w-md overflow-hidden rounded-3xl border-4 border-red-500 bg-white shadow-[5px_5px_0_rgba(220,38,38,0.18)]">
+              <div class="border-b-2 border-red-500 bg-red-50 px-6 py-5">
+                <p class="text-sm font-black text-red-700">
                   削除前の確認
                 </p>
-                <h2 class="mt-1 text-lg font-bold text-gray-900">
+                <h2 class="mt-1 text-lg font-black text-[#263236]">
                   この作品情報を削除しますか？
                 </h2>
               </div>
 
               <div class="px-6 py-5">
-                <p class="text-sm leading-6 text-gray-600">
+                <p class="text-sm font-bold leading-6 text-[#263236]/70">
                   「{{ project.title }}」とページ別進捗は完全に削除されます。この操作は元に戻せません。
                 </p>
               </div>
 
-              <div class="flex flex-col-reverse gap-3 border-t border-gray-200 px-6 py-4 sm:flex-row sm:justify-end">
+              <div class="flex flex-col-reverse gap-3 border-t-2 border-red-100 px-6 py-4 sm:flex-row sm:justify-end">
                 <button
                   type="button"
-                  class="rounded-xl border border-gray-300 px-4 py-3 text-sm font-bold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
+                  class="rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
                   @click="closeDeleteConfirm"
                 >
                   キャンセル
                 </button>
                 <button
                   type="button"
-                  class="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700"
+                  class="rounded-xl border-2 border-red-700 bg-red-600 px-5 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(220,38,38,0.28)] transition hover:-translate-y-0.5 hover:bg-red-700"
                   @click="handleDelete"
                 >
                   削除する
@@ -296,89 +306,89 @@
         <Teleport to="body">
           <div
             v-if="isEditingInfo"
-            class="fixed inset-0 z-50 grid place-items-center bg-gray-900/50 px-4 py-6"
+            class="fixed inset-0 z-50 grid place-items-center bg-[#263236]/50 px-4 py-6"
             @click.self="cancelInfoEdit"
           >
             <form
-              class="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-gray-200"
+              class="w-full max-w-xl overflow-hidden rounded-3xl border-4 border-[#2c8d98] bg-white shadow-[5px_5px_0_rgba(44,141,152,0.18)]"
               @submit.prevent="handleInfoSubmit"
             >
-              <div class="border-b border-gray-200 px-6 py-5">
-                <h2 class="text-lg font-bold text-gray-900">
+              <div class="border-b-2 border-dashed border-[#2c8d98] px-6 py-5">
+                <h2 class="text-lg font-black text-[#263236]">
                   プロジェクト情報を編集
                 </h2>
-                <p class="mt-1 text-sm text-gray-500">
+                <p class="mt-1 text-sm font-bold text-[#263236]/60">
                   作業開始日や締切など、進捗計算に使う情報を更新できます。
                 </p>
               </div>
 
               <div class="grid gap-4 px-6 py-5 md:grid-cols-2">
                 <label class="grid gap-2 md:col-span-2">
-                  <span class="text-sm font-semibold text-gray-700">イベント名</span>
+                  <span class="text-sm font-black text-[#263236]">イベント名</span>
                   <input
                     v-model="editEventName"
                     type="text"
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
                 </label>
 
                 <label class="grid gap-2 md:col-span-2">
-                  <span class="text-sm font-semibold text-gray-700">イベント開催日</span>
+                  <span class="text-sm font-black text-[#263236]">イベント開催日</span>
                   <input
                     v-model="editEventDate"
                     type="date"
                     :min="editDeadline || undefined"
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
                 </label>
 
                 <label class="grid gap-2 md:col-span-2">
-                  <span class="text-sm font-semibold text-gray-700">タイトル</span>
+                  <span class="text-sm font-black text-[#263236]">タイトル</span>
                   <input
                     v-model="editTitle"
                     type="text"
                     required
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
                 </label>
 
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">作業開始日</span>
+                  <span class="text-sm font-black text-[#263236]">作業開始日</span>
                   <input
                     v-model="editStartDate"
                     type="date"
                     :max="editDeadline"
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
                 </label>
 
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">締切日</span>
+                  <span class="text-sm font-black text-[#263236]">締切日</span>
                   <input
                     v-model="editDeadline"
                     type="date"
                     required
                     :min="editStartDate || undefined"
                     :max="editEventDate || undefined"
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
                 </label>
 
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">ページ数</span>
-                  <div class="flex overflow-hidden rounded-xl border border-gray-300 bg-white focus-within:border-gray-900">
+                  <span class="text-sm font-black text-[#263236]">ページ数</span>
+                  <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
                     <input
                       v-model.number="editTotalPages"
                       type="number"
                       min="1"
                       required
-                      class="min-w-0 flex-1 border-0 px-4 py-3 outline-none"
+                      class="min-w-0 flex-1 border-0 px-4 py-3 font-bold text-[#263236] outline-none"
                     >
-                    <div class="grid w-11 shrink-0 border-l border-gray-200">
+                    <div class="grid w-11 shrink-0 border-l-2 border-[#2c8d98]/30">
                       <button
                         type="button"
                         aria-label="ページ数を増やす"
-                        class="grid place-items-center text-xs font-bold text-gray-600 transition hover:bg-gray-50"
+                        class="grid place-items-center text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
                         @click="incrementEditTotalPages"
                       >
                         ▲
@@ -386,7 +396,7 @@
                       <button
                         type="button"
                         aria-label="ページ数を減らす"
-                        class="grid place-items-center border-t border-gray-200 text-xs font-bold text-gray-600 transition hover:bg-gray-50"
+                        class="grid place-items-center border-t-2 border-[#2c8d98]/30 text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
                         @click="decrementEditTotalPages"
                       >
                         ▼
@@ -396,10 +406,10 @@
                 </label>
 
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">作業工程</span>
+                  <span class="text-sm font-black text-[#263236]">作業工程</span>
                   <select
                     v-model="editWorkProcessId"
-                    class="rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
                     <option
                       v-for="process in settings.workProcesses"
@@ -413,16 +423,16 @@
 
                 <p
                   v-if="infoEditError"
-                  class="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 md:col-span-2"
+                  class="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700 md:col-span-2"
                 >
                   {{ infoEditError }}
                 </p>
               </div>
 
-              <div class="flex flex-col-reverse gap-3 border-t border-gray-200 px-6 py-4 sm:flex-row sm:justify-end">
+              <div class="flex flex-col-reverse gap-3 border-t-2 border-dashed border-[#2c8d98] px-6 py-4 sm:flex-row sm:justify-end">
                 <button
                   type="button"
-                  class="rounded-xl border border-gray-300 px-4 py-3 text-sm font-bold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
+                  class="rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
                   @click="cancelInfoEdit"
                 >
                   キャンセル
@@ -430,7 +440,7 @@
                 <button
                   type="submit"
                   :disabled="!canSaveInfo"
-                  class="rounded-xl bg-gray-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                  class="rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-5 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984] disabled:cursor-not-allowed disabled:border-[#d7d7d7] disabled:bg-[#d7d7d7]"
                 >
                   保存
                 </button>
@@ -442,38 +452,38 @@
         <Teleport to="body">
           <div
             v-if="isEditingBookSpec"
-            class="fixed inset-0 z-50 grid place-items-center bg-gray-900/50 px-4 py-6"
+            class="fixed inset-0 z-50 grid place-items-center bg-[#263236]/50 px-4 py-6"
             @click.self="cancelBookSpecEdit"
           >
             <form
-              class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-gray-200"
+              class="w-full max-w-2xl overflow-hidden rounded-3xl border-4 border-[#2c8d98] bg-white shadow-[5px_5px_0_rgba(44,141,152,0.18)]"
               @submit.prevent="handleBookSpecSubmit"
             >
-              <div class="border-b border-gray-200 px-6 py-5">
-                <h2 class="text-lg font-bold text-gray-900">
+              <div class="border-b-2 border-dashed border-[#2c8d98] px-6 py-5">
+                <h2 class="text-lg font-black text-[#263236]">
                   本の情報を編集
                 </h2>
-                <p class="mt-1 text-sm text-gray-500">
+                <p class="mt-1 text-sm font-bold text-[#263236]/60">
                   ページ数や印刷仕様を更新できます。
                 </p>
               </div>
 
               <div class="grid gap-4 px-6 py-5 md:grid-cols-2">
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">ページ数</span>
-                  <div class="flex overflow-hidden rounded-xl border border-gray-300 bg-white focus-within:border-gray-900">
+                  <span class="text-sm font-black text-[#263236]">ページ数</span>
+                  <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
                     <input
                       v-model.number="bookSpecForm.totalPages"
                       type="number"
                       min="1"
                       required
-                      class="min-w-0 flex-1 border-0 px-4 py-3 outline-none"
+                      class="min-w-0 flex-1 border-0 px-4 py-3 font-bold text-[#263236] outline-none"
                     >
-                    <div class="grid w-11 shrink-0 border-l border-gray-200">
+                    <div class="grid w-11 shrink-0 border-l-2 border-[#2c8d98]/30">
                       <button
                         type="button"
                         aria-label="ページ数を増やす"
-                        class="grid place-items-center text-xs font-bold text-gray-600 transition hover:bg-gray-50"
+                        class="grid place-items-center text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
                         @click="incrementBookSpecTotalPages"
                       >
                         ▲
@@ -481,7 +491,7 @@
                       <button
                         type="button"
                         aria-label="ページ数を減らす"
-                        class="grid place-items-center border-t border-gray-200 text-xs font-bold text-gray-600 transition hover:bg-gray-50"
+                        class="grid place-items-center border-t-2 border-[#2c8d98]/30 text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
                         @click="decrementBookSpecTotalPages"
                       >
                         ▼
@@ -491,10 +501,10 @@
                 </label>
 
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">カラー</span>
+                  <span class="text-sm font-black text-[#263236]">カラー</span>
                   <select
                     v-model="bookSpecForm.colorMode"
-                    class="rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
                     <option
                       v-for="colorMode in colorModes"
@@ -507,64 +517,64 @@
                 </label>
 
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">表紙の紙</span>
+                  <span class="text-sm font-black text-[#263236]">表紙の紙</span>
                   <input
                     v-model="bookSpecForm.coverPaper"
                     type="text"
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
                 </label>
 
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">本文の紙</span>
+                  <span class="text-sm font-black text-[#263236]">本文の紙</span>
                   <input
                     v-model="bookSpecForm.bodyPaper"
                     type="text"
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
                 </label>
 
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">印刷会社</span>
+                  <span class="text-sm font-black text-[#263236]">印刷会社</span>
                   <input
                     v-model="bookSpecForm.printer"
                     type="text"
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
                 </label>
 
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">発行部数</span>
+                  <span class="text-sm font-black text-[#263236]">発行部数</span>
                   <input
                     v-model.number="bookSpecForm.printRun"
                     type="number"
                     min="0"
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
                 </label>
 
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold text-gray-700">予算</span>
+                  <span class="text-sm font-black text-[#263236]">予算</span>
                   <input
                     v-model.number="bookSpecForm.budget"
                     type="number"
                     min="0"
-                    class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-900"
+                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
                 </label>
               </div>
 
-              <div class="flex flex-col-reverse gap-3 border-t border-gray-200 px-6 py-4 sm:flex-row sm:justify-end">
+              <div class="flex flex-col-reverse gap-3 border-t-2 border-dashed border-[#2c8d98] px-6 py-4 sm:flex-row sm:justify-end">
                 <button
                   type="button"
-                  class="rounded-xl border border-gray-300 px-4 py-3 text-sm font-bold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
+                  class="rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
                   @click="cancelBookSpecEdit"
                 >
                   キャンセル
                 </button>
                 <button
                   type="submit"
-                  class="rounded-xl bg-gray-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-gray-700"
+                  class="rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-5 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984]"
                 >
                   保存
                 </button>
@@ -574,11 +584,11 @@
         </Teleport>
       </div>
 
-      <div v-else class="mt-6 rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-gray-200">
-        <p class="text-lg font-semibold text-gray-900">
+      <div v-else class="mt-6 rounded-3xl border-4 border-dashed border-[#2c8d98] bg-white p-8 text-center shadow-[5px_5px_0_rgba(44,141,152,0.18)]">
+        <p class="text-lg font-black text-[#263236]">
           プロジェクトが見つかりません
         </p>
-        <p class="mt-2 text-sm text-gray-500">
+        <p class="mt-2 text-sm font-bold text-[#263236]/60">
           一覧から作成し直してください。
         </p>
       </div>
@@ -717,11 +727,11 @@ const canSaveInfo = computed(() => {
 
 const getCrunchLevelClasses = (tone: string) => {
   const classes: Record<string, string> = {
-    emerald: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    sky: "border-sky-200 bg-sky-50 text-sky-800",
-    amber: "border-amber-200 bg-amber-50 text-amber-800",
-    orange: "border-orange-200 bg-orange-50 text-orange-800",
-    red: "border-red-200 bg-red-50 text-red-800",
+    emerald: "border-emerald-500 bg-emerald-50 text-emerald-700",
+    sky: "border-[#2c8d98] bg-[#edf6fa] text-[#2c8d98]",
+    amber: "border-amber-500 bg-amber-50 text-amber-700",
+    orange: "border-[#ff8a00] bg-orange-50 text-[#f36b00]",
+    red: "border-red-500 bg-red-50 text-red-700",
   };
 
   return classes[tone] ?? classes.sky;
