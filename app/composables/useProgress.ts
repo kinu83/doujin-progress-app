@@ -15,6 +15,7 @@ export type CrunchLevel = {
 };
 
 export const createStatusList = (workSteps = DEFAULT_WORK_STEPS) => {
+  // 進捗ステップは常に「未着手」を起点にして、設定された工程を後ろへ並べる。
   return ["未着手", ...workSteps.map((step) => step.name)];
 };
 
@@ -26,6 +27,7 @@ const getStatusIndex = (status: PageStatus, workSteps = DEFAULT_WORK_STEPS) => {
 };
 
 const getStepCount = (workSteps = DEFAULT_WORK_STEPS) => {
+  // 工程が空でも割り算が壊れないよう、最低1ステップとして扱う。
   return Math.max(workSteps.length, 1);
 };
 
@@ -37,6 +39,7 @@ const getCompletedStepMinutes = (
   status: PageStatus,
   workSteps = DEFAULT_WORK_STEPS
 ) => {
+  // 現在のステータスより前にある工程だけを「完了済み作業時間」として足す。
   return workSteps.slice(0, getStatusIndex(status, workSteps)).reduce((sum, step) => {
     return sum + step.minutesPerPage;
   }, 0);
@@ -93,6 +96,7 @@ export const useProgress = () => {
     pages: ManuscriptPage[],
     workSteps: WorkProcessStep[] = DEFAULT_WORK_STEPS
   ) => {
+    // 各ページの全工程時間から、完了済み工程の時間を差し引いて残作業を出す。
     const totalWork = pages.length * getTotalStepMinutes(workSteps);
     const currentWork = pages.reduce((sum, page) => {
       return sum + calculateStatusCompletedMinutes(page.status, workSteps);
@@ -105,6 +109,7 @@ export const useProgress = () => {
     const today = new Date();
     const deadlineDate = new Date(deadline);
 
+    // 時刻差で日数がずれないよう、日付だけで締切までの残日数を計算する。
     today.setHours(0, 0, 0, 0);
     deadlineDate.setHours(0, 0, 0, 0);
 
@@ -149,6 +154,7 @@ export const useProgress = () => {
     const dailyWork = calculateDailyWork(pages, deadline, workSteps);
     const daysLeft = calculateDaysLeft(deadline);
     const thresholds = {
+      // 設定値が逆転していても判定の順序が崩れないよう、ここで単調増加に補正する。
       warningMinutes: Math.max(1, Math.round(crunchThresholds.warningMinutes)),
       crunchMinutes: Math.max(
         Math.round(crunchThresholds.warningMinutes) + 1,

@@ -59,6 +59,7 @@ const defaultBookSpec = (): BookSpec => ({
   printer: "",
   printRun: 0,
   budget: 0,
+  note: "",
 });
 
 const normalizeDailyWorkEntries = (
@@ -67,6 +68,7 @@ const normalizeDailyWorkEntries = (
 ) => {
   return Object.fromEntries(
     Object.entries(entries ?? {}).map(([date, entry]) => {
+      // 旧progressベースのデータは1単位を20分として保存していたため、分単位へ寄せる。
       const multiplier = shouldMigrateFromLegacyWorkUnits ? 3 : 1;
 
       return [
@@ -85,6 +87,7 @@ const normalizeWorkLogs = (
   projectId: string
 ) => {
   return (logs ?? []).reduce<WorkLog[]>((result, log) => {
+    // 日付がないログは集計できないため、読み込み時に捨てる。
     const workDate = String(log.workDate ?? "");
     if (!workDate) return result;
 
@@ -123,6 +126,7 @@ const createLegacyActualWorkLogs = (
     const hasLogForDate = existingLogs.some((log) => log.workDate === date);
     if (hasLogForDate) return result;
 
+    // 実績ログ導入前のactualも、以後は同じ集計経路で扱えるようにログ化する。
     const now = new Date().toISOString();
     result.push({
       id: `legacy-actual-${date}`,
@@ -155,6 +159,7 @@ const getActualMinutesFromLogs = (project: Project, date: string) => {
 };
 
 const getDailyActualMinutes = (project: Project, date: string) => {
+  // ログがある日はログを正とし、旧dailyWorkEntries.actualは後方互換のフォールバックにする。
   if (hasWorkLogsForDate(project, date)) {
     return getActualMinutesFromLogs(project, date);
   }
@@ -169,6 +174,7 @@ const refreshDailyActualCache = (project: Project, date: string) => {
   };
   const actual = getActualMinutesFromLogs(project, date);
 
+  // dailyWorkEntriesはカレンダー表示用の軽いキャッシュなので、空なら持たない。
   if (current.planned === 0 && actual === 0) {
     delete project.dailyWorkEntries[date];
     return;
@@ -193,6 +199,7 @@ const normalizeProjectSteps = (
 ) => {
   const normalized = (steps ?? []).reduce<WorkProcessStep[]>((result, step) => {
     const name = typeof step === "string" ? step.trim() : String(step.name ?? "").trim();
+    // 同名工程はステータス判定が曖昧になるので、最初の1件だけを採用する。
     if (!name || result.some((item) => item.name === name)) return result;
 
     const minutesPerPage = typeof step === "string"
@@ -223,6 +230,7 @@ const normalizeStatusForSteps = (
 
   const previousStatuses = getProjectStatusList(previousSteps);
   const previousIndex = previousStatuses.indexOf(status);
+  // 旧工程で完了済みだったページは、新工程でも最後の工程に移して完了扱いを保つ。
   if (previousIndex === previousStatuses.length - 1) {
     return nextStatuses[nextStatuses.length - 1];
   }
@@ -235,6 +243,7 @@ const resizePages = (
   totalPages: number,
   normalizeStatus: (status: PageStatus) => PageStatus = (status) => status
 ) => {
+  // ページ数変更時は既存ページの進捗を可能な限り維持し、足りない分だけ未着手で作る。
   return Array.from({ length: totalPages }, (_, index) => {
     return pages[index] ?? {
       pageNumber: index + 1,
@@ -249,6 +258,7 @@ const resizePages = (
 
 const normalizeProject = (project: Project): Project => {
   const pages = project.pages ?? [];
+  // progressフィールドを持つデータは旧形式として扱い、作業時間単位も移行する。
   const hasLegacyProgress = pages.some((page) => "progress" in page);
   const projectId = project.id || crypto.randomUUID();
   const dailyWorkEntries = normalizeDailyWorkEntries(
@@ -303,6 +313,7 @@ const writeLocalProjects = (projects: Project[]) => {
 };
 
 const cloneJson = <T>(value: T): T => {
+  // Vueのリアクティブ参照をFirestore保存前に素のJSONへ落とす。
   return JSON.parse(JSON.stringify(value)) as T;
 };
 
@@ -323,6 +334,7 @@ export const useProjects = () => {
   ) => {
     if (import.meta.server) return Promise.resolve();
 
+    // Firestoreへの連続保存は順序を崩さないように直列化する。
     remoteProjectWriteQueue = remoteProjectWriteQueue
       .catch(() => undefined)
       .then(write)
@@ -425,6 +437,7 @@ export const useProjects = () => {
           projects.value = remoteProjects.map(normalizeProject);
           writeLocalProjects(projects.value);
           projects.value.forEach((project) => {
+            // 読み込み時に作った移行ログは、次回以降もリモートで復元できるよう保存する。
             project.workLogs
               .filter((workLog) => workLog.kind === "legacyActual")
               .forEach((workLog) => {
@@ -432,6 +445,7 @@ export const useProjects = () => {
               });
           });
         } else if (projects.value.length > 0) {
+          // 初回ログインなどでリモートが空なら、端末内の既存データを種として同期する。
           await persistProjects();
           projects.value.forEach((project) => {
             project.workLogs.forEach((workLog) => {
@@ -450,12 +464,14 @@ export const useProjects = () => {
   };
 
   const saveProject = (project: Project) => {
+    // 画面の即時反映はlocalStorage、永続同期は非同期でFirestoreへ送る。
     writeLocalProjects(projects.value);
     void persistProject(project);
   };
 
   const createProject = (input: CreateProjectInput) => {
     loadSettings();
+    // 指定がない場合は設定画面のデフォルト工程を使って新規プロジェクトを作る。
     const workProcess = input.workProcessId
       ? getWorkProcessById(input.workProcessId)
       : getWorkProcessById(settings.value.defaultWorkProcessId);
@@ -502,6 +518,7 @@ export const useProjects = () => {
     );
     if (projectIndex === -1) return false;
 
+    // 先にローカル状態から消して、リモート削除は保存キューへ任せる。
     projects.value.splice(projectIndex, 1);
     writeLocalProjects(projects.value);
     void persistProjectDeletes([projectId]);
@@ -517,6 +534,7 @@ export const useProjects = () => {
       return false;
     }
 
+    // 締切はイベント当日以前、作業開始日は締切以前という日付関係をここでも守る。
     if (input.deadline && input.eventDate && input.deadline > input.eventDate) {
       return false;
     }
@@ -524,6 +542,7 @@ export const useProjects = () => {
     const totalPages = Math.max(1, input.totalPages);
     loadSettings();
     const workProcess = getWorkProcessById(input.workProcessId);
+    // 設定から工程が消えていても、既存プロジェクトの工程で編集を継続できるようにする。
     const nextProcessFields = workProcessToProjectFields(workProcess ?? {
       id: project.workProcessId,
       name: project.workProcessName,
@@ -558,6 +577,7 @@ export const useProjects = () => {
     if (!project) return false;
 
     const totalPages = Math.max(1, Number(input.totalPages) || 1);
+    // 本の仕様からページ数を変えた場合も、ページ別進捗の配列を同時に揃える。
     const nextPages = resizePages(project.pages, totalPages);
 
     project.totalPages = totalPages;
@@ -569,6 +589,7 @@ export const useProjects = () => {
       printer: input.printer.trim(),
       printRun: Math.max(0, Number(input.printRun) || 0),
       budget: Math.max(0, Number(input.budget) || 0),
+      note: input.note.trim(),
     };
 
     saveProject(project);
@@ -599,6 +620,7 @@ export const useProjects = () => {
 
     let workLog: WorkLog | undefined;
     if (options.syncDailyActual && options.workDate) {
+      // ページ進捗の差分だけをその日の実績として記録する。
       const actualDelta =
         calculateStatusCompletedMinutes(
           page.status,
@@ -644,6 +666,7 @@ export const useProjects = () => {
     };
     const actual = Math.max(0, current.actual + actualDelta);
 
+    // 進捗を戻した場合でも日別実績はマイナスにせず、0分で止める。
     if (current.planned === 0 && actual === 0) {
       delete project.dailyWorkEntries[date];
       return;
@@ -664,6 +687,7 @@ export const useProjects = () => {
     if (!project) return;
 
     const planned = Math.max(0, Number(entry.planned) || 0);
+    // 実績ログがある日は手入力値でログ集計を上書きしない。
     const actual = hasWorkLogsForDate(project, date)
       ? getActualMinutesFromLogs(project, date)
       : Math.max(0, Number(entry.actual) || 0);
@@ -707,6 +731,7 @@ export const useProjects = () => {
     if (!project) return;
 
     const actual = Math.max(0, Math.round(Number(minutes) || 0));
+    // 1日1件の手入力ログに寄せて、入力欄の値とログ集計が一対一になるようにする。
     const existingLog = project.workLogs.find((log) => {
       return log.workDate === date && ["manualActual", "legacyActual"].includes(log.kind);
     });
@@ -716,9 +741,11 @@ export const useProjects = () => {
     const now = new Date().toISOString();
 
     if (actual === 0 && existingLog) {
+      // 0分入力は「手入力ログを消す」操作として扱う。
       deletedWorkLog = existingLog;
       project.workLogs = project.workLogs.filter((log) => log.id !== existingLog.id);
     } else if (actual > 0 && existingLog) {
+      // 旧移行ログを編集した時点で、通常の手入力ログとして扱う。
       existingLog.kind = "manualActual";
       existingLog.minutes = actual;
       existingLog.updatedAt = now;
@@ -760,6 +787,7 @@ export const useProjects = () => {
     projects.value.forEach((project) => {
       if (project.workProcessId !== process.id) return;
 
+      // 設定画面で工程名や所要時間を変えたら、同じ工程を使う全プロジェクトへ反映する。
       const previousSteps = project.workProcessSteps;
       const nextProcessFields = workProcessToProjectFields(process);
       project.workProcessName = nextProcessFields.workProcessName;

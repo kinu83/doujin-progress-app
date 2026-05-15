@@ -341,63 +341,6 @@
                     </div>
                   </div>
 
-                  <div class="mt-3 grid gap-2">
-                    <span class="text-xs font-black text-[#263236]/60">実績の手入力（分）</span>
-                    <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
-                      <input
-                        :value="workToMinutes(manualActualEntry(project.id))"
-                        type="number"
-                        min="0"
-                        step="any"
-                        inputmode="decimal"
-                        class="min-w-0 flex-1 px-3 py-2 text-sm font-bold text-[#263236] outline-none"
-                        @input="handleManualActualEntry(project.id, $event)"
-                      >
-                      <div class="grid w-9 shrink-0 border-l-2 border-[#2c8d98]/30">
-                        <button
-                          type="button"
-                          aria-label="実績を30分増やす"
-                          title="実績を30分増やす"
-                          class="grid place-items-center text-[#263236] transition hover:bg-[#edf6fa]"
-                          @click="adjustManualActualEntry(project.id, 30)"
-                        >
-                          <svg
-                            class="h-3 w-3"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                          >
-                            <path d="m18 15-6-6-6 6" />
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="実績を30分減らす"
-                          title="実績を30分減らす"
-                          class="grid place-items-center border-t-2 border-[#2c8d98]/30 text-[#263236] transition hover:bg-[#edf6fa]"
-                          @click="adjustManualActualEntry(project.id, -30)"
-                        >
-                          <svg
-                            class="h-3 w-3"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                          >
-                            <path d="m6 9 6 6 6-6" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
                   <NuxtLink
                     :to="{ path: `/projects/${project.id}`, query: { workDate: selectedDate } }"
                     class="ml-auto mt-4 flex w-fit items-center justify-center rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-4 py-2 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984]"
@@ -432,8 +375,6 @@ const {
   loadProjects,
   updateDailyWorkEntry,
   getProjectDailyActualMinutes,
-  getProjectManualActualMinutes,
-  updateManualActualWorkLog,
 } = useProjects();
 const {
   calculateTotalProgress,
@@ -489,6 +430,7 @@ const calendarDays = computed(() => {
   const start = new Date(firstDay);
   start.setDate(firstDay.getDate() - firstDay.getDay());
 
+  // 6週間分を固定で描画して、月送り時にカレンダーの高さが跳ねないようにする。
   return Array.from({ length: 42 }, (_, index) => {
     const date = new Date(start);
     date.setDate(start.getDate() + index);
@@ -521,6 +463,7 @@ const selectedSchedule = computed(() => daySchedule(selectedDate.value));
 
 const editableProjects = computed(() => {
   return projects.value.filter((project) => {
+    // 作業期間外でも、すでに予定や実績がある日は編集できるように残す。
     return isWithinWorkPeriod(project, selectedDate.value) || hasDailyEntry(project, selectedDate.value);
   });
 });
@@ -575,6 +518,7 @@ function daySchedule(dateKey: string): ScheduleItem[] {
   return projects.value.flatMap((project) => {
     const items: ScheduleItem[] = [];
 
+    // 1つのプロジェクトが同じ日に複数の節目を持つ場合は、それぞれ別ラベルで出す。
     if (project.eventDate === dateKey) {
       items.push(toScheduleItem(project, "event"));
     }
@@ -594,6 +538,7 @@ function daySchedule(dateKey: string): ScheduleItem[] {
 function toScheduleItem(project: Project, kind: ScheduleKind): ScheduleItem {
   return {
     projectId: project.id,
+    // イベント日は作品タイトルよりイベント名を優先して、カレンダー上の意味を分かりやすくする。
     title: kind === "event" && project.eventName ? project.eventName : project.title,
     kind,
   };
@@ -604,6 +549,7 @@ function dayTotals(dateKey: string) {
     (sum, project) => {
       const entry = project.dailyWorkEntries[dateKey];
       const actual = getProjectDailyActualMinutes(project.id, dateKey);
+      // 作業期間外の空データは月合計にも日別バーにも含めない。
       if (!entry && actual === 0) return sum;
       if (!isWithinWorkPeriod(project, dateKey) && (entry?.planned ?? 0) === 0 && actual === 0) return sum;
 
@@ -620,6 +566,7 @@ function workBars(dateKey: string) {
   const plannedBars = Math.ceil(totals.planned / workBarUnit);
   const actualBars = Math.ceil(totals.actual / workBarUnit);
   const totalBars = Math.max(plannedBars, actualBars);
+  // 選択中の週以外は最大本数へ圧縮し、月表示の密度を保つ。
   const isCollapsed = !shouldShowAllBars(dateKey) && totalBars > maxCollapsedWorkBars;
   const visibleBars = isCollapsed
     ? maxCollapsedWorkBars
@@ -630,6 +577,7 @@ function workBars(dateKey: string) {
     const fillRatio = totals.planned > 0
       ? totals.actual / totals.planned
       : Number(totals.actual > 0);
+    // 圧縮時は予定と実績の比率を同じ本数の中へ写像して、超過分だけ色を分ける。
     const plannedRatioOfActual = totals.actual > 0
       ? totals.planned / totals.actual
       : 0;
@@ -722,6 +670,7 @@ function barStyle(bar: {
 }
 
 function shouldShowAllBars(dateKey: string) {
+  // 選択中の週だけ詳細表示にして、クリックした日の周辺を読み取りやすくする。
   return getWeekStartKey(dateKey) === getWeekStartKey(selectedDate.value);
 }
 
@@ -758,15 +707,12 @@ function dailyActual(projectId: string) {
   return getProjectDailyActualMinutes(projectId, selectedDate.value);
 }
 
-function manualActualEntry(projectId: string) {
-  return getProjectManualActualMinutes(projectId, selectedDate.value);
-}
-
 function projectRequiredWork(project: Project) {
   return calculateRemainingWork(project.pages, project.workProcessSteps);
 }
 
 function projectPlannedTotal(project: Project) {
+  // 予定の割り振り過ぎを防ぐため、全日付の予定分だけを集計する。
   return Object.values(project.dailyWorkEntries).reduce((sum, entry) => {
     return sum + entry.planned;
   }, 0);
@@ -781,10 +727,12 @@ function maxPlannedEntry(projectId: string) {
   if (!project) return 0;
 
   const current = dailyEntry(projectId);
+  // その日に入力済みの予定は残しつつ、未割り振り分だけ追加可能にする。
   return Math.max(current.planned + projectUnplannedWork(project), 0);
 }
 
 function normalizePlannedEntry(projectId: string, value: number) {
+  // 入力値は0以上、かつ残作業時間を超えない範囲へ丸める。
   return Math.max(0, Math.min(Number.isFinite(value) ? value : 0, maxPlannedEntry(projectId)));
 }
 
@@ -808,23 +756,5 @@ function adjustPlannedEntry(projectId: string, amount: number) {
     ...current,
     planned,
   });
-}
-
-function normalizeManualActualEntry(value: number) {
-  return Math.max(0, Number.isFinite(value) ? value : 0);
-}
-
-function handleManualActualEntry(projectId: string, event: Event) {
-  const input = event.target as HTMLInputElement;
-  const actual = normalizeManualActualEntry(minutesToWork(Number(input.value)));
-  input.value = String(workToMinutes(actual));
-
-  updateManualActualWorkLog(projectId, selectedDate.value, actual);
-}
-
-function adjustManualActualEntry(projectId: string, amount: number) {
-  const actual = normalizeManualActualEntry(manualActualEntry(projectId) + amount);
-
-  updateManualActualWorkLog(projectId, selectedDate.value, actual);
 }
 </script>

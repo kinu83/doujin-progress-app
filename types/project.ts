@@ -35,6 +35,7 @@ export type BookSpec = {
   printer: string;
   printRun: number;
   budget: number;
+  note: string;
 };
 
 export type Project = {
