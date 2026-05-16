@@ -9,5 +9,6 @@ const crunchLevelClasses: Record<CrunchLevelTone, string> = {
 };
 
 export const getCrunchLevelClasses = (tone: string) => {
+  // 保存済みデータに未知のtoneが混ざっても、標準色で表示を継続する。
   return crunchLevelClasses[tone as CrunchLevelTone] ?? crunchLevelClasses.sky;
 };

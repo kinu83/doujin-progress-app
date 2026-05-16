@@ -33,108 +33,56 @@
       </div>
 
       <div v-if="project" class="mt-4 grid gap-6">
-        <section class="rounded-3xl border-4 border-[#2c8d98] bg-white p-8 shadow-[5px_5px_0_rgba(44,141,152,0.16)]">
-          <div class="flex flex-wrap items-start justify-between gap-6">
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-start gap-3">
-                <div class="min-w-0 flex-1">
-                  <div class="flex flex-wrap items-center gap-3">
-                    <h1 class="break-words text-3xl font-black text-[#263236]">
-                      {{ project.title }}
-                    </h1>
-                    <span
-                      v-if="formatEventLabel(project)"
-                      class="rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-3 py-1 text-xs font-black text-[#2c8d98]"
-                    >
-                      {{ formatEventLabel(project) }}
-                    </span>
-                  </div>
-                  <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-b-2 border-dashed border-[#2c8d98] pb-3 text-sm font-black text-[#263236]">
-                    <span>
-                      <span class="text-xs text-[#263236]/60">入稿締切日</span>
-                      <span class="ml-2">{{ formatProjectDate(project.deadline) }}</span>
-                    </span>
-                    <span v-if="project.startDate" class="border-l-2 border-[#2c8d98]/50 pl-4">
-                      <span class="text-xs text-[#263236]/60">作業開始日</span>
-                      <span class="ml-2">{{ formatProjectDate(project.startDate) }}</span>
-                    </span>
-                    <span v-else class="text-[#263236]/50">
-                      作業開始日は未設定です
-                    </span>
-                  </div>
-                  <details class="group mt-3 text-sm font-bold text-[#263236]/70">
-                    <summary class="flex cursor-pointer list-none items-center gap-1 font-black text-[#263236]/70 hover:text-[#2c8d98]">
-                      <span class="text-[10px] transition-transform group-open:rotate-90">
-                        ▶
-                      </span>
-                      <span>本の情報</span>
-                    </summary>
-                    <div class="mt-1">
-                      <dl class="flex flex-wrap gap-x-4 gap-y-1">
-                        <div class="flex gap-1">
-                          <dt>ページ数</dt>
-                          <dd>{{ project.totalPages }}P</dd>
-                        </div>
-                        <div class="flex gap-1">
-                          <dt>作業工程</dt>
-                          <dd>{{ project.workProcessName }}</dd>
-                        </div>
-                        <div class="flex gap-1">
-                          <dt>カラー</dt>
-                          <dd>{{ project.bookSpec.colorMode }}</dd>
-                        </div>
-                        <div v-if="project.bookSpec.coverPaper" class="flex gap-1">
-                          <dt>表紙の紙</dt>
-                          <dd>{{ project.bookSpec.coverPaper }}</dd>
-                        </div>
-                        <div v-if="project.bookSpec.bodyPaper" class="flex gap-1">
-                          <dt>本文の紙</dt>
-                          <dd>{{ project.bookSpec.bodyPaper }}</dd>
-                        </div>
-                        <div v-if="project.bookSpec.printer" class="flex gap-1">
-                          <dt>印刷会社</dt>
-                          <dd>{{ project.bookSpec.printer }}</dd>
-                        </div>
-                        <div v-if="project.bookSpec.printRun" class="flex gap-1">
-                          <dt>発行部数</dt>
-                          <dd>{{ project.bookSpec.printRun }}部</dd>
-                        </div>
-                        <div v-if="project.bookSpec.budget" class="flex gap-1">
-                          <dt>予算</dt>
-                          <dd>{{ project.bookSpec.budget.toLocaleString() }}円</dd>
-                        </div>
-                      </dl>
-                      <button
-                        type="button"
-                        class="mt-2 rounded-lg border-2 border-[#2c8d98] bg-white px-3 py-1 text-xs font-black text-[#2c8d98] shadow-[2px_2px_0_rgba(44,141,152,0.16)] transition hover:-translate-y-0.5 hover:bg-[#edf6fa]"
-                        @click="startBookSpecEdit"
-                      >
-                        編集
-                      </button>
-                    </div>
-                  </details>
+        <section class="rounded-3xl border-4 border-[#2c8d98] bg-white p-5 shadow-[5px_5px_0_rgba(44,141,152,0.16)] sm:p-8">
+          <div class="grid gap-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div class="min-w-0">
+                <div class="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                  <h1 class="break-words text-3xl font-black text-[#263236]">
+                    {{ project.title }}
+                  </h1>
+                  <span
+                    v-if="formatEventLabel(project)"
+                    class="rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-3 py-1 text-xs font-black text-[#2c8d98]"
+                  >
+                    {{ formatEventLabel(project) }}
+                  </span>
                 </div>
+              </div>
 
-                <div class="flex shrink-0 flex-wrap gap-2">
-                  <button
-                    type="button"
-                    class="rounded-xl border-2 border-[#263236] bg-white px-4 py-2 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
-                    @click="startInfoEdit"
-                  >
-                    情報を編集
-                  </button>
-                  <button
-                    type="button"
-                    class="rounded-xl border-2 border-red-500 bg-white px-4 py-2 text-sm font-black text-red-700 shadow-[3px_3px_0_rgba(220,38,38,0.16)] transition hover:-translate-y-0.5 hover:bg-red-50"
-                    @click="openDeleteConfirm"
-                  >
-                    削除
-                  </button>
-                </div>
+              <div class="flex shrink-0 flex-wrap justify-end gap-2">
+                <button
+                  type="button"
+                  class="rounded-xl border-2 border-red-500 bg-white px-4 py-2 text-sm font-black text-red-700 shadow-[3px_3px_0_rgba(220,38,38,0.16)] transition hover:-translate-y-0.5 hover:bg-red-50"
+                  @click="openDeleteConfirm"
+                >
+                  削除
+                </button>
+                <button
+                  type="button"
+                  class="rounded-xl border-2 border-[#263236] bg-white px-4 py-2 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
+                  @click="startInfoEdit"
+                >
+                  情報を編集
+                </button>
               </div>
             </div>
 
-            <div class="shrink-0 text-right font-black text-[#263236]">
+            <div class="grid gap-1 border-b-2 border-dashed border-[#2c8d98] pb-3 text-sm font-black text-[#263236] sm:flex sm:flex-wrap sm:gap-x-4 sm:gap-y-1">
+              <span class="flex flex-wrap gap-x-2">
+                <span class="text-xs text-[#263236]/60">入稿締切日</span>
+                <span>{{ formatProjectDate(project.deadline) }}</span>
+              </span>
+              <span v-if="project.startDate" class="flex flex-wrap gap-x-2 sm:border-l-2 sm:border-[#2c8d98]/50 sm:pl-4">
+                <span class="text-xs text-[#263236]/60">作業開始日</span>
+                <span>{{ formatProjectDate(project.startDate) }}</span>
+              </span>
+              <span v-else class="text-[#263236]/50">
+                作業開始日は未設定です
+              </span>
+            </div>
+
+            <div class="text-right font-black text-[#263236]">
               <p class="text-4xl leading-none">
                 {{ projectProgress }}%
               </p>
@@ -179,26 +127,90 @@
           </div>
 
           <div class="mt-5 grid gap-3 text-sm text-[#263236] md:grid-cols-4">
+            <NuxtLink
+              :to="{ path: '/calendar', query: { date: todayKey } }"
+              class="rounded-2xl border-2 border-[#ff4b1f] bg-[#fff2e3] p-4 font-black shadow-[3px_3px_0_rgba(255,75,31,0.22)] transition hover:-translate-y-0.5 hover:bg-[#fff7ef]"
+            >
+              <span class="block text-xs">今日の必要時間</span>
+              <span class="text-2xl leading-tight text-[#f36b00]">{{ formatWorkDuration(projectDailyWork) }}</span>
+            </NuxtLink>
             <div class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)]">
               <span class="block text-xs">残り日数</span>
               <span class="text-2xl leading-tight text-[#2c8d98]">{{ calculateDaysLeft(project.deadline) }}日</span>
             </div>
             <div class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)]">
-              <span class="block text-xs">残作業時間</span>
-              <span class="text-2xl leading-tight text-[#2c8d98]">{{ formatWorkDuration(projectRemainingWork) }}</span>
-            </div>
-            <div class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)]">
               <span class="block text-xs">残ページ数</span>
               <span class="text-2xl leading-tight text-[#2c8d98]">{{ formatRemainingPages(project) }}P</span>
             </div>
-            <NuxtLink
-              :to="{ path: '/calendar', query: { date: selectedWorkDateKey } }"
-              class="rounded-2xl border-2 border-[#ff4b1f] bg-[#fff2e3] p-4 font-black shadow-[3px_3px_0_rgba(255,75,31,0.22)] transition hover:-translate-y-0.5 hover:bg-[#fff7ef]"
+            <div class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)]">
+              <span class="block text-xs">残り作業時間</span>
+              <span class="text-2xl leading-tight text-[#2c8d98]">{{ formatWorkDuration(projectRemainingWork) }}</span>
+            </div>
+          </div>
+
+          <div class="mt-4 text-sm font-bold text-[#263236]/70">
+            <div
+              v-if="isMemoOpen"
+              class="rounded-2xl border-2 border-[#2c8d98]/30 bg-white px-4 py-3"
             >
-              <span class="block text-xs">{{ selectedWorkDateSummaryLabel }}</span>
-              <span class="text-2xl leading-tight text-[#f36b00]">{{ formatWorkDuration(selectedWorkDailyEntry.actual) }}</span>
-              <span class="block text-xs">予定 {{ formatWorkDuration(selectedWorkDailyEntry.planned) }}</span>
-            </NuxtLink>
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 font-black text-[#263236] transition hover:text-[#2c8d98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2c8d98] focus-visible:ring-offset-2"
+                  :aria-expanded="isBookSpecOpen"
+                  aria-label="本の情報を開閉"
+                  @click="isBookSpecOpen = !isBookSpecOpen"
+                >
+                  <span
+                    class="text-xs transition-transform"
+                    :class="{ 'rotate-90': isBookSpecOpen }"
+                    aria-hidden="true"
+                  >
+                    ▶
+                  </span>
+                  <span>本の情報</span>
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg border-2 border-[#2c8d98] bg-white px-3 py-1 text-xs font-black text-[#2c8d98] shadow-[2px_2px_0_rgba(44,141,152,0.16)] transition hover:-translate-y-0.5 hover:bg-[#edf6fa]"
+                  @click="startBookSpecEdit"
+                >
+                  編集
+                </button>
+              </div>
+              <dl
+                v-if="isBookSpecOpen"
+                class="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2"
+              >
+                <div
+                  v-for="item in bookSpecItems"
+                  :key="item.label"
+                  class="min-w-0 grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3"
+                >
+                  <dt class="text-xs font-black text-[#263236]/55">
+                    {{ item.label }}
+                  </dt>
+                  <dd class="whitespace-pre-wrap break-words text-sm font-black text-[#263236]">
+                    {{ item.value }}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+            <button
+              type="button"
+              class="mx-auto mt-3 flex w-fit items-center px-3 py-1 text-sm leading-none text-[#2c8d98] transition hover:text-[#237984] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2c8d98] focus-visible:ring-offset-2"
+              :aria-expanded="isMemoOpen"
+              aria-label="メモ欄を開閉"
+              @click="isMemoOpen = !isMemoOpen"
+            >
+              <span
+                class="transition-transform"
+                :class="{ 'rotate-180': isMemoOpen }"
+                aria-hidden="true"
+              >
+                ▼
+              </span>
+            </button>
           </div>
         </section>
 
@@ -306,14 +318,14 @@
         <Teleport to="body">
           <div
             v-if="isEditingInfo"
-            class="fixed inset-0 z-50 grid place-items-center bg-[#263236]/50 px-4 py-6"
+            class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-[#263236]/50 px-4 py-6"
             @click.self="cancelInfoEdit"
           >
             <form
-              class="w-full max-w-xl overflow-hidden rounded-3xl border-4 border-[#2c8d98] bg-white shadow-[5px_5px_0_rgba(44,141,152,0.18)]"
+              class="flex max-h-[calc(100dvh-3rem)] w-full max-w-xl flex-col overflow-hidden rounded-3xl border-4 border-[#2c8d98] bg-white shadow-[5px_5px_0_rgba(44,141,152,0.18)]"
               @submit.prevent="handleInfoSubmit"
             >
-              <div class="border-b-2 border-dashed border-[#2c8d98] px-6 py-5">
+              <div class="shrink-0 border-b-2 border-dashed border-[#2c8d98] px-6 py-5">
                 <h2 class="text-lg font-black text-[#263236]">
                   プロジェクト情報を編集
                 </h2>
@@ -322,7 +334,7 @@
                 </p>
               </div>
 
-              <div class="grid gap-4 px-6 py-5 md:grid-cols-2">
+              <div class="grid gap-4 overflow-y-auto px-6 py-5 md:grid-cols-2">
                 <label class="grid gap-2 md:col-span-2">
                   <span class="text-sm font-black text-[#263236]">イベント名</span>
                   <input
@@ -429,7 +441,7 @@
                 </p>
               </div>
 
-              <div class="flex flex-col-reverse gap-3 border-t-2 border-dashed border-[#2c8d98] px-6 py-4 sm:flex-row sm:justify-end">
+              <div class="shrink-0 flex flex-col-reverse gap-3 border-t-2 border-dashed border-[#2c8d98] px-6 py-4 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   class="rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
@@ -452,14 +464,14 @@
         <Teleport to="body">
           <div
             v-if="isEditingBookSpec"
-            class="fixed inset-0 z-50 grid place-items-center bg-[#263236]/50 px-4 py-6"
+            class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-[#263236]/50 px-4 py-6"
             @click.self="cancelBookSpecEdit"
           >
             <form
-              class="w-full max-w-2xl overflow-hidden rounded-3xl border-4 border-[#2c8d98] bg-white shadow-[5px_5px_0_rgba(44,141,152,0.18)]"
+              class="flex max-h-[calc(100dvh-3rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border-4 border-[#2c8d98] bg-white shadow-[5px_5px_0_rgba(44,141,152,0.18)]"
               @submit.prevent="handleBookSpecSubmit"
             >
-              <div class="border-b-2 border-dashed border-[#2c8d98] px-6 py-5">
+              <div class="shrink-0 border-b-2 border-dashed border-[#2c8d98] px-6 py-5">
                 <h2 class="text-lg font-black text-[#263236]">
                   本の情報を編集
                 </h2>
@@ -468,7 +480,7 @@
                 </p>
               </div>
 
-              <div class="grid gap-4 px-6 py-5 md:grid-cols-2">
+              <div class="grid gap-4 overflow-y-auto px-6 py-5 md:grid-cols-2">
                 <label class="grid gap-2">
                   <span class="text-sm font-black text-[#263236]">ページ数</span>
                   <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
@@ -562,9 +574,18 @@
                     class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
                 </label>
+
+                <label class="grid gap-2 md:col-span-2">
+                  <span class="text-sm font-black text-[#263236]">メモ</span>
+                  <textarea
+                    v-model="bookSpecForm.note"
+                    rows="5"
+                    class="resize-y rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold leading-6 text-[#263236] outline-none transition focus:border-[#2c8d98]"
+                  />
+                </label>
               </div>
 
-              <div class="flex flex-col-reverse gap-3 border-t-2 border-dashed border-[#2c8d98] px-6 py-4 sm:flex-row sm:justify-end">
+              <div class="shrink-0 flex flex-col-reverse gap-3 border-t-2 border-dashed border-[#2c8d98] px-6 py-4 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   class="rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
@@ -619,6 +640,7 @@ const {
   calculateTotalProgress,
   calculateRemainingWork,
   calculateDaysLeft,
+  calculateDailyWork,
   calculateCrunchLevel,
   calculatePageProgress,
   formatWorkDuration,
@@ -642,9 +664,15 @@ const projectRemainingWork = computed(() => {
 
   return calculateRemainingWork(project.value.pages, project.value.workProcessSteps);
 });
+const projectDailyWork = computed(() => {
+  if (!project.value) return 0;
+
+  return calculateDailyWork(project.value.pages, project.value.deadline, project.value.workProcessSteps);
+});
 const projectCrunchLevel = computed(() => {
   const currentProject = project.value;
 
+  // 設定画面のしきい値を反映して、作品ごとに現在の危険度を再計算する。
   return calculateCrunchLevel(
     currentProject?.pages ?? [],
     currentProject?.deadline ?? "",
@@ -654,6 +682,7 @@ const projectCrunchLevel = computed(() => {
   );
 });
 const statuses = computed<PageStatus[]>(() => {
+  // ページ進捗の入力候補は、プロジェクトに保存された工程定義から作る。
   return createStatusList(project.value?.workProcessSteps);
 });
 const todayKey = computed(() => formatDateKey(new Date()));
@@ -662,6 +691,7 @@ const selectedWorkDateKey = computed(() => {
     ? route.query.workDate[0]
     : route.query.workDate;
 
+  // カレンダーから来た日付だけを採用し、直接アクセス時は今日の実績入力にする。
   return isDateKey(queryValue) ? queryValue : todayKey.value;
 });
 const selectedWorkDailyEntry = computed(() => {
@@ -679,6 +709,7 @@ const selectedWorkDailyEntry = computed(() => {
 
   return {
     planned: entry.planned,
+    // 実績はdailyWorkEntriesのキャッシュではなく、ログ優先の集計値を表示する。
     actual: getProjectDailyActualMinutes(project.value.id, selectedWorkDateKey.value),
   };
 });
@@ -694,8 +725,64 @@ const selectedWorkDateSummaryLabel = computed(() => {
     ? "今日の作業時間"
     : `${selectedWorkDateLabel.value}の作業時間`;
 });
+const formatBookSpecText = (value: string | number, unit = "") => {
+  const text = typeof value === "number"
+    ? value > 0 ? `${value.toLocaleString()}${unit}` : ""
+    : value.trim();
+
+  return {
+    value: text,
+    isEmpty: !text,
+  };
+};
+const bookSpecItems = computed(() => {
+  if (!project.value) return [];
+
+  const currentProject = project.value;
+
+  return [
+    {
+      label: "ページ数",
+      value: `${currentProject.totalPages.toLocaleString()}P`,
+      isEmpty: false,
+    },
+    {
+      label: "作業工程",
+      ...formatBookSpecText(currentProject.workProcessName),
+    },
+    {
+      label: "カラー",
+      ...formatBookSpecText(currentProject.bookSpec.colorMode),
+    },
+    {
+      label: "表紙の紙",
+      ...formatBookSpecText(currentProject.bookSpec.coverPaper),
+    },
+    {
+      label: "本文の紙",
+      ...formatBookSpecText(currentProject.bookSpec.bodyPaper),
+    },
+    {
+      label: "印刷会社",
+      ...formatBookSpecText(currentProject.bookSpec.printer),
+    },
+    {
+      label: "発行部数",
+      ...formatBookSpecText(currentProject.bookSpec.printRun, "部"),
+    },
+    {
+      label: "予算",
+      ...formatBookSpecText(currentProject.bookSpec.budget, "円"),
+    },
+    {
+      label: "メモ",
+      ...formatBookSpecText(currentProject.bookSpec.note),
+    },
+  ].filter((item) => !item.isEmpty);
+});
 
 const formatRemainingPages = (project: NonNullable<typeof project.value>) => {
+  // 最後の工程に到達したページだけを完了ページとして数える。
   const finalStatus = project.workProcessSteps[project.workProcessSteps.length - 1]?.name;
   const completedPages = project.pages.filter((page) => page.status === finalStatus).length;
   const remainingPages = Math.max(project.totalPages - completedPages, 0);
@@ -706,6 +793,8 @@ const formatRemainingPages = (project: NonNullable<typeof project.value>) => {
 const isEditingInfo = ref(false);
 const isEditingBookSpec = ref(false);
 const isConfirmingDelete = ref(false);
+const isMemoOpen = ref(false);
+const isBookSpecOpen = ref(false);
 const editEventName = ref("");
 const editTitle = ref("");
 const editStartDate = ref("");
@@ -721,6 +810,7 @@ const bookSpecForm = reactive({
   printer: "",
   printRun: 0,
   budget: 0,
+  note: "",
 });
 
 const isStartDateAfterDeadline = computed(() => {
@@ -767,6 +857,7 @@ const fillBookSpecForm = () => {
   bookSpecForm.printer = project.value.bookSpec.printer;
   bookSpecForm.printRun = project.value.bookSpec.printRun;
   bookSpecForm.budget = project.value.bookSpec.budget;
+  bookSpecForm.note = project.value.bookSpec.note;
 };
 
 const startInfoEdit = () => {
@@ -775,6 +866,7 @@ const startInfoEdit = () => {
 };
 
 const cancelInfoEdit = () => {
+  // キャンセル時は編集中の入力を破棄して、保存済みの値へ戻す。
   fillInfoForm();
   isEditingInfo.value = false;
 };
@@ -785,6 +877,7 @@ const startBookSpecEdit = () => {
 };
 
 const cancelBookSpecEdit = () => {
+  // 仕様編集も同じく、モーダルを閉じる前にフォームを保存済み状態へ戻す。
   fillBookSpecForm();
   isEditingBookSpec.value = false;
 };
@@ -826,6 +919,7 @@ const handleInfoSubmit = () => {
   if (!project.value) return;
 
   if (!canSaveInfo.value) {
+    // HTML制約だけでなく、日付同士の関係もcomputedの結果で止める。
     return;
   }
 
@@ -857,6 +951,7 @@ const handleBookSpecSubmit = () => {
     printer: bookSpecForm.printer,
     printRun: bookSpecForm.printRun,
     budget: bookSpecForm.budget,
+    note: bookSpecForm.note,
   });
 
   if (updated) {
@@ -868,6 +963,7 @@ const updatePageStatusWithDailySync = (
   pageNumber: number,
   nextStatus: PageStatus
 ) => {
+  // ページ進捗の変更を、現在選択中の日付の作業ログとして同時に残す。
   updatePageStatus(String(route.params.id), pageNumber, nextStatus, {
     workDate: selectedWorkDateKey.value,
     syncDailyActual: true,
@@ -893,12 +989,14 @@ const getStatusFromPointerEvent = (event: MouseEvent) => {
   const rect = button.getBoundingClientRect();
   const pointerX = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
   const ratio = rect.width === 0 ? 0 : pointerX / rect.width;
+  // クリック位置を最も近い工程へ丸めることで、バー全体をステップ入力として使う。
   const statusIndex = Math.round(ratio * (statuses.value.length - 1));
 
   return statuses.value[statusIndex];
 };
 
 const handleProgressBarClick = (pageNumber: number, event: MouseEvent) => {
+  // キーボード操作から発火したclickはkeydown側で処理済みなので重複更新を避ける。
   if (event.detail === 0) return;
 
   updatePageStatusWithDailySync(pageNumber, getStatusFromPointerEvent(event));
@@ -923,6 +1021,7 @@ const handleProgressBarKeydown = (
   if (nextIndex === undefined) return;
 
   event.preventDefault();
+  // キーボード操作でもスライダーの範囲外へ出ないように丸める。
   const boundedIndex = Math.min(Math.max(nextIndex, 0), statuses.value.length - 1);
   updatePageStatusWithDailySync(pageNumber, statuses.value[boundedIndex]);
 };
