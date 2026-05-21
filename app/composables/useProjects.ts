@@ -330,7 +330,8 @@ export const useProjects = () => {
 
   const enqueueRemoteWrite = (
     write: () => Promise<void>,
-    failureMessage = "プロジェクトの保存に失敗しました。"
+    failureMessage = "プロジェクトの保存に失敗しました。",
+    rethrow = false
   ) => {
     if (import.meta.server) return Promise.resolve();
 
@@ -343,6 +344,9 @@ export const useProjects = () => {
       })
       .catch((error) => {
         projectsError.value = error instanceof Error ? error.message : failureMessage;
+        if (rethrow) {
+          throw error;
+        }
       });
 
     return remoteProjectWriteQueue;
@@ -360,7 +364,7 @@ export const useProjects = () => {
     });
   };
 
-  const persistProject = (project: Project) => {
+  const persistProject = (project: Project, rethrow = false) => {
     const projectSnapshot = cloneProject(project);
 
     return enqueueRemoteWrite(async () => {
@@ -369,7 +373,7 @@ export const useProjects = () => {
 
       const { $firestore } = useNuxtApp();
       await saveRemoteProject($firestore, user.uid, projectSnapshot);
-    });
+    }, "プロジェクトの保存に失敗しました。", rethrow);
   };
 
   const persistWorkLog = (workLog: WorkLog) => {
@@ -401,7 +405,7 @@ export const useProjects = () => {
     }, "作業履歴の削除に失敗しました。");
   };
 
-  const persistProjectDeletes = (projectIds: string[]) => {
+  const persistProjectDeletes = (projectIds: string[], rethrow = false) => {
     return enqueueRemoteWrite(async () => {
       const user = await ensureAuthenticated();
       if (!user) return;
@@ -410,7 +414,7 @@ export const useProjects = () => {
       await Promise.all(
         projectIds.map((projectId) => deleteRemoteProject($firestore, user.uid, projectId))
       );
-    }, "プロジェクトの削除に失敗しました。");
+    }, "プロジェクトの削除に失敗しました。", rethrow);
   };
 
   const loadProjects = () => {
@@ -469,7 +473,7 @@ export const useProjects = () => {
     void persistProject(project);
   };
 
-  const createProject = (input: CreateProjectInput) => {
+  const createProject = async (input: CreateProjectInput) => {
     loadSettings();
     // 指定がない場合は設定画面のデフォルト工程を使って新規プロジェクトを作る。
     const workProcess = input.workProcessId
@@ -503,7 +507,15 @@ export const useProjects = () => {
     };
 
     projects.value.push(project);
-    saveProject(project);
+    writeLocalProjects(projects.value);
+
+    try {
+      await persistProject(project, true);
+    } catch (error) {
+      projects.value = projects.value.filter((item) => item.id !== project.id);
+      writeLocalProjects(projects.value);
+      throw error;
+    }
 
     return project;
   };
@@ -512,16 +524,25 @@ export const useProjects = () => {
     return projects.value.find((project) => project.id === id);
   };
 
-  const deleteProject = (projectId: string) => {
+  const deleteProject = async (projectId: string) => {
     const projectIndex = projects.value.findIndex(
       (project) => project.id === projectId
     );
     if (projectIndex === -1) return false;
 
-    // 先にローカル状態から消して、リモート削除は保存キューへ任せる。
-    projects.value.splice(projectIndex, 1);
+    // 先にローカル状態から消し、リモート削除に失敗したら巻き戻す。
+    const [deletedProject] = projects.value.splice(projectIndex, 1);
+    if (!deletedProject) return false;
+
     writeLocalProjects(projects.value);
-    void persistProjectDeletes([projectId]);
+
+    try {
+      await persistProjectDeletes([projectId], true);
+    } catch (error) {
+      projects.value.splice(projectIndex, 0, deletedProject);
+      writeLocalProjects(projects.value);
+      throw error;
+    }
 
     return true;
   };

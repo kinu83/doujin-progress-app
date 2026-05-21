@@ -52,7 +52,8 @@ service cloud.firestore {
           "bodyPaper",
           "printer",
           "printRun",
-          "budget"
+          "budget",
+          "note"
         ])
         && bookSpec.keys().hasAll([
           "colorMode",
@@ -60,14 +61,16 @@ service cloud.firestore {
           "bodyPaper",
           "printer",
           "printRun",
-          "budget"
+          "budget",
+          "note"
         ])
         && bookSpec.colorMode in ["フルカラー", "モノクロ"]
         && isString(bookSpec.coverPaper, 120)
         && isString(bookSpec.bodyPaper, 120)
         && isString(bookSpec.printer, 120)
         && isNonNegativeInt(bookSpec.printRun, 1000000)
-        && isNonNegativeInt(bookSpec.budget, 100000000);
+        && isNonNegativeInt(bookSpec.budget, 100000000)
+        && isString(bookSpec.note, 400);
     }
 
     function isValidProject(projectId) {
