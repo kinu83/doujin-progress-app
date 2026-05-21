@@ -12,15 +12,12 @@
         <div class="flex flex-wrap items-start justify-between gap-3 border-b-2 border-dashed border-[#2c8d98] pb-5">
           <div>
             <h1 class="text-3xl font-black text-[#263236]">
-              新規プロジェクト作成
+              新規作成
             </h1>
             <p class="mt-2 text-sm font-bold text-[#263236]/60">
-              イベント情報、作品タイトル、作業期間を登録すると進捗管理を始められます。
+              作品タイトル、締切日を登録してみましょう！
             </p>
           </div>
-          <span class="rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-3 py-1 text-xs font-black text-[#2c8d98]">
-            初期ページ数 {{ settings.defaultTotalPages }}P
-          </span>
         </div>
 
         <form class="mt-8 grid gap-5" @submit.prevent="handleSubmit">
@@ -109,10 +106,10 @@
           </section>
 
           <p
-            v-if="formError"
+            v-if="displayError"
             class="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700"
           >
-            {{ formError }}
+            {{ displayError }}
           </p>
 
           <div class="mt-2 flex flex-wrap gap-3">
@@ -127,7 +124,7 @@
               :disabled="!canSubmit"
               class="rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-5 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984] disabled:cursor-not-allowed disabled:border-[#d7d7d7] disabled:bg-[#d7d7d7] disabled:shadow-none"
             >
-              作成して詳細へ進む
+              {{ isSubmitting ? "作成中..." : "作成して詳細へ進む" }}
             </button>
           </div>
         </form>
@@ -150,6 +147,8 @@ const eventDate = ref("");
 const deadline = ref("");
 const totalPages = ref(settings.value.defaultTotalPages);
 const workProcessId = ref(settings.value.defaultWorkProcessId);
+const submitError = ref("");
+const isSubmitting = ref(false);
 
 const formError = computed(() => {
   if (startDate.value && deadline.value && startDate.value > deadline.value) {
@@ -163,7 +162,8 @@ const formError = computed(() => {
   return "";
 });
 
-const canSubmit = computed(() => !formError.value);
+const displayError = computed(() => submitError.value || formError.value);
+const canSubmit = computed(() => !formError.value && !isSubmitting.value);
 
 onMounted(() => {
   loadSettings();
@@ -172,19 +172,28 @@ onMounted(() => {
   workProcessId.value = settings.value.defaultWorkProcessId;
 });
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (!canSubmit.value) return;
 
-  const project = createProject({
-    eventName: eventName.value.trim(),
-    title: title.value.trim(),
-    startDate: startDate.value,
-    eventDate: eventDate.value,
-    deadline: deadline.value,
-    totalPages: totalPages.value,
-    workProcessId: workProcessId.value,
-  });
+  submitError.value = "";
+  isSubmitting.value = true;
 
-  router.push(`/projects/${project.id}`);
+  try {
+    const project = await createProject({
+      eventName: eventName.value.trim(),
+      title: title.value.trim(),
+      startDate: startDate.value,
+      eventDate: eventDate.value,
+      deadline: deadline.value,
+      totalPages: totalPages.value,
+      workProcessId: workProcessId.value,
+    });
+
+    await router.push(`/projects/${project.id}`);
+  } catch (error) {
+    submitError.value = error instanceof Error ? error.message : "プロジェクトの作成に失敗しました。";
+  } finally {
+    isSubmitting.value = false;
+  }
 };
 </script>

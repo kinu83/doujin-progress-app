@@ -293,6 +293,12 @@
                 <p class="text-sm font-bold leading-6 text-[#263236]/70">
                   「{{ project.title }}」とページ別進捗は完全に削除されます。この操作は元に戻せません。
                 </p>
+                <p
+                  v-if="deleteError"
+                  class="mt-3 rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700"
+                >
+                  {{ deleteError }}
+                </p>
               </div>
 
               <div class="flex flex-col-reverse gap-3 border-t-2 border-red-100 px-6 py-4 sm:flex-row sm:justify-end">
@@ -305,10 +311,11 @@
                 </button>
                 <button
                   type="button"
+                  :disabled="isDeleting"
                   class="rounded-xl border-2 border-red-700 bg-red-600 px-5 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(220,38,38,0.28)] transition hover:-translate-y-0.5 hover:bg-red-700"
                   @click="handleDelete"
                 >
-                  削除する
+                  {{ isDeleting ? "削除中..." : "削除する" }}
                 </button>
               </div>
             </section>
@@ -793,6 +800,8 @@ const formatRemainingPages = (project: NonNullable<typeof project.value>) => {
 const isEditingInfo = ref(false);
 const isEditingBookSpec = ref(false);
 const isConfirmingDelete = ref(false);
+const isDeleting = ref(false);
+const deleteError = ref("");
 const isMemoOpen = ref(false);
 const isBookSpecOpen = ref(false);
 const editEventName = ref("");
@@ -899,6 +908,7 @@ const decrementBookSpecTotalPages = () => {
 };
 
 const openDeleteConfirm = () => {
+  deleteError.value = "";
   isConfirmingDelete.value = true;
 };
 
@@ -906,13 +916,23 @@ const closeDeleteConfirm = () => {
   isConfirmingDelete.value = false;
 };
 
-const handleDelete = () => {
+const handleDelete = async () => {
   if (!project.value) return;
+  if (isDeleting.value) return;
 
-  const deleted = deleteProject(project.value.id);
-  if (!deleted) return;
+  deleteError.value = "";
+  isDeleting.value = true;
 
-  router.push("/");
+  try {
+    const deleted = await deleteProject(project.value.id);
+    if (!deleted) return;
+
+    await router.push("/");
+  } catch (error) {
+    deleteError.value = error instanceof Error ? error.message : "プロジェクトの削除に失敗しました。";
+  } finally {
+    isDeleting.value = false;
+  }
 };
 
 const handleInfoSubmit = () => {
