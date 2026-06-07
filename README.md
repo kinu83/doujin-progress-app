@@ -1,5 +1,10 @@
 # 同人原稿進捗管理アプリ 『修羅場メーター』　
 
+<img width="484" height="260" alt="Image" src="https://github.com/user-attachments/assets/1fe2ebf9-cb1d-4a31-8eee-5af0b8724b6c" />
+<img width="484" height="260" alt="Image" src="https://github.com/user-attachments/assets/ec014d58-d741-4677-92f1-0d6c6c5375c2" />
+<img width="484" height="260" alt="Image" src="https://github.com/user-attachments/assets/7c2c82a1-4af0-459d-ae98-b1eb16aa5544" />
+
+
 ### 「原稿の"間に合う気がする"を、現実にする」
 
 修羅場メーターは、同人原稿における**締切までの作業時間を「修羅場レベル」として可視化**する、原稿進捗管理Webアプリです。
