@@ -343,13 +343,19 @@
                     </span>
                   </div>
 
+                  <p
+                    v-if="user?.isAnonymous"
+                    class="mt-5 rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-sm font-black leading-6 text-amber-800"
+                  >
+                    お試し利用中です。現在のお試しデータはGoogleアカウントへ引き継げません。
+                  </p>
                   <button
                     type="button"
-                    class="mt-5 w-fit rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-4 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984] disabled:cursor-not-allowed disabled:opacity-50"
-                    :disabled="isGoogleAuthLoading || isGoogleLinked"
-                    @click="handleGoogleSignIn"
+                    class="mt-5 w-fit rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="isSignOutLoading"
+                    @click="handleSignOut"
                   >
-                    {{ googleButtonLabel }}
+                    {{ signOutButtonLabel }}
                   </button>
                 </div>
 
@@ -358,12 +364,6 @@
                   class="rounded-xl border-2 border-emerald-500 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700"
                 >
                   {{ accountMessage }}
-                </p>
-                <p
-                  v-if="authError"
-                  class="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700"
-                >
-                  {{ authError }}
                 </p>
               </section>
 
@@ -673,13 +673,19 @@
                 </span>
               </div>
 
+              <p
+                v-if="user?.isAnonymous"
+                class="mt-5 rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-sm font-black leading-6 text-amber-800"
+              >
+                お試し利用中です。現在のお試しデータはGoogleアカウントへ引き継げません。
+              </p>
               <button
                 type="button"
-                class="mt-5 w-fit rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-4 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984] disabled:cursor-not-allowed disabled:opacity-50"
-                :disabled="isGoogleAuthLoading || isGoogleLinked"
-                @click="handleGoogleSignIn"
+                class="mt-5 w-fit rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="isSignOutLoading"
+                @click="handleSignOut"
               >
-                {{ googleButtonLabel }}
+                {{ signOutButtonLabel }}
               </button>
             </div>
 
@@ -688,12 +694,6 @@
               class="rounded-xl border-2 border-emerald-500 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700"
             >
               {{ accountMessage }}
-            </p>
-            <p
-              v-if="authError"
-              class="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700"
-            >
-              {{ authError }}
             </p>
           </section>
 
@@ -771,9 +771,8 @@ const {
 const {
   user,
   isAuthReady,
-  authError,
   initAuth,
-  signInWithGoogle,
+  signOut,
 } = useFirebaseAuth();
 
 const settingSections = [
@@ -794,8 +793,8 @@ const settingSections = [
   {
     id: "account",
     title: "アカウント",
-    description: "Google 連携",
-    detail: "Google アカウントとの接続状態を管理します。",
+    description: "ログイン状態",
+    detail: "現在のログイン方法と接続状態を確認します。",
     available: true,
   },
   {
@@ -824,7 +823,7 @@ const workProcessSteps = ref<WorkProcessStep[]>([
 ]);
 const savedMessage = ref("");
 const accountMessage = ref("");
-const isGoogleAuthLoading = ref(false);
+const isSignOutLoading = ref(false);
 const isConfirmingReset = ref(false);
 
 const isGoogleLinked = computed(() => {
@@ -832,19 +831,18 @@ const isGoogleLinked = computed(() => {
 });
 
 const accountName = computed(() => {
-  return user.value?.displayName || user.value?.email || "匿名アカウント";
+  return user.value?.displayName || user.value?.email || (user.value?.isAnonymous ? "お試しユーザー" : "未ログイン");
 });
 
 const accountStatusLabel = computed(() => {
   if (!isAuthReady.value) return "認証状態を確認しています。";
-  if (isGoogleLinked.value) return user.value?.email ? `Google 連携済み: ${user.value.email}` : "Google 連携済みです。";
-  return "匿名アカウントで利用中です。";
+  if (isGoogleLinked.value) return user.value?.email ? `Googleログイン中: ${user.value.email}` : "Googleログイン中です。";
+  if (user.value?.isAnonymous) return "ユーザー名によるお試し利用中です。";
+  return "未ログインです。";
 });
 
-const googleButtonLabel = computed(() => {
-  if (isGoogleLinked.value) return "Google 連携済み";
-  if (isGoogleAuthLoading.value) return "接続中...";
-  return "Google で連携する";
+const signOutButtonLabel = computed(() => {
+  return isSignOutLoading.value ? "ログアウト中..." : "ログアウト";
 });
 
 const syncForm = () => {
@@ -966,22 +964,16 @@ const crunchThresholdError = computed(() => {
   return "";
 });
 
-const handleGoogleSignIn = async () => {
-  isGoogleAuthLoading.value = true;
+const handleSignOut = async () => {
+  isSignOutLoading.value = true;
   accountMessage.value = "";
 
   try {
-    await signInWithGoogle();
-    await loadSettings();
-    await loadProjects();
-    syncForm();
-    accountMessage.value = isGoogleLinked.value
-      ? "Google アカウントと連携しました。"
-      : "Google アカウントでログインしました。";
+    await signOut();
   } catch {
     accountMessage.value = "";
   } finally {
-    isGoogleAuthLoading.value = false;
+    isSignOutLoading.value = false;
   }
 };
 
