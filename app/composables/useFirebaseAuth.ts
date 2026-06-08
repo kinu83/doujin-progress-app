@@ -11,6 +11,7 @@ import {
   saveUsernameUserProfile,
 } from "~/repositories/userRepository";
 
+// 認証状態の初期確認が複数回実行されないよう、初回確認のPromiseを共有する。
 let authReadyPromise: Promise<User | null> | null = null;
 
 export const useFirebaseAuth = () => {
@@ -18,13 +19,20 @@ export const useFirebaseAuth = () => {
   const isAuthReady = useState("firebase-auth-ready", () => false);
   const authError = useState<string>("firebase-auth-error", () => "");
 
+  const completeSignIn = (currentUser: User) => {
+    user.value = currentUser;
+    isAuthReady.value = true;
+    authError.value = "";
+    authReadyPromise = Promise.resolve(currentUser);
+  };
+
   const initAuth = () => {
     // SSRではFirebase Authのブラウザ依存APIを実行できないため、クライアント側だけで認証状態を確認する。
     if (import.meta.server) return Promise.resolve(null);
     if (authReadyPromise) return authReadyPromise;
 
     const { $firebaseAuth } = useNuxtApp();
-
+    // Firebaseに保存されているログイン状態を確認し、ブラウザ更新後もユーザー情報を復元する。
     authReadyPromise = new Promise((resolve) => {
       const unsubscribe = onAuthStateChanged(
         $firebaseAuth,
@@ -71,6 +79,7 @@ export const useFirebaseAuth = () => {
     return getCurrentUser();
   };
 
+// ユーザー名ログインは正式な認証ではなく、ポートフォリオ確認用のお試しログインとして扱う
   const signInWithUsername = async (username: string) => {
     // SSRではFirebase Authのブラウザ依存APIを実行できないため、匿名認証もクライアント側だけで行う。
     if (import.meta.server) return null;
@@ -88,12 +97,10 @@ export const useFirebaseAuth = () => {
       const credential = await signInAnonymously($firebaseAuth);
       // ユーザー名認証はポートフォリオ確認用の簡易ログインとして扱う。
       // 正式公開時はGoogle認証のみを想定しているため、Googleアカウントへのデータ引き継ぎは行わない。
-      await saveUsernameUserProfile($firestore, credential.user, normalizedUsername);
-
-      user.value = credential.user;
-      isAuthReady.value = true;
-      authError.value = "";
-      authReadyPromise = Promise.resolve(credential.user);
+      completeSignIn(credential.user);
+      saveUsernameUserProfile($firestore, credential.user, normalizedUsername).catch((error) => {
+        console.warn("Failed to save username profile.", error);
+      });
 
       return credential.user;
     } catch (error) {
@@ -114,12 +121,10 @@ export const useFirebaseAuth = () => {
 
     try {
       const credential = await signInWithPopup($firebaseAuth, provider);
-      await saveGoogleUserProfile($firestore, credential.user);
-
-      user.value = credential.user;
-      isAuthReady.value = true;
-      authError.value = "";
-      authReadyPromise = Promise.resolve(credential.user);
+      completeSignIn(credential.user);
+      saveGoogleUserProfile($firestore, credential.user).catch((error) => {
+        console.warn("Failed to save Google profile.", error);
+      });
 
       return credential.user;
     } catch (error) {

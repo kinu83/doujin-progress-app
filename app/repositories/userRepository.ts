@@ -2,8 +2,6 @@ import type { User } from "firebase/auth";
 import type { Firestore } from "firebase/firestore";
 import {
   doc,
-  getDoc,
-  serverTimestamp,
   setDoc,
 } from "firebase/firestore";
 
@@ -17,7 +15,6 @@ export const saveUsernameUserProfile = async (
   username: string
 ) => {
   const ref = userDoc(db, user.uid);
-  const snapshot = await getDoc(ref);
 
   await setDoc(
     ref,
@@ -25,8 +22,7 @@ export const saveUsernameUserProfile = async (
       username,
       authType: "username",
       isGuest: true,
-      createdAt: snapshot.exists() ? snapshot.data().createdAt : serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      updatedAt: new Date().toISOString(),
     },
     { merge: true }
   );
@@ -34,7 +30,6 @@ export const saveUsernameUserProfile = async (
 
 export const saveGoogleUserProfile = async (db: Firestore, user: User) => {
   const ref = userDoc(db, user.uid);
-  const snapshot = await getDoc(ref);
 
   await setDoc(
     ref,
@@ -44,8 +39,7 @@ export const saveGoogleUserProfile = async (db: Firestore, user: User) => {
       email: user.email,
       displayName: user.displayName,
       photoURL: user.photoURL,
-      createdAt: snapshot.exists() ? snapshot.data().createdAt : serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      updatedAt: new Date().toISOString(),
     },
     { merge: true }
   );

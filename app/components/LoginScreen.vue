@@ -8,7 +8,7 @@
           class="mx-auto h-auto w-full max-w-[300px] drop-shadow-[3px_3px_0_#edf6fa]"
         >
         <p class="mt-5 text-lg font-black text-[#263236]">
-          ログインして利用を開始
+          ログインして始める
         </p>
       </div>
 
@@ -36,6 +36,12 @@
             >
               {{ isUsernameLoading ? "開始中..." : "ユーザー名でお試し利用" }}
             </button>
+           <p
+          v-if="displayError"
+          class="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700"
+          >
+          {{ displayError }}
+        </p>
           </form>
         </div>
         <button
@@ -48,44 +54,29 @@
           <span>{{ isGoogleLoading ? "ログイン中..." : "Googleログイン" }}</span>
         </button>
 
-        <p
-          v-if="displayError"
-          class="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700"
-        >
-          {{ displayError }}
-        </p>
       </div>
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
+// Firebase認証の処理はcomposableにまとめ、この画面ではUI状態の管理に集中する
 const {
   authError,
   signInWithGoogle,
   signInWithUsername,
 } = useFirebaseAuth();
 
+const router = useRouter();
 const username = ref("");
 const localError = ref("");
 const isGoogleLoading = ref(false);
 const isUsernameLoading = ref(false);
 
+// どちらかのログイン処理中は、二重送信を防ぐため全ボタンを無効化する
 const isLoading = computed(() => isGoogleLoading.value || isUsernameLoading.value);
+// 入力チェックのエラーを優先し、なければ認証処理側のエラーを表示する
 const displayError = computed(() => localError.value || authError.value);
-
-const handleGoogleSignIn = async () => {
-  localError.value = "";
-  isGoogleLoading.value = true;
-
-  try {
-    await signInWithGoogle();
-  } catch {
-    localError.value = "";
-  } finally {
-    isGoogleLoading.value = false;
-  }
-};
 
 const handleUsernameSignIn = async () => {
   localError.value = "";
@@ -99,10 +90,27 @@ const handleUsernameSignIn = async () => {
 
   try {
     await signInWithUsername(username.value);
+    await router.push("/");
   } catch {
+    // 認証エラーはuseFirebaseAuth側のauthErrorで管理するため、ここではローカルエラーをクリアしておく
     localError.value = "";
   } finally {
     isUsernameLoading.value = false;
+  }
+};
+
+const handleGoogleSignIn = async () => {
+  localError.value = "";
+  isGoogleLoading.value = true;
+
+  try {
+    await signInWithGoogle();
+    await router.push("/");
+  } catch {
+    // 認証エラーはuseFirebaseAuth側のauthErrorで管理するため、ここではローカルエラーをクリアしておく
+    localError.value = "";
+  } finally {
+    isGoogleLoading.value = false;
   }
 };
 </script>
