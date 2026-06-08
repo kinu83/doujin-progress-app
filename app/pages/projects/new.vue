@@ -152,11 +152,11 @@ const isSubmitting = ref(false);
 
 const formError = computed(() => {
   if (startDate.value && deadline.value && startDate.value > deadline.value) {
-    return "作業開始日は締切日以前の日付を設定してください。";
+    return "作業開始日は締切日以前の日付を設定してください";
   }
 
   if (deadline.value && eventDate.value && deadline.value > eventDate.value) {
-    return "原稿締切はイベント日以前の日付を設定してください。";
+    return "原稿締切はイベント日以前の日付を設定してください";
   }
 
   return "";

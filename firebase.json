@@ -7,6 +7,9 @@
   },
   "hosting": {
     "public": ".output/public",
+    "predeploy": [
+      "npm run generate"
+    ],
     "ignore": [
       "firebase.json",
       "**/.*",
