@@ -1,12 +1,17 @@
 import type { User } from "firebase/auth";
 import {
   GoogleAuthProvider,
-  linkWithPopup,
   onAuthStateChanged,
+  signOut as firebaseSignOut,
   signInAnonymously,
   signInWithPopup,
 } from "firebase/auth";
+import {
+  saveGoogleUserProfile,
+  saveUsernameUserProfile,
+} from "~/repositories/userRepository";
 
+// 認証状態の初期確認が複数回実行されないよう、初回確認のPromiseを共有する。
 let authReadyPromise: Promise<User | null> | null = null;
 
 export const useFirebaseAuth = () => {
@@ -14,12 +19,20 @@ export const useFirebaseAuth = () => {
   const isAuthReady = useState("firebase-auth-ready", () => false);
   const authError = useState<string>("firebase-auth-error", () => "");
 
+  const completeSignIn = (currentUser: User) => {
+    user.value = currentUser;
+    isAuthReady.value = true;
+    authError.value = "";
+    authReadyPromise = Promise.resolve(currentUser);
+  };
+
   const initAuth = () => {
+    // SSRではFirebase Authのブラウザ依存APIを実行できないため、クライアント側だけで認証状態を確認する。
     if (import.meta.server) return Promise.resolve(null);
     if (authReadyPromise) return authReadyPromise;
 
     const { $firebaseAuth } = useNuxtApp();
-
+    // Firebaseに保存されているログイン状態を確認し、ブラウザ更新後もユーザー情報を復元する。
     authReadyPromise = new Promise((resolve) => {
       const unsubscribe = onAuthStateChanged(
         $firebaseAuth,
@@ -41,7 +54,8 @@ export const useFirebaseAuth = () => {
     return authReadyPromise;
   };
 
-  const ensureAuthenticated = async () => {
+  const getCurrentUser = async () => {
+    // SSRではFirebase Authのブラウザ依存APIを実行できないため、現在ユーザーの参照もクライアント側に限定する。
     if (import.meta.server) return null;
     if (user.value) return user.value;
 
@@ -57,53 +71,77 @@ export const useFirebaseAuth = () => {
     const currentUser = await initAuth();
     if (currentUser) return currentUser;
 
-    const credential = await signInAnonymously($firebaseAuth);
-    user.value = credential.user;
-    isAuthReady.value = true;
-    authReadyPromise = Promise.resolve(credential.user);
+    // 未ログイン時に自動で匿名ログインせず、ログイン画面でユーザーに認証方法を選択させる。
+    return null;
+  };
 
-    return credential.user;
+  const ensureAuthenticated = async () => {
+    return getCurrentUser();
+  };
+
+// ユーザー名ログインは正式な認証ではなく、ポートフォリオ確認用のお試しログインとして扱う
+  const signInWithUsername = async (username: string) => {
+    // SSRではFirebase Authのブラウザ依存APIを実行できないため、匿名認証もクライアント側だけで行う。
+    if (import.meta.server) return null;
+
+    const normalizedUsername = username.trim();
+    if (!normalizedUsername) {
+      authError.value = "ユーザー名を入力してください。";
+      return null;
+    }
+
+    const { $firebaseAuth, $firestore } = useNuxtApp();
+
+    try {
+      // Firebase Authenticationにはユーザー名のみの認証がないため、匿名認証をお試し用の土台として使う。
+      const credential = await signInAnonymously($firebaseAuth);
+      // ユーザー名認証はポートフォリオ確認用の簡易ログインとして扱う。
+      // 正式公開時はGoogle認証のみを想定しているため、Googleアカウントへのデータ引き継ぎは行わない。
+      completeSignIn(credential.user);
+      saveUsernameUserProfile($firestore, credential.user, normalizedUsername).catch((error) => {
+        console.warn("Failed to save username profile.", error);
+      });
+
+      return credential.user;
+    } catch (error) {
+      authError.value = error instanceof Error ? error.message : "お試し利用の開始に失敗しました。";
+      throw error;
+    }
   };
 
   const signInWithGoogle = async () => {
+    // SSRではFirebase Authのブラウザ依存APIを実行できないため、Google認証もクライアント側だけで行う。
     if (import.meta.server) return null;
 
-    const { $firebaseAuth } = useNuxtApp();
+    const { $firebaseAuth, $firestore } = useNuxtApp();
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({
       prompt: "select_account",
     });
 
     try {
-      const currentUser = await ensureAuthenticated();
-      const credential = currentUser?.isAnonymous
-        ? await linkWithPopup(currentUser, provider)
-        : await signInWithPopup($firebaseAuth, provider);
-
-      user.value = credential.user;
-      isAuthReady.value = true;
-      authError.value = "";
-      authReadyPromise = Promise.resolve(credential.user);
+      const credential = await signInWithPopup($firebaseAuth, provider);
+      completeSignIn(credential.user);
+      saveGoogleUserProfile($firestore, credential.user).catch((error) => {
+        console.warn("Failed to save Google profile.", error);
+      });
 
       return credential.user;
     } catch (error) {
-      const errorCode = typeof error === "object" && error && "code" in error
-        ? String(error.code)
-        : "";
-
-      if (errorCode === "auth/credential-already-in-use") {
-        const credential = await signInWithPopup($firebaseAuth, provider);
-        user.value = credential.user;
-        isAuthReady.value = true;
-        authError.value = "";
-        authReadyPromise = Promise.resolve(credential.user);
-
-        return credential.user;
-      }
-
       authError.value = error instanceof Error ? error.message : "Google ログインに失敗しました。";
       throw error;
     }
+  };
+
+  const signOut = async () => {
+    if (import.meta.server) return;
+
+    const { $firebaseAuth } = useNuxtApp();
+    await firebaseSignOut($firebaseAuth);
+    user.value = null;
+    isAuthReady.value = true;
+    authError.value = "";
+    authReadyPromise = Promise.resolve(null);
   };
 
   return {
@@ -111,7 +149,10 @@ export const useFirebaseAuth = () => {
     isAuthReady,
     authError,
     initAuth,
+    getCurrentUser,
     ensureAuthenticated,
+    signInWithUsername,
     signInWithGoogle,
+    signOut,
   };
 };
