@@ -15,7 +15,7 @@ import {
   saveRemoteSettings,
 } from "~/repositories/settingsRepository";
 
-const STORAGE_KEY = "doujin-progress-settings";
+const STORAGE_KEY_PREFIX = "doujin-progress-settings";
 
 let remoteSettingsWriteQueue: Promise<void> = Promise.resolve();
 
@@ -109,19 +109,22 @@ const cloneDefaultSettings = (): AppSettings => ({
   })),
 });
 
-const readLocalSettings = () => {
+const localStorageKey = (uid: string) => `${STORAGE_KEY_PREFIX}:${uid}`;
+
+const readLocalSettings = (uid: string) => {
   if (import.meta.server) return null;
 
-  const saved = localStorage.getItem(STORAGE_KEY);
+  const saved = localStorage.getItem(localStorageKey(uid));
   if (!saved) return null;
 
   return normalizeSettings(JSON.parse(saved));
 };
 
-const writeLocalSettings = (settings: AppSettings) => {
+const writeLocalSettings = (uid: string | undefined, settings: AppSettings) => {
   if (import.meta.server) return;
+  if (!uid) return;
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  localStorage.setItem(localStorageKey(uid), JSON.stringify(settings));
 };
 
 const cloneSettings = (settings: AppSettings): AppSettings => {
@@ -146,7 +149,7 @@ export const useSettings = () => {
   const settings = useState<AppSettings>("settings", () => cloneDefaultSettings());
   const isSettingsLoading = useState("settings-loading", () => false);
   const settingsError = useState<string>("settings-error", () => "");
-  const { ensureAuthenticated } = useFirebaseAuth();
+  const { ensureAuthenticated, user: authUser } = useFirebaseAuth();
 
   const enqueueRemoteWrite = (
     write: () => Promise<void>,
@@ -182,11 +185,6 @@ export const useSettings = () => {
   const loadSettings = () => {
     if (import.meta.server) return Promise.resolve();
 
-    const localSettings = readLocalSettings();
-    if (localSettings) {
-      settings.value = localSettings;
-    }
-
     return (async () => {
       isSettingsLoading.value = true;
 
@@ -194,12 +192,15 @@ export const useSettings = () => {
         const user = await ensureAuthenticated();
         if (!user) return;
 
+        const localSettings = readLocalSettings(user.uid);
+        settings.value = localSettings ?? cloneDefaultSettings();
+
         const { $firestore } = useNuxtApp();
         const remoteSettings = await loadRemoteSettings($firestore, user.uid);
 
         if (remoteSettings) {
           settings.value = normalizeSettings(remoteSettings);
-          writeLocalSettings(settings.value);
+          writeLocalSettings(user.uid, settings.value);
         } else {
           await persistSettings();
         }
@@ -215,7 +216,7 @@ export const useSettings = () => {
 
   const saveSettings = (input: Partial<AppSettings>) => {
     settings.value = normalizeSettings(input);
-    writeLocalSettings(settings.value);
+    writeLocalSettings(authUser.value?.uid, settings.value);
 
     void persistSettings();
   };

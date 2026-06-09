@@ -20,6 +20,17 @@
           </div>
         </div>
 
+          <label class="grid gap-2">
+            <span class="text-sm font-black text-[#263236]">タイトル</span>
+            <input
+              v-model="title"
+              type="text"
+              required
+              placeholder="例: 2026夏コミ新刊"
+              class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition placeholder:text-[#263236]/35 focus:border-[#2c8d98]"
+            >
+          </label>
+
         <form class="mt-8 grid gap-5" @submit.prevent="handleSubmit">
           <label class="grid gap-2">
             <span class="text-sm font-black text-[#263236]">イベント名</span>
@@ -38,17 +49,6 @@
               type="date"
               :min="deadline || undefined"
               class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
-            >
-          </label>
-
-          <label class="grid gap-2">
-            <span class="text-sm font-black text-[#263236]">タイトル</span>
-            <input
-              v-model="title"
-              type="text"
-              required
-              placeholder="例: 2026夏コミ新刊"
-              class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition placeholder:text-[#263236]/35 focus:border-[#2c8d98]"
             >
           </label>
 

@@ -13,7 +13,7 @@ import {
   saveRemoteWorkLog,
 } from "~/repositories/projectRepository";
 
-const STORAGE_KEY = "doujin-progress-projects";
+const STORAGE_KEY_PREFIX = "doujin-progress-projects";
 
 type ProjectInfoInput = {
   eventName: string;
@@ -297,19 +297,22 @@ const normalizeProject = (project: Project): Project => {
   };
 };
 
-const readLocalProjects = () => {
+const localStorageKey = (uid: string) => `${STORAGE_KEY_PREFIX}:${uid}`;
+
+const readLocalProjects = (uid: string) => {
   if (import.meta.server) return null;
 
-  const saved = localStorage.getItem(STORAGE_KEY);
+  const saved = localStorage.getItem(localStorageKey(uid));
   if (!saved) return null;
 
   return (JSON.parse(saved) as Project[]).map(normalizeProject);
 };
 
-const writeLocalProjects = (projects: Project[]) => {
+const writeLocalProjects = (uid: string | undefined, projects: Project[]) => {
   if (import.meta.server) return;
+  if (!uid) return;
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+  localStorage.setItem(localStorageKey(uid), JSON.stringify(projects));
 };
 
 const cloneJson = <T>(value: T): T => {
@@ -326,7 +329,7 @@ export const useProjects = () => {
   const { settings, loadSettings, getWorkProcessById } = useSettings();
   const isProjectsLoading = useState("projects-loading", () => false);
   const projectsError = useState<string>("projects-error", () => "");
-  const { ensureAuthenticated } = useFirebaseAuth();
+  const { ensureAuthenticated, user: authUser } = useFirebaseAuth();
 
   const enqueueRemoteWrite = (
     write: () => Promise<void>,
@@ -420,11 +423,6 @@ export const useProjects = () => {
   const loadProjects = () => {
     if (import.meta.server) return Promise.resolve();
 
-    const localProjects = readLocalProjects();
-    if (localProjects) {
-      projects.value = localProjects;
-    }
-
     return (async () => {
       isProjectsLoading.value = true;
 
@@ -434,12 +432,19 @@ export const useProjects = () => {
         const user = await ensureAuthenticated();
         if (!user) return;
 
+        const localProjects = readLocalProjects(user.uid);
+        if (localProjects) {
+          projects.value = localProjects;
+        } else {
+          projects.value = [];
+        }
+
         const { $firestore } = useNuxtApp();
         const remoteProjects = await loadRemoteProjects($firestore, user.uid);
 
         if (remoteProjects.length > 0) {
           projects.value = remoteProjects.map(normalizeProject);
-          writeLocalProjects(projects.value);
+          writeLocalProjects(user.uid, projects.value);
           projects.value.forEach((project) => {
             // 読み込み時に作った移行ログは、次回以降もリモートで復元できるよう保存する。
             project.workLogs
@@ -469,7 +474,7 @@ export const useProjects = () => {
 
   const saveProject = (project: Project) => {
     // 画面の即時反映はlocalStorage、永続同期は非同期でFirestoreへ送る。
-    writeLocalProjects(projects.value);
+    writeLocalProjects(authUser.value?.uid, projects.value);
     void persistProject(project);
   };
 
@@ -507,13 +512,13 @@ export const useProjects = () => {
     };
 
     projects.value.push(project);
-    writeLocalProjects(projects.value);
+    writeLocalProjects(authUser.value?.uid, projects.value);
 
     try {
       await persistProject(project, true);
     } catch (error) {
       projects.value = projects.value.filter((item) => item.id !== project.id);
-      writeLocalProjects(projects.value);
+      writeLocalProjects(authUser.value?.uid, projects.value);
       throw error;
     }
 
@@ -534,13 +539,13 @@ export const useProjects = () => {
     const [deletedProject] = projects.value.splice(projectIndex, 1);
     if (!deletedProject) return false;
 
-    writeLocalProjects(projects.value);
+    writeLocalProjects(authUser.value?.uid, projects.value);
 
     try {
       await persistProjectDeletes([projectId], true);
     } catch (error) {
       projects.value.splice(projectIndex, 0, deletedProject);
-      writeLocalProjects(projects.value);
+      writeLocalProjects(authUser.value?.uid, projects.value);
       throw error;
     }
 
@@ -825,7 +830,7 @@ export const useProjects = () => {
     });
 
     if (updatedProjects.length > 0) {
-      writeLocalProjects(projects.value);
+      writeLocalProjects(authUser.value?.uid, projects.value);
       updatedProjects.forEach((project) => {
         void persistProject(project);
       });
