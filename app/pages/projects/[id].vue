@@ -343,6 +343,16 @@
 
               <div class="grid gap-4 overflow-y-auto px-6 py-5 md:grid-cols-2">
                 <label class="grid gap-2 md:col-span-2">
+                  <span class="text-sm font-black text-[#263236]">タイトル</span>
+                  <input
+                    v-model="editTitle"
+                    type="text"
+                    required
+                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
+                  >
+                </label>
+                
+                <label class="grid gap-2 md:col-span-2">
                   <span class="text-sm font-black text-[#263236]">イベント名</span>
                   <input
                     v-model="editEventName"
@@ -357,16 +367,6 @@
                     v-model="editEventDate"
                     type="date"
                     :min="editDeadline || undefined"
-                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
-                  >
-                </label>
-
-                <label class="grid gap-2 md:col-span-2">
-                  <span class="text-sm font-black text-[#263236]">タイトル</span>
-                  <input
-                    v-model="editTitle"
-                    type="text"
-                    required
                     class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
                 </label>
