@@ -80,21 +80,18 @@
         </p>
       </div>
 
-      <div v-else class="grid gap-4">
+      <ui v-else class="grid gap-4">
+        <li v-for="card in projectCards" :key="card.project.id">
+        <NuxtLink :to="`/projects/${card.project.id}`" class="block">
         <article
-          v-for="card in projectCards"
-          :key="card.project.id"
-          class="rounded-3xl border-4 border-[#2c8d98] bg-white p-5 shadow-[5px_5px_0_rgba(44,141,152,0.16)] transition hover:-translate-y-0.5 hover:shadow-[7px_7px_0_rgba(44,141,152,0.2)] sm:px-12"
+          class="rounded-3xl border-4 border-[#2c8d98] bg-white p-5 shadow-[5px_5px_0_rgba(44,141,152,0.16)] sm:px-12"
         >
           <div class="flex items-start justify-between gap-4">
             <div class="min-w-0 flex-1">
               <div class="flex flex-col items-start gap-2 font-bold sm:flex-row sm:flex-wrap sm:items-center">
-                <NuxtLink
-                  :to="`/projects/${card.project.id}`"
-                  class="break-words text-3xl font-black text-[#263236] transition hover:text-[#2c8d98]"
-                >
+                <h2 class="wrap-break-words text-3xl font-black text-[#263236] transition hover:text-[#2c8d98]">
                   {{ card.project.title }}
-                </NuxtLink>
+                </h2>
                 <span
                   v-if="formatEventLabel(card.project)"
                   class="rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-3 py-1 text-xs font-black text-[#2c8d98]"
@@ -141,7 +138,7 @@
               <span class="block text-4xl leading-none">{{ card.progress }}%</span>
             </span>
             <span
-              class="rounded-xl border-2 px-3 py-1 text-xs font-black shadow-[3px_3px_0_rgba(38,50,54,0.16)]"
+              class="rounded-xl border-2 px-3 py-1 text-xs font-black"
               :class="getCrunchLevelClasses(card.crunchLevel.tone)"
             >
               修羅場レベル: {{ card.crunchLevel.label }}
@@ -150,22 +147,24 @@
 
           <div class="mt-6 flex flex-wrap gap-3 text-sm text-[#263236]">
             <span
-              class="min-w-0 w-full rounded-2xl border-2 border-[#ff4b1f] bg-[#fff2e3] px-4 py-3 font-black shadow-[3px_3px_0_rgba(255,75,31,0.22)] sm:flex-1"
+              class="min-w-0 w-full rounded-2xl border-2 border-[#ff4b1f] bg-[#fff2e3] px-4 py-3 font-black sm:flex-1"
             >
               <span class="block text-xs">今日の必要時間</span>
               <span class="text-3xl leading-tight text-[#f36b00]">{{ formatWorkDuration(card.dailyWork) }}</span>
             </span>
-            <span class="min-w-0 w-full rounded-2xl border-2 border-[#2c8d98] bg-white px-4 py-3 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)] sm:flex-1">
+            <span class="min-w-0 w-full rounded-2xl border-2 border-[#2c8d98] bg-white px-4 py-3 font-black sm:flex-1">
               <span class="block text-xs">残り日数</span>
-              <span class="text-3xl leading-tight text-[#2c8d98]">{{ card.daysLeft }}日</span>
-            </span>
-            <span class="min-w-0 w-full rounded-2xl border-2 border-[#2c8d98] bg-white px-4 py-3 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)] sm:flex-1">
-              <span class="block text-xs">残り作業時間</span>
-              <span class="text-3xl leading-tight text-[#2c8d98]">{{ formatWorkDuration(card.remainingWork) }}</span>
-            </span>
-          </div>
-        </article>
-      </div>
+                  <span class="text-3xl leading-tight text-[#2c8d98]">{{ card.daysLeft }}日</span>
+                </span>
+               <span class="min-w-0 w-full rounded-2xl border-2 border-[#2c8d98] bg-white px-4 py-3 font-black sm:flex-1">
+                  <span class="block text-xs">残り作業時間</span>
+                  <span class="text-3xl leading-tight text-[#2c8d98]">{{ formatWorkDuration(card.remainingWork) }}</span>
+                </span>
+              </div>
+            </article>
+          </NuxtLink>
+        </li>
+      </ui>
     </div>
   </main>
 </template>
