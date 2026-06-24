@@ -84,12 +84,12 @@
         <li v-for="card in projectCards" :key="card.project.id">
         <NuxtLink :to="`/projects/${card.project.id}`" class="block">
         <article
-          class="rounded-3xl border-4 border-[#2c8d98] bg-white p-5 shadow-[5px_5px_0_rgba(44,141,152,0.16)] sm:px-12"
+          class="rounded-3xl border-4 border-[#2c8d98] bg-white p-5 shadow-[5px_5px_0_rgba(44,141,152)] transition hover:border-[#ff4b1f] hover:bg-[#fff2e3] sm:px-12"
         >
           <div class="flex items-start justify-between gap-4">
             <div class="min-w-0 flex-1">
               <div class="flex flex-col items-start gap-2 font-bold sm:flex-row sm:flex-wrap sm:items-center">
-                <h2 class="wrap-break-words text-3xl font-black text-[#263236] transition hover:text-[#2c8d98]">
+                <h2 class="wrap-break-words text-3xl font-black text-[#263236]">
                   {{ card.project.title }}
                 </h2>
                 <span
