@@ -18,21 +18,7 @@
             title="カレンダー"
             class="inline-flex h-10 w-10 items-center justify-center gap-2 rounded-xl border-2 border-[#263236] bg-white text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] hover:shadow-[4px_4px_0_rgba(38,50,54,0.22)] lg:w-auto lg:px-3"
           >
-            <svg
-              class="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M8 2v4" />
-              <path d="M16 2v4" />
-              <rect width="18" height="18" x="3" y="4" rx="3" />
-              <path d="M3 10h18" />
-            </svg>
+            <img src="/icon/calendar.svg" alt="" aria-hidden="true" class="h-5 w-5">
             <span class="hidden lg:inline">カレンダー</span>
           </NuxtLink>
 
@@ -42,19 +28,7 @@
             title="設定"
             class="inline-flex h-10 w-10 items-center justify-center gap-2 rounded-xl border-2 border-[#263236] bg-white text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] hover:shadow-[4px_4px_0_rgba(38,50,54,0.22)] lg:w-auto lg:px-3"
           >
-            <svg
-              class="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
-              <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15Z" />
-            </svg>
+            <img src="/icon/setting.svg" alt="" aria-hidden="true" class="h-5 w-5">
             <span class="hidden lg:inline">設定</span>
           </NuxtLink>
 
@@ -84,7 +58,7 @@
         <li v-for="card in projectCards" :key="card.project.id">
         <NuxtLink :to="`/projects/${card.project.id}`" class="block">
         <article
-          class="rounded-3xl border-4 border-[#2c8d98] bg-white p-5 shadow-[5px_5px_0_rgba(44,141,152)] transition hover:border-[#ff4b1f] hover:bg-[#fff2e3] sm:px-12"
+          class="rounded-3xl border-4 border-[#2c8d98] bg-white p-5 shadow-[5px_5px_0_rgba(44,141,152)] transition-all hover:translate-x-[5px] hover:translate-y-[5px] hover:shadow-none sm:px-12"
         >
           <div class="flex items-start justify-between gap-4">
             <div class="min-w-0 flex-1">
