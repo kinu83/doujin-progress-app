@@ -7,7 +7,7 @@
           <img
             src="/logo.png"
             alt="修羅場メーター"
-            class="h-auto w-full max-w-[320px] drop-shadow-[3px_3px_0_#ffffff] sm:max-w-[320px]"
+            class="h-auto w-full max-w-[400px] drop-shadow-[3px_3px_0_#ffffff] sm:max-w-[400px]"
           >
         </div>
 
@@ -18,21 +18,7 @@
             title="カレンダー"
             class="inline-flex h-10 w-10 items-center justify-center gap-2 rounded-xl border-2 border-[#263236] bg-white text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] hover:shadow-[4px_4px_0_rgba(38,50,54,0.22)] lg:w-auto lg:px-3"
           >
-            <svg
-              class="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M8 2v4" />
-              <path d="M16 2v4" />
-              <rect width="18" height="18" x="3" y="4" rx="3" />
-              <path d="M3 10h18" />
-            </svg>
+            <img src="/icon/calendar.svg" alt="" aria-hidden="true" class="h-5 w-5">
             <span class="hidden lg:inline">カレンダー</span>
           </NuxtLink>
 
@@ -42,19 +28,7 @@
             title="設定"
             class="inline-flex h-10 w-10 items-center justify-center gap-2 rounded-xl border-2 border-[#263236] bg-white text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] hover:shadow-[4px_4px_0_rgba(38,50,54,0.22)] lg:w-auto lg:px-3"
           >
-            <svg
-              class="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
-              <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15Z" />
-            </svg>
+            <img src="/icon/setting.svg" alt="" aria-hidden="true" class="h-5 w-5">
             <span class="hidden lg:inline">設定</span>
           </NuxtLink>
 
@@ -80,21 +54,18 @@
         </p>
       </div>
 
-      <div v-else class="grid gap-4">
+      <ui v-else class="grid gap-4">
+        <li v-for="card in projectCards" :key="card.project.id">
+        <NuxtLink :to="`/projects/${card.project.id}`" class="block">
         <article
-          v-for="card in projectCards"
-          :key="card.project.id"
-          class="rounded-3xl border-4 border-[#2c8d98] bg-white p-5 shadow-[5px_5px_0_rgba(44,141,152,0.16)] transition hover:-translate-y-0.5 hover:shadow-[7px_7px_0_rgba(44,141,152,0.2)] sm:px-12"
+          class="rounded-3xl border-4 border-[#2c8d98] bg-white p-5 shadow-[5px_5px_0_rgba(44,141,152)] transition-all hover:translate-x-[5px] hover:translate-y-[5px] hover:shadow-none sm:px-12"
         >
           <div class="flex items-start justify-between gap-4">
             <div class="min-w-0 flex-1">
               <div class="flex flex-col items-start gap-2 font-bold sm:flex-row sm:flex-wrap sm:items-center">
-                <NuxtLink
-                  :to="`/projects/${card.project.id}`"
-                  class="break-words text-3xl font-black text-[#263236] transition hover:text-[#2c8d98]"
-                >
+                <h2 class="wrap-break-words text-3xl font-black text-[#263236]">
                   {{ card.project.title }}
-                </NuxtLink>
+                </h2>
                 <span
                   v-if="formatEventLabel(card.project)"
                   class="rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-3 py-1 text-xs font-black text-[#2c8d98]"
@@ -141,7 +112,7 @@
               <span class="block text-4xl leading-none">{{ card.progress }}%</span>
             </span>
             <span
-              class="rounded-xl border-2 px-3 py-1 text-xs font-black shadow-[3px_3px_0_rgba(38,50,54,0.16)]"
+              class="rounded-xl border-2 px-3 py-1 text-xs font-black"
               :class="getCrunchLevelClasses(card.crunchLevel.tone)"
             >
               修羅場レベル: {{ card.crunchLevel.label }}
@@ -150,22 +121,24 @@
 
           <div class="mt-6 flex flex-wrap gap-3 text-sm text-[#263236]">
             <span
-              class="min-w-0 w-full rounded-2xl border-2 border-[#ff4b1f] bg-[#fff2e3] px-4 py-3 font-black shadow-[3px_3px_0_rgba(255,75,31,0.22)] sm:flex-1"
+              class="min-w-0 w-full rounded-2xl border-2 border-[#ff4b1f] bg-[#fff2e3] px-4 py-3 font-black sm:flex-1"
             >
               <span class="block text-xs">今日の必要時間</span>
               <span class="text-3xl leading-tight text-[#f36b00]">{{ formatWorkDuration(card.dailyWork) }}</span>
             </span>
-            <span class="min-w-0 w-full rounded-2xl border-2 border-[#2c8d98] bg-white px-4 py-3 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)] sm:flex-1">
+            <span class="min-w-0 w-full rounded-2xl border-2 border-[#2c8d98] bg-white px-4 py-3 font-black sm:flex-1">
               <span class="block text-xs">残り日数</span>
-              <span class="text-3xl leading-tight text-[#2c8d98]">{{ card.daysLeft }}日</span>
-            </span>
-            <span class="min-w-0 w-full rounded-2xl border-2 border-[#2c8d98] bg-white px-4 py-3 font-black shadow-[3px_3px_0_rgba(44,141,152,0.2)] sm:flex-1">
-              <span class="block text-xs">残り作業時間</span>
-              <span class="text-3xl leading-tight text-[#2c8d98]">{{ formatWorkDuration(card.remainingWork) }}</span>
-            </span>
-          </div>
-        </article>
-      </div>
+                  <span class="text-3xl leading-tight text-[#2c8d98]">{{ card.daysLeft }}日</span>
+                </span>
+               <span class="min-w-0 w-full rounded-2xl border-2 border-[#2c8d98] bg-white px-4 py-3 font-black sm:flex-1">
+                  <span class="block text-xs">残り作業時間</span>
+                  <span class="text-3xl leading-tight text-[#2c8d98]">{{ formatWorkDuration(card.remainingWork) }}</span>
+                </span>
+              </div>
+            </article>
+          </NuxtLink>
+        </li>
+      </ui>
     </div>
   </main>
 </template>
