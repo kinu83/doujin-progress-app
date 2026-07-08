@@ -7,7 +7,7 @@
           <img
             src="/logo.png"
             alt="修羅場メーター"
-            class="h-auto w-full max-w-[320px] drop-shadow-[3px_3px_0_#ffffff] sm:max-w-[320px]"
+            class="h-auto w-full max-w-[400px] drop-shadow-[3px_3px_0_#ffffff] sm:max-w-[400px]"
           >
         </div>
 
