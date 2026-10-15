@@ -9,25 +9,6 @@ const userDoc = (db: Firestore, uid: string) => {
   return doc(db, "users", uid);
 };
 
-export const saveUsernameUserProfile = async (
-  db: Firestore,
-  user: User,
-  username: string
-) => {
-  const ref = userDoc(db, user.uid);
-
-  await setDoc(
-    ref,
-    {
-      username,
-      authType: "username",
-      isGuest: true,
-      updatedAt: new Date().toISOString(),
-    },
-    { merge: true }
-  );
-};
-
 export const saveGoogleUserProfile = async (db: Firestore, user: User) => {
   const ref = userDoc(db, user.uid);
 
