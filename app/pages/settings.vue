@@ -92,34 +92,34 @@
                   </div>
 
                   <div class="grid gap-3 md:grid-cols-3">
-                    <label class="grid gap-2">
+                    <label class="grid min-w-0 gap-2">
                       <span class="text-sm font-black text-[#263236]">一歩手前（分/日）</span>
                       <input
                         v-model.number="crunchThresholds.warningMinutes"
                         type="number"
                         min="1"
                         required
-                        class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
+                        class="w-full min-w-0 rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                       >
                     </label>
-                    <label class="grid gap-2">
+                    <label class="grid min-w-0 gap-2">
                       <span class="text-sm font-black text-[#263236]">修羅場（分/日）</span>
                       <input
                         v-model.number="crunchThresholds.crunchMinutes"
                         type="number"
                         min="1"
                         required
-                        class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
+                        class="w-full min-w-0 rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                       >
                     </label>
-                    <label class="grid gap-2">
+                    <label class="grid min-w-0 gap-2">
                       <span class="text-sm font-black text-[#263236]">限界修羅場（分/日）</span>
                       <input
                         v-model.number="crunchThresholds.extremeMinutes"
                         type="number"
                         min="1"
                         required
-                        class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
+                        class="w-full min-w-0 rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                       >
                     </label>
                   </div>
@@ -422,34 +422,34 @@
               </div>
 
               <div class="grid gap-3 md:grid-cols-3">
-                <label class="grid gap-2">
+                <label class="grid min-w-0 gap-2">
                   <span class="text-sm font-black text-[#263236]">一歩手前（分/日）</span>
                   <input
                     v-model.number="crunchThresholds.warningMinutes"
                     type="number"
                     min="1"
                     required
-                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
+                    class="w-full min-w-0 rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                   >
                 </label>
-                <label class="grid gap-2">
+                <label class="grid min-w-0 gap-2">
                   <span class="text-sm font-black text-[#263236]">修羅場（分/日）</span>
                   <input
                     v-model.number="crunchThresholds.crunchMinutes"
                     type="number"
                     min="1"
                     required
-                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
+                    class="w-full min-w-0 rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                   >
                 </label>
-                <label class="grid gap-2">
+                <label class="grid min-w-0 gap-2">
                   <span class="text-sm font-black text-[#263236]">限界修羅場（分/日）</span>
                   <input
                     v-model.number="crunchThresholds.extremeMinutes"
                     type="number"
                     min="1"
                     required
-                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
+                    class="w-full min-w-0 rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                   >
                 </label>
               </div>
