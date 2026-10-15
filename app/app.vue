@@ -11,8 +11,8 @@
         認証状態を確認しています...
       </div>
 
-      <!-- ログイン済みの場合は通常ページを表示する -->
-      <NuxtPage v-else-if="user" />
+      <!-- ログイン済み、または認証不要のページ（プライバシーポリシーなど）は通常ページを表示する -->
+      <NuxtPage v-else-if="user || route.meta.public" />
 
       <!-- 未ログインの場合はログイン画面を表示する -->
       <LoginScreen v-else />
@@ -27,6 +27,7 @@
 
 <script setup lang="ts">
 const { user, isAuthReady, initAuth } = useFirebaseAuth();
+const route = useRoute();
 
 onMounted(() => {
   // SSRではFirebase Authを実行せず、ブラウザで復元された認証状態を確認してから画面を出し分ける。

@@ -29,6 +29,9 @@
         >
           {{ authError }}
         </p>
+        <p class="text-center text-xs font-bold leading-5 text-[#263236]/60">
+          ログインすると、<NuxtLink to="/terms" class="text-[#2c8d98] underline underline-offset-2 hover:text-[#237984]">利用規約・プライバシーポリシー</NuxtLink>に同意したものとみなします。
+        </p>
       </div>
     </section>
   </main>

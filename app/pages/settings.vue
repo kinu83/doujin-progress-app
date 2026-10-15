@@ -367,6 +367,22 @@
                 </p>
               </section>
 
+              <nav
+                v-else-if="section.id === 'legal'"
+                class="mt-8 grid gap-3"
+              >
+                <component
+                  :is="link.external ? 'a' : NuxtLink"
+                  v-for="link in legalLinks"
+                  :key="link.label"
+                  v-bind="link.external ? { href: link.to, target: '_blank', rel: 'noopener noreferrer' } : { to: link.to }"
+                  class="flex items-center justify-between rounded-2xl border-2 border-[#2c8d98] bg-white p-4 text-base font-black text-[#263236] shadow-[3px_3px_0_rgba(44,141,152,0.14)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
+                >
+                  {{ link.label }}
+                  <span aria-hidden="true" class="text-[#2c8d98]">{{ link.external ? "↗" : "→" }}</span>
+                </component>
+              </nav>
+
               <div
                 v-else
                 class="mt-8 rounded-2xl border-2 border-dashed border-[#2c8d98] bg-[#edf6fa] p-6 text-sm font-bold text-[#263236]/60"
@@ -697,6 +713,22 @@
             </p>
           </section>
 
+          <nav
+            v-else-if="selectedSection.id === 'legal'"
+            class="mt-8 grid gap-3"
+          >
+            <component
+              :is="link.external ? 'a' : NuxtLink"
+              v-for="link in legalLinks"
+              :key="link.label"
+              v-bind="link.external ? { href: link.to, target: '_blank', rel: 'noopener noreferrer' } : { to: link.to }"
+              class="flex items-center justify-between rounded-2xl border-2 border-[#2c8d98] bg-white p-4 text-base font-black text-[#263236] shadow-[3px_3px_0_rgba(44,141,152,0.14)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
+            >
+              {{ link.label }}
+              <span aria-hidden="true" class="text-[#2c8d98]">{{ link.external ? "↗" : "→" }}</span>
+            </component>
+          </nav>
+
           <div
             v-else
             class="mt-8 rounded-2xl border-2 border-dashed border-[#2c8d98] bg-[#edf6fa] p-6 text-sm font-bold text-[#263236]/60"
@@ -752,11 +784,13 @@
 </template>
 
 <script setup lang="ts">
+import { NuxtLink } from "#components";
 import type { WorkProcess, WorkProcessStep } from "~/types/settings";
 import {
   DEFAULT_CRUNCH_THRESHOLDS,
   DEFAULT_SETTINGS,
 } from "~/constants/defaultSettings";
+import { CONTACT_FORM_URL } from "~/constants/legal";
 
 const {
   settings,
@@ -798,13 +832,19 @@ const settingSections = [
     available: true,
   },
   {
-    id: "other",
-    title: "その他",
-    description: "そのほかの設定",
-    detail: "通知、保存、バックアップなどの設定を追加予定です。",
-    available: false,
+    id: "legal",
+    title: "規約・ポリシー",
+    description: "利用規約とお問い合わせ",
+    detail: "利用規約・プライバシーポリシーの確認と、お問い合わせができます。",
+    available: true,
   },
 ] as const;
+
+const legalLinks = [
+  { label: "利用規約", to: "/terms#terms", external: false },
+  { label: "プライバシーポリシー", to: "/terms#privacy", external: false },
+  { label: "お問い合わせ", to: CONTACT_FORM_URL, external: true },
+];
 
 const selectedSectionId = ref<(typeof settingSections)[number]["id"]>("work");
 const selectedSection = computed(() => {
