@@ -352,7 +352,7 @@
                   <input
                     v-model="editEventDate"
                     type="date"
-                    :min="editDeadline || undefined"
+                    :min="editEventDateMin"
                     class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
                 </label>
@@ -373,7 +373,7 @@
                     v-model="editDeadline"
                     type="date"
                     required
-                    :min="editStartDate || undefined"
+                    :min="editDeadlineMin"
                     :max="editEventDate || undefined"
                     class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                   >
@@ -814,7 +814,30 @@ const isStartDateAfterDeadline = computed(() => {
   return editStartDate.value > editDeadline.value;
 });
 
+// 締切を過ぎたプロジェクトも他の項目を編集できるよう、保存済みの過去日付はそのまま許可する。
+const getMinEditableDate = (savedDate: string | undefined) => {
+  return savedDate && savedDate < todayKey.value ? savedDate : todayKey.value;
+};
+const isPastEditDate = (value: string, savedDate: string | undefined) => {
+  return Boolean(value) && value < getMinEditableDate(savedDate);
+};
+const laterDateKey = (a: string, b: string) => (a > b ? a : b);
+const editEventDateMin = computed(() => {
+  return laterDateKey(getMinEditableDate(project.value?.eventDate), editDeadline.value);
+});
+const editDeadlineMin = computed(() => {
+  return laterDateKey(getMinEditableDate(project.value?.deadline), editStartDate.value);
+});
+
 const infoEditError = computed(() => {
+  if (isPastEditDate(editEventDate.value, project.value?.eventDate)) {
+    return "イベント開催日は今日以降の日付を設定してください。";
+  }
+
+  if (isPastEditDate(editDeadline.value, project.value?.deadline)) {
+    return "締切日は今日以降の日付を設定してください。";
+  }
+
   if (isStartDateAfterDeadline.value) {
     return "作業開始日は締切日以前の日付を設定してください。";
   }
