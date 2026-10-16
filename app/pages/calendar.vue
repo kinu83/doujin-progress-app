@@ -182,6 +182,7 @@
                 </h2>
               </div>
               <button
+                ref="closePanelButton"
                 type="button"
                 aria-label="作業時間入力を閉じる"
                 title="閉じる"
@@ -269,67 +270,32 @@
 
                   <p
                     v-if="projectUnplannedWork(project) > 0"
-                    class="mt-3 rounded-xl border-2 border-amber-400 bg-amber-50 px-3 py-2 text-xs font-black text-amber-700"
+                    class="mt-3 w-fit rounded-full border border-[#263236]/20 bg-[#f7fcfd] px-3 py-1 text-[11px] font-black text-[#263236]/60"
                   >
-                    必要な作業時間分の予定を入力してください。あと {{ formatWorkDuration(projectUnplannedWork(project)) }} 割り振れます。
+                    未割り振り {{ formatWorkDuration(projectUnplannedWork(project)) }}
                   </p>
 
                   <div class="mt-4 grid grid-cols-2 gap-3">
                     <div class="grid gap-2">
-                      <span class="text-xs font-black text-[#263236]/60">予定（分）</span>
-                      <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
+                      <label
+                        :for="`planned-${project.id}`"
+                        class="text-xs font-black text-[#263236]/60"
+                      >
+                        予定（時間）
+                      </label>
+                      <div class="flex items-center overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
                         <input
-                          :value="workToMinutes(dailyEntry(project.id).planned)"
+                          :id="`planned-${project.id}`"
+                          :value="minutesToHoursInput(dailyEntry(project.id).planned)"
                           type="number"
                           min="0"
-                          step="any"
-                          :max="workToMinutes(maxPlannedEntry(project.id))"
+                          step="0.5"
+                          :max="minutesToHoursInput(maxPlannedEntry(project.id))"
                           inputmode="decimal"
                           class="min-w-0 flex-1 px-3 py-2 text-sm font-bold text-[#263236] outline-none"
-                          @input="handlePlannedEntry(project.id, $event)"
+                          @change="handlePlannedEntry(project.id, $event)"
                         >
-                        <div class="grid w-9 shrink-0 border-l-2 border-[#2c8d98]/30">
-                          <button
-                            type="button"
-                            aria-label="予定を30分増やす"
-                            title="予定を30分増やす"
-                            class="grid place-items-center text-[#263236] transition hover:bg-[#edf6fa]"
-                            @click="adjustPlannedEntry(project.id, 30)"
-                          >
-                            <svg
-                              class="h-3 w-3"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              aria-hidden="true"
-                            >
-                              <path d="m18 15-6-6-6 6" />
-                            </svg>
-                          </button>
-                          <button
-                            type="button"
-                            aria-label="予定を30分減らす"
-                            title="予定を30分減らす"
-                            class="grid place-items-center border-t-2 border-[#2c8d98]/30 text-[#263236] transition hover:bg-[#edf6fa]"
-                            @click="adjustPlannedEntry(project.id, -30)"
-                          >
-                            <svg
-                              class="h-3 w-3"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              aria-hidden="true"
-                            >
-                              <path d="m6 9 6 6 6-6" />
-                            </svg>
-                          </button>
-                        </div>
+                        <span class="shrink-0 pr-3 text-xs font-black text-[#263236]/50">h</span>
                       </div>
                     </div>
 
@@ -340,6 +306,27 @@
                       </div>
                     </div>
                   </div>
+
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <button
+                      v-for="step in plannedSteps"
+                      :key="step.amount"
+                      type="button"
+                      :aria-label="step.ariaLabel"
+                      class="min-h-9 rounded-xl border-2 border-[#2c8d98]/40 bg-white px-3 py-1 text-xs font-black text-[#263236] transition hover:border-[#2c8d98] hover:bg-[#edf6fa]"
+                      @click="adjustPlannedEntry(project.id, step.amount)"
+                    >
+                      {{ step.label }}
+                    </button>
+                  </div>
+
+                  <p
+                    v-if="plannedClampNotices[project.id]"
+                    class="mt-2 text-xs font-bold text-[#f36b00]"
+                    role="status"
+                  >
+                    残り作業時間を超えるため、{{ formatWorkDuration(plannedClampNotices[project.id]) }} に合わせました。
+                  </p>
 
                   <NuxtLink
                     :to="{ path: `/projects/${project.id}`, query: { workDate: selectedDate } }"
@@ -379,14 +366,17 @@ const {
 const {
   calculateTotalProgress,
   calculateRemainingWork,
-  workToMinutes,
-  minutesToWork,
   formatWorkDuration,
 } = useProgress();
 
 const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
 const workBarUnit = 60;
 const maxCollapsedWorkBars = 4;
+const plannedSteps = [
+  { amount: -30, label: "−30m", ariaLabel: "予定を30分減らす" },
+  { amount: 30, label: "+30m", ariaLabel: "予定を30分増やす" },
+  { amount: 60, label: "+1h", ariaLabel: "予定を1時間増やす" },
+];
 const scheduleLabels: Record<ScheduleKind, string> = {
   event: "イベント",
   deadline: "締切",
@@ -405,9 +395,29 @@ const selectedDate = ref(formatDateKey(initialDate));
 const visibleYear = ref(initialDate.getFullYear());
 const visibleMonth = ref(initialDate.getMonth());
 const isWorkPanelOpen = ref(Boolean(route.query.date));
+const closePanelButton = ref<HTMLButtonElement | null>(null);
+// 上限に丸めた入力だけ、丸めた後の値をプロジェクト別に表示する。
+const plannedClampNotices = ref<Record<string, number>>({});
 
 onMounted(() => {
   loadProjects();
+  window.addEventListener("keydown", handleKeydown);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleKeydown);
+});
+
+watch(isWorkPanelOpen, async (isOpen) => {
+  if (!isOpen) return;
+
+  // パネルを開いたらダイアログ内へフォーカスを移し、キーボード操作の起点にする。
+  await nextTick();
+  closePanelButton.value?.focus();
+});
+
+watch(selectedDate, () => {
+  plannedClampNotices.value = {};
 });
 
 const monthTitle = computed(() => {
@@ -502,7 +512,6 @@ function goToday() {
   selectedDate.value = formatDateKey(now);
   visibleYear.value = now.getFullYear();
   visibleMonth.value = now.getMonth();
-  isWorkPanelOpen.value = true;
 }
 
 function selectDate(dateKey: string) {
@@ -512,6 +521,12 @@ function selectDate(dateKey: string) {
 
 function closeWorkPanel() {
   isWorkPanelOpen.value = false;
+}
+
+function handleKeydown(event: KeyboardEvent) {
+  if (event.key === "Escape" && isWorkPanelOpen.value) {
+    closeWorkPanel();
+  }
 }
 
 function daySchedule(dateKey: string): ScheduleItem[] {
@@ -711,10 +726,22 @@ function projectRequiredWork(project: Project) {
   return calculateRemainingWork(project.pages, project.workProcessSteps);
 }
 
+function plannedLoad(project: Project, dateKey: string, planned: number) {
+  const todayKey = formatDateKey(new Date());
+  // 過去日の予定は残作業時間とは無関係なので、割り振り済みとして数えない。
+  if (dateKey < todayKey) return 0;
+  // 今日はすでに進めた分が残作業時間から減っているため、その分を予定から差し引く。
+  if (dateKey === todayKey) {
+    return Math.max(planned - getProjectDailyActualMinutes(project.id, dateKey), 0);
+  }
+
+  return planned;
+}
+
 function projectPlannedTotal(project: Project) {
-  // 予定の割り振り過ぎを防ぐため、全日付の予定分だけを集計する。
-  return Object.values(project.dailyWorkEntries).reduce((sum, entry) => {
-    return sum + entry.planned;
+  // 予定の割り振り過ぎを防ぐため、残作業時間に対応する今日以降の予定だけを集計する。
+  return Object.entries(project.dailyWorkEntries).reduce((sum, [dateKey, entry]) => {
+    return sum + plannedLoad(project, dateKey, entry.planned);
   }, 0);
 }
 
@@ -726,35 +753,53 @@ function maxPlannedEntry(projectId: string) {
   const project = projects.value.find((item) => item.id === projectId);
   if (!project) return 0;
 
+  const dateKey = selectedDate.value;
   const current = dailyEntry(projectId);
-  // その日に入力済みの予定は残しつつ、未割り振り分だけ追加可能にする。
-  return Math.max(current.planned + projectUnplannedWork(project), 0);
+  const otherPlanned = projectPlannedTotal(project) - plannedLoad(project, dateKey, current.planned);
+  const available = Math.max(projectRequiredWork(project) - otherPlanned, 0);
+  const todayKey = formatDateKey(new Date());
+
+  // 過去日は入力済みの予定を削らないようにし、今日は進めた分を上乗せして入力できるようにする。
+  if (dateKey < todayKey) return Math.max(current.planned, available);
+  if (dateKey === todayKey) return available + dailyActual(projectId);
+
+  return available;
 }
 
-function normalizePlannedEntry(projectId: string, value: number) {
-  // 入力値は0以上、かつ残作業時間を超えない範囲へ丸める。
-  return Math.max(0, Math.min(Number.isFinite(value) ? value : 0, maxPlannedEntry(projectId)));
+function minutesToHoursInput(minutes: number) {
+  // 入力欄は時間単位で表示し、0.25hなどの端数も小数2桁まで見せる。
+  return Math.round((minutes / 60) * 100) / 100;
+}
+
+function savePlannedEntry(projectId: string, minutes: number) {
+  const current = dailyEntry(projectId);
+  const requested = Math.max(0, Math.round(Number.isFinite(minutes) ? minutes : 0));
+  const planned = Math.min(requested, maxPlannedEntry(projectId));
+
+  if (planned < requested) {
+    plannedClampNotices.value[projectId] = planned;
+  } else {
+    delete plannedClampNotices.value[projectId];
+  }
+
+  if (planned === current.planned) return planned;
+
+  updateDailyWorkEntry(projectId, selectedDate.value, {
+    ...current,
+    planned,
+  });
+
+  return planned;
 }
 
 function handlePlannedEntry(projectId: string, event: Event) {
-  const current = dailyEntry(projectId);
   const input = event.target as HTMLInputElement;
-  const planned = normalizePlannedEntry(projectId, minutesToWork(Number(input.value)));
-  input.value = String(workToMinutes(planned));
-
-  updateDailyWorkEntry(projectId, selectedDate.value, {
-    ...current,
-    planned,
-  });
+  // 入力は確定時（blur/Enter）だけ保存して、1文字ごとの書き込みを避ける。
+  const planned = savePlannedEntry(projectId, Number(input.value) * 60);
+  input.value = String(minutesToHoursInput(planned));
 }
 
 function adjustPlannedEntry(projectId: string, amount: number) {
-  const current = dailyEntry(projectId);
-  const planned = normalizePlannedEntry(projectId, current.planned + amount);
-
-  updateDailyWorkEntry(projectId, selectedDate.value, {
-    ...current,
-    planned,
-  });
+  savePlannedEntry(projectId, dailyEntry(projectId).planned + amount);
 }
 </script>
