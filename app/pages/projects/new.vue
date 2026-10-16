@@ -47,7 +47,7 @@
             <input
               v-model="eventDate"
               type="date"
-              :min="deadline || undefined"
+              :min="eventDateMin"
               class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
             >
           </label>
@@ -69,7 +69,7 @@
                 v-model="deadline"
                 type="date"
                 required
-                :min="startDate || undefined"
+                :min="deadlineMin"
                 :max="eventDate || undefined"
                 class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
               >
@@ -150,7 +150,27 @@ const workProcessId = ref(settings.value.defaultWorkProcessId);
 const submitError = ref("");
 const isSubmitting = ref(false);
 
+// 日付入力の値と同じYYYY-MM-DD形式で、ローカル時刻の今日を求める。
+const todayKey = computed(() => {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  return `${today.getFullYear()}-${month}-${day}`;
+});
+const laterDateKey = (a: string, b: string) => (a > b ? a : b);
+const eventDateMin = computed(() => laterDateKey(todayKey.value, deadline.value));
+const deadlineMin = computed(() => laterDateKey(todayKey.value, startDate.value));
+
 const formError = computed(() => {
+  if (eventDate.value && eventDate.value < todayKey.value) {
+    return "イベント開催日は今日以降の日付を設定してください";
+  }
+
+  if (deadline.value && deadline.value < todayKey.value) {
+    return "締切日は今日以降の日付を設定してください";
+  }
+
   if (startDate.value && deadline.value && startDate.value > deadline.value) {
     return "作業開始日は締切日以前の日付を設定してください";
   }
