@@ -730,6 +730,39 @@ export const useProjects = () => {
     saveProject(project);
   };
 
+  const replacePlannedEntries = (
+    projectId: string,
+    fromDate: string,
+    plannedByDate: Record<string, number>
+  ) => {
+    const project = getProjectById(projectId);
+    if (!project) return;
+
+    const dateKeys = new Set([
+      ...Object.keys(project.dailyWorkEntries).filter((date) => date >= fromDate),
+      ...Object.keys(plannedByDate),
+    ]);
+
+    // fromDate以降の予定をまとめて差し替え、Firestoreへの書き込みを1回にする。
+    for (const date of dateKeys) {
+      const planned = Math.max(0, Math.round(Number(plannedByDate[date]) || 0));
+      const actual = hasWorkLogsForDate(project, date)
+        ? getActualMinutesFromLogs(project, date)
+        : Math.max(0, Number(project.dailyWorkEntries[date]?.actual) || 0);
+
+      if (planned === 0 && actual === 0) {
+        delete project.dailyWorkEntries[date];
+      } else {
+        project.dailyWorkEntries[date] = {
+          planned,
+          actual,
+        };
+      }
+    }
+
+    saveProject(project);
+  };
+
   const getProjectDailyActualMinutes = (projectId: string, date: string) => {
     const project = getProjectById(projectId);
     if (!project) return 0;
@@ -851,6 +884,7 @@ export const useProjects = () => {
     updateBookSpec,
     updatePageStatus,
     updateDailyWorkEntry,
+    replacePlannedEntries,
     getProjectDailyActualMinutes,
     getProjectManualActualMinutes,
     updateManualActualWorkLog,
