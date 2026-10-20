@@ -225,7 +225,7 @@
 
               <section class="grid auto-rows-max content-start gap-3">
                 <h3 class="text-sm font-black text-[#263236]/60">
-                  プロジェクト別予定
+                  {{ projectSectionTitle }}
                 </h3>
 
                 <div
@@ -275,65 +275,144 @@
                     未割り振り {{ formatWorkDuration(projectUnplannedWork(project)) }}
                   </p>
 
-                  <div class="mt-4 grid grid-cols-2 gap-3">
+                  <p
+                    v-if="selectedDateMode === 'past' && dailyEntry(project.id).planned > 0"
+                    class="mt-3 text-xs font-black text-[#263236]/50"
+                  >
+                    この日の予定（参考）: {{ formatWorkDuration(dailyEntry(project.id).planned) }}
+                  </p>
+
+                  <div v-if="selectedDateMode !== 'past'" class="mt-4 grid gap-2">
+                    <label
+                      :for="`planned-${project.id}`"
+                      class="text-xs font-black text-[#263236]/60"
+                    >
+                      予定（時間）
+                    </label>
+                    <div class="flex items-center overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
+                      <input
+                        :id="`planned-${project.id}`"
+                        :value="minutesToHoursInput(dailyEntry(project.id).planned)"
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        :max="minutesToHoursInput(maxPlannedEntry(project.id))"
+                        inputmode="decimal"
+                        class="min-w-0 flex-1 px-3 py-2 text-sm font-bold text-[#263236] outline-none"
+                        @change="handlePlannedEntry(project.id, $event)"
+                      >
+                      <span class="shrink-0 pr-3 text-xs font-black text-[#263236]/50">h</span>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                      <button
+                        v-for="step in plannedSteps"
+                        :key="step.amount"
+                        type="button"
+                        :aria-label="step.ariaLabel"
+                        class="min-h-9 rounded-xl border-2 border-[#2c8d98]/40 bg-white px-3 py-1 text-xs font-black text-[#263236] transition hover:border-[#2c8d98] hover:bg-[#edf6fa]"
+                        @click="adjustPlannedEntry(project.id, step.amount)"
+                      >
+                        {{ step.label }}
+                      </button>
+                    </div>
+
+                    <p
+                      v-if="plannedClampNotices[project.id]"
+                      class="text-xs font-bold text-[#f36b00]"
+                      role="status"
+                    >
+                      残り作業時間を超えるため、{{ formatWorkDuration(plannedClampNotices[project.id]) }} に合わせました。
+                    </p>
+                  </div>
+
+                  <div
+                    v-if="selectedDateMode !== 'future'"
+                    class="mt-4 grid gap-3 border-t-2 border-dashed border-[#2c8d98]/40 pt-4"
+                  >
+                    <div class="flex items-center justify-between gap-3">
+                      <span class="text-xs font-black text-[#263236]/60">作業時間（実績）</span>
+                      <span class="rounded-xl border-2 border-[#2c8d98]/40 bg-[#edf6fa] px-3 py-1 text-sm font-black text-[#263236]">
+                        {{ formatWorkDuration(dailyActual(project.id)) }}
+                      </span>
+                    </div>
+
+                    <div class="rounded-xl border-2 border-[#2c8d98]/40">
+                      <button
+                        type="button"
+                        class="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm font-black text-[#263236] transition hover:bg-[#f7fcfd] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2c8d98]"
+                        :aria-expanded="Boolean(openPageSections[project.id])"
+                        :aria-controls="`page-progress-${project.id}`"
+                        @click="togglePageSection(project.id)"
+                      >
+                        <span class="flex items-center gap-2">
+                          <span
+                            class="text-xs transition-transform"
+                            :class="{ 'rotate-90': openPageSections[project.id] }"
+                            aria-hidden="true"
+                          >
+                            ▶
+                          </span>
+                          ページを進める
+                        </span>
+                        <span class="text-xs text-[#263236]/50">
+                          未完了 {{ incompletePageCount(project) }}P
+                        </span>
+                      </button>
+
+                      <div
+                        v-if="openPageSections[project.id]"
+                        :id="`page-progress-${project.id}`"
+                        class="grid gap-2 border-t-2 border-[#2c8d98]/20 p-3"
+                      >
+                        <label class="flex w-fit items-center gap-2 text-xs font-black text-[#263236]/60">
+                          <input
+                            v-model="showCompletedPages[project.id]"
+                            type="checkbox"
+                            class="h-4 w-4 accent-[#2c8d98]"
+                          >
+                          完了済みのページも表示
+                        </label>
+
+                        <PageProgressSlider
+                          v-for="page in visiblePages(project)"
+                          :key="page.pageNumber"
+                          :page="page"
+                          :work-process-steps="project.workProcessSteps"
+                          @change="updatePageStatusForSelectedDate(project.id, page.pageNumber, $event)"
+                        />
+
+                        <p
+                          v-if="visiblePages(project).length === 0"
+                          class="rounded-xl bg-[#edf6fa] px-3 py-2 text-center text-xs font-bold text-[#263236]/60"
+                        >
+                          すべてのページが完了しています。
+                        </p>
+                      </div>
+                    </div>
+
                     <div class="grid gap-2">
                       <label
-                        :for="`planned-${project.id}`"
+                        :for="`manual-actual-${project.id}`"
                         class="text-xs font-black text-[#263236]/60"
                       >
-                        予定（時間）
+                        その他の作業時間（ネーム・資料集め・入稿など）
                       </label>
                       <div class="flex items-center overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
                         <input
-                          :id="`planned-${project.id}`"
-                          :value="minutesToHoursInput(dailyEntry(project.id).planned)"
+                          :id="`manual-actual-${project.id}`"
+                          :value="minutesToHoursInput(getProjectManualActualMinutes(project.id, selectedDate))"
                           type="number"
                           min="0"
-                          step="0.5"
-                          :max="minutesToHoursInput(maxPlannedEntry(project.id))"
+                          step="0.25"
                           inputmode="decimal"
                           class="min-w-0 flex-1 px-3 py-2 text-sm font-bold text-[#263236] outline-none"
-                          @change="handlePlannedEntry(project.id, $event)"
+                          @change="handleManualActualEntry(project.id, $event)"
                         >
                         <span class="shrink-0 pr-3 text-xs font-black text-[#263236]/50">h</span>
                       </div>
                     </div>
-
-                    <div class="grid gap-2">
-                      <span class="text-xs font-black text-[#263236]/60">作業時間</span>
-                      <div class="rounded-xl border-2 border-[#2c8d98]/40 bg-[#edf6fa] px-3 py-2 text-sm font-black text-[#263236]">
-                        {{ formatWorkDuration(dailyActual(project.id)) }}
-                      </div>
-                    </div>
                   </div>
-
-                  <div class="mt-2 flex flex-wrap gap-2">
-                    <button
-                      v-for="step in plannedSteps"
-                      :key="step.amount"
-                      type="button"
-                      :aria-label="step.ariaLabel"
-                      class="min-h-9 rounded-xl border-2 border-[#2c8d98]/40 bg-white px-3 py-1 text-xs font-black text-[#263236] transition hover:border-[#2c8d98] hover:bg-[#edf6fa]"
-                      @click="adjustPlannedEntry(project.id, step.amount)"
-                    >
-                      {{ step.label }}
-                    </button>
-                  </div>
-
-                  <p
-                    v-if="plannedClampNotices[project.id]"
-                    class="mt-2 text-xs font-bold text-[#f36b00]"
-                    role="status"
-                  >
-                    残り作業時間を超えるため、{{ formatWorkDuration(plannedClampNotices[project.id]) }} に合わせました。
-                  </p>
-
-                  <NuxtLink
-                    :to="{ path: `/projects/${project.id}`, query: { workDate: selectedDate } }"
-                    class="ml-auto mt-4 flex w-fit items-center justify-center rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-4 py-2 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984]"
-                  >
-                    作業時間入力
-                  </NuxtLink>
                 </div>
               </section>
             </div>
@@ -345,11 +424,13 @@
 </template>
 
 <script setup lang="ts">
-import type { DailyWorkEntry, Project } from "~/types/project";
+import type { DailyWorkEntry, PageStatus, Project } from "~/types/project";
 import { useProjects } from "~/composables/useProjects";
-import { useProgress } from "~/composables/useProgress";
+import { createStatusList, useProgress } from "~/composables/useProgress";
 
 type ScheduleKind = "event" | "deadline" | "start";
+
+type DateMode = "past" | "today" | "future";
 
 type ScheduleItem = {
   projectId: string;
@@ -361,7 +442,10 @@ const {
   projects,
   loadProjects,
   updateDailyWorkEntry,
+  updatePageStatus,
   getProjectDailyActualMinutes,
+  getProjectManualActualMinutes,
+  updateManualActualWorkLog,
 } = useProjects();
 const {
   calculateTotalProgress,
@@ -398,6 +482,8 @@ const isWorkPanelOpen = ref(Boolean(route.query.date));
 const closePanelButton = ref<HTMLButtonElement | null>(null);
 // 上限に丸めた入力だけ、丸めた後の値をプロジェクト別に表示する。
 const plannedClampNotices = ref<Record<string, number>>({});
+const openPageSections = ref<Record<string, boolean>>({});
+const showCompletedPages = ref<Record<string, boolean>>({});
 
 onMounted(() => {
   loadProjects();
@@ -470,6 +556,25 @@ const monthTotals = computed(() => {
 });
 
 const selectedSchedule = computed(() => daySchedule(selectedDate.value));
+
+const selectedDateMode = computed<DateMode>(() => {
+  const todayKey = formatDateKey(new Date());
+
+  if (selectedDate.value < todayKey) return "past";
+  if (selectedDate.value === todayKey) return "today";
+
+  return "future";
+});
+
+const projectSectionTitle = computed(() => {
+  const titles: Record<DateMode, string> = {
+    past: "プロジェクト別実績",
+    today: "プロジェクト別予定・実績",
+    future: "プロジェクト別予定",
+  };
+
+  return titles[selectedDateMode.value];
+});
 
 const editableProjects = computed(() => {
   return projects.value.filter((project) => {
@@ -801,5 +906,51 @@ function handlePlannedEntry(projectId: string, event: Event) {
 
 function adjustPlannedEntry(projectId: string, amount: number) {
   savePlannedEntry(projectId, dailyEntry(projectId).planned + amount);
+}
+
+function togglePageSection(projectId: string) {
+  openPageSections.value[projectId] = !openPageSections.value[projectId];
+}
+
+function isCompletedPage(project: Project, status: PageStatus) {
+  const statuses = createStatusList(project.workProcessSteps);
+
+  return status === statuses[statuses.length - 1];
+}
+
+function incompletePageCount(project: Project) {
+  return project.pages.filter((page) => !isCompletedPage(project, page.status)).length;
+}
+
+function visiblePages(project: Project) {
+  if (showCompletedPages.value[project.id]) return project.pages;
+
+  // この日に進めたページは完了しても一覧から消さず、直前の操作を戻せるようにする。
+  const touchedPageNumbers = new Set(
+    project.workLogs
+      .filter((log) => log.kind === "pageStatus" && log.workDate === selectedDate.value)
+      .map((log) => log.pageNumber)
+  );
+
+  return project.pages.filter((page) => {
+    return !isCompletedPage(project, page.status) || touchedPageNumbers.has(page.pageNumber);
+  });
+}
+
+function updatePageStatusForSelectedDate(projectId: string, pageNumber: number, status: PageStatus) {
+  // カレンダーで選んだ日の作業ログとして、ページ進捗の差分を記録する。
+  updatePageStatus(projectId, pageNumber, status, {
+    workDate: selectedDate.value,
+    syncDailyActual: true,
+  });
+}
+
+function handleManualActualEntry(projectId: string, event: Event) {
+  const input = event.target as HTMLInputElement;
+  const hours = Number(input.value);
+  const minutes = Math.max(0, Math.round((Number.isFinite(hours) ? hours : 0) * 60));
+
+  updateManualActualWorkLog(projectId, selectedDate.value, minutes);
+  input.value = String(minutesToHoursInput(getProjectManualActualMinutes(projectId, selectedDate.value)));
 }
 </script>
