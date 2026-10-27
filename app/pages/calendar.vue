@@ -247,32 +247,26 @@
                   :key="project.id"
                   class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 shadow-[3px_3px_0_rgba(44,141,152,0.14)]"
                 >
-                  <div class="flex items-start justify-between gap-3">
-                    <NuxtLink
-                      :to="`/projects/${project.id}`"
-                      class="min-w-0 font-black text-[#263236] hover:text-[#2c8d98]"
-                    >
-                      {{ project.title }}
-                    </NuxtLink>
-                    <span class="shrink-0 rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-2 py-1 text-xs font-black text-[#2c8d98]">
+                  <NuxtLink
+                    :to="`/projects/${project.id}`"
+                    class="block font-black text-[#263236] hover:text-[#2c8d98]"
+                  >
+                    {{ project.title }}
+                  </NuxtLink>
+
+                  <div class="mt-1 flex items-start justify-between gap-3 text-xs font-black text-[#263236]/60">
+                    <p class="flex min-w-0 flex-wrap gap-x-2">
+                      <span v-if="project.eventDate">
+                        開催 {{ formatProjectDate(project.eventDate) }}
+                      </span>
+                      <span v-if="project.eventName.trim()" class="min-w-0 break-all">
+                        {{ project.eventName.trim() }} 合わせ
+                      </span>
+                    </p>
+                    <span class="shrink-0">
                       {{ project.totalPages }}P
                     </span>
                   </div>
-
-                  <p
-                    v-if="formatEventLabel(project)"
-                    class="mt-1 text-xs font-black text-[#263236]/60"
-                  >
-                    {{ formatEventLabel(project) }}
-                  </p>
-
-                  <p class="mt-1 text-[11px] font-black text-[#263236]/50">
-                    進捗 {{ calculateTotalProgress(project.pages, project.workProcessSteps) }}%
-                    ・残り {{ formatWorkDuration(projectRequiredWork(project)) }}
-                    <template v-if="projectUnplannedWork(project) > 0">
-                      ・未割り振り {{ formatWorkDuration(projectUnplannedWork(project)) }}
-                    </template>
-                  </p>
 
                   <div class="mt-4 flex items-center gap-4">
                     <div
@@ -616,7 +610,7 @@ import {
   listDateKeys,
   parseDateKey,
 } from "~/utils/planAllocation";
-import { formatEventLabel } from "~/utils/projectDisplay";
+import { formatProjectDate } from "~/utils/projectDisplay";
 
 type ScheduleKind = "event" | "deadline" | "start";
 
@@ -665,7 +659,6 @@ const {
   getProjectDailyActualMinutes,
 } = useProjects();
 const {
-  calculateTotalProgress,
   calculateRemainingWork,
   formatWorkDuration,
 } = useProgress();
@@ -1094,10 +1087,6 @@ function projectPlannedTotal(project: Project) {
   return Object.entries(project.dailyWorkEntries).reduce((sum, [dateKey, entry]) => {
     return sum + plannedLoad(project, dateKey, entry.planned);
   }, 0);
-}
-
-function projectUnplannedWork(project: Project) {
-  return Math.max(projectRequiredWork(project) - projectPlannedTotal(project), 0);
 }
 
 function maxPlannedEntry(projectId: string) {
