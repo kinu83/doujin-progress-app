@@ -268,45 +268,51 @@
                     </span>
                   </div>
 
-                  <div class="mt-4 flex items-center gap-4">
+                  <div class="mt-5 flex items-center gap-6">
                     <div
-                      class="flex shrink-0 items-end gap-1"
+                      class="flex shrink-0 items-end gap-1.5"
                       role="img"
                       :aria-label="`作業時間 ${formatWorkDuration(dailyActual(project.id))}、予定 ${formatWorkDuration(dailyEntry(project.id).planned)}`"
                     >
                       <div
                         v-for="(column, columnIndex) in projectWorkBarColumns(project.id)"
                         :key="columnIndex"
-                        class="grid w-10 gap-1"
+                        class="grid gap-1.5"
+                        :class="projectWorkBarColumns(project.id).length > 1 ? 'w-12' : 'w-24'"
                       >
                         <span
                           v-for="bar in column"
                           :key="bar.level"
-                          class="h-2 w-full rounded-full border"
+                          class="h-3 w-full rounded-sm border-2"
                           :class="barClass(bar)"
                           :style="barStyle(bar)"
                         />
                       </div>
                       <span
                         v-if="projectWorkBarColumns(project.id).length === 0"
-                        class="h-2 w-10 rounded-full border border-dashed border-[#2c8d98]/30"
+                        class="h-3 w-24 rounded-sm border-2 border-dashed border-[#2c8d98]/30"
                       />
                     </div>
 
-                    <dl class="flex flex-1 gap-10">
-                      <div v-if="selectedDateMode !== 'future'">
-                        <dt class="text-xs font-black text-[#263236]/60">
+                    <dl class="flex items-end gap-4">
+                      <div v-if="selectedDateMode !== 'future'" class="grid gap-2">
+                        <dt class="text-sm font-black text-[#263236]">
                           実績
                         </dt>
-                        <dd class="text-lg font-black text-[#263236]">
+                        <dd class="text-xl font-black text-[#263236]">
                           {{ formatWorkDuration(dailyActual(project.id)) }}
                         </dd>
                       </div>
-                      <div>
-                        <dt class="text-xs font-black text-[#263236]/60">
+                      <span
+                        v-if="selectedDateMode !== 'future'"
+                        class="text-xl font-black text-[#263236]/40"
+                        aria-hidden="true"
+                      >/</span>
+                      <div class="grid gap-2">
+                        <dt class="text-sm font-black text-[#263236]">
                           予定
                         </dt>
-                        <dd class="text-lg font-black text-[#2c8d98]">
+                        <dd class="text-xl font-black text-[#2c8d98]">
                           {{ formatWorkDuration(dailyEntry(project.id).planned) }}
                         </dd>
                       </div>
@@ -405,13 +411,13 @@
 
                   <section
                     v-if="selectedDateMode !== 'future'"
-                    class="mt-4 grid gap-2 border-t-2 border-dashed border-[#2c8d98]/40 pt-4"
+                    class="mt-5 grid gap-2 border-t-2 border-dashed border-[#2c8d98]/40 pt-4"
                     :aria-labelledby="`page-progress-title-${project.id}`"
                   >
                     <div class="flex items-center justify-between gap-3">
                       <h4
                         :id="`page-progress-title-${project.id}`"
-                        class="text-xs font-black text-[#263236]/60"
+                        class="text-sm font-black text-[#263236]"
                       >
                         実績入力
                       </h4>
