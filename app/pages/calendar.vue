@@ -294,7 +294,7 @@
                       />
                     </div>
 
-                    <dl class="flex items-end gap-4">
+                    <dl class="flex items-start gap-4">
                       <div v-if="selectedDateMode !== 'future'" class="grid gap-2">
                         <dt class="text-sm font-black text-[#263236]">
                           実績
@@ -303,17 +303,44 @@
                           {{ formatWorkDuration(dailyActual(project.id)) }}
                         </dd>
                       </div>
-                      <span
+                      <!-- 見出し1行分（20px）と行間（8px）を空けて、時間の数字と高さをそろえる。 -->
+                      <div
                         v-if="selectedDateMode !== 'future'"
-                        class="text-xl font-black text-[#263236]/40"
+                        class="pt-7 text-xl font-black text-[#263236]/40"
                         aria-hidden="true"
-                      >/</span>
+                      >
+                        /
+                      </div>
                       <div class="grid gap-2">
                         <dt class="text-sm font-black text-[#263236]">
                           予定
                         </dt>
-                        <dd class="text-xl font-black text-[#2c8d98]">
-                          {{ formatWorkDuration(dailyEntry(project.id).planned) }}
+                        <dd class="flex flex-wrap items-center gap-x-3">
+                          <span class="text-xl font-black text-[#2c8d98]">
+                            {{ formatWorkDuration(dailyEntry(project.id).planned) }}
+                          </span>
+                          <button
+                            v-if="selectedDateMode !== 'past'"
+                            type="button"
+                            class="inline-flex min-h-10 items-center text-xs font-black text-[#f36b00] underline-offset-2 hover:underline"
+                            aria-haspopup="dialog"
+                            aria-label="今日〜締切の予定を自動で割り振る"
+                            @click="openAllocationDialog(project.id)"
+                          >
+                            自動割り振り ›
+                          </button>
+                        </dd>
+                        <dd v-if="selectedDateMode !== 'past'" class="flex gap-1.5">
+                          <button
+                            v-for="step in plannedSteps"
+                            :key="step.amount"
+                            type="button"
+                            :aria-label="step.ariaLabel"
+                            class="min-h-10 min-w-14 rounded-xl border-2 border-[#2c8d98]/40 bg-white px-2 text-xs font-black text-[#263236] transition hover:border-[#2c8d98] hover:bg-[#edf6fa]"
+                            @click="adjustPlannedEntry(project.id, step.amount)"
+                          >
+                            {{ step.label }}
+                          </button>
                         </dd>
                       </div>
                     </dl>
@@ -324,7 +351,7 @@
                       予定を入力
                     </legend>
                     <div class="flex items-center gap-2">
-                      <div class="flex flex-1 items-center overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
+                      <div class="flex min-w-0 flex-1 items-center overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
                         <input
                           :value="Math.floor(dailyEntry(project.id).planned / 60)"
                           type="number"
@@ -337,7 +364,7 @@
                         >
                         <span class="shrink-0 pr-3 text-xs font-black text-[#263236]/50">h</span>
                       </div>
-                      <div class="flex flex-1 items-center overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
+                      <div class="flex min-w-0 flex-1 items-center overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
                         <select
                           :value="dailyEntry(project.id).planned % 60"
                           aria-label="予定（分）"
@@ -354,25 +381,12 @@
                         </select>
                         <span class="shrink-0 pr-3 text-xs font-black text-[#263236]/50">m</span>
                       </div>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-2">
-                      <button
-                        v-for="step in plannedSteps"
-                        :key="step.amount"
-                        type="button"
-                        :aria-label="step.ariaLabel"
-                        class="min-h-11 rounded-xl border-2 border-[#2c8d98]/40 bg-white px-2 text-xs font-black text-[#263236] transition hover:border-[#2c8d98] hover:bg-[#edf6fa]"
-                        @click="adjustPlannedEntry(project.id, step.amount)"
-                      >
-                        {{ step.label }}
-                      </button>
                       <button
                         v-if="dailyGuide(project) > 0"
                         type="button"
                         :aria-label="`予定を目安の${formatWorkDuration(dailyGuideTarget(project))}にする`"
                         :aria-pressed="isDailyGuideApplied(project)"
-                        class="min-h-11 rounded-xl border-2 px-2 text-xs font-black transition"
+                        class="min-h-11 shrink-0 rounded-xl border-2 px-3 text-xs font-black transition"
                         :class="isDailyGuideApplied(project)
                           ? 'border-[#f36b00] bg-[#f36b00] text-white'
                           : 'border-[#f36b00]/60 bg-[#fff2e3] text-[#f36b00] hover:border-[#f36b00]'"
@@ -389,16 +403,6 @@
                     >
                       残り作業時間を超えるため、{{ formatWorkDuration(plannedClampNotices[project.id]) }} に合わせました。
                     </p>
-
-                    <button
-                      type="button"
-                      class="flex min-h-11 items-center justify-between rounded-xl border-2 border-[#2c8d98]/40 bg-white px-3 text-sm font-black text-[#263236] transition hover:border-[#2c8d98] hover:bg-[#f7fcfd]"
-                      aria-haspopup="dialog"
-                      @click="openAllocationDialog(project.id)"
-                    >
-                      今日〜締切を自動で割り振る
-                      <span aria-hidden="true">›</span>
-                    </button>
 
                     <p
                       v-if="allocationDoneNotices[project.id]"
