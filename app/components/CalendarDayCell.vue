@@ -11,12 +11,27 @@
     @click="emit('select', day.dateKey)"
   >
     <div class="flex w-full flex-wrap items-start justify-between gap-1">
-      <span
-        class="grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-black sm:h-7 sm:w-7 sm:text-sm"
-        :class="day.isToday ? 'bg-[#ff4b1f] text-white shadow-[2px_2px_0_rgba(255,75,31,0.24)]' : 'text-[#263236]'"
-      >
-        {{ day.dayNumber }}
-      </span>
+      <!-- 日付の横に収まらない幅では、時間表示が日付の下へ折り返す。 -->
+      <div class="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
+        <span
+          class="grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-black sm:h-7 sm:w-7 sm:text-sm"
+          :class="day.isToday ? 'bg-[#ff4b1f] text-white shadow-[2px_2px_0_rgba(255,75,31,0.24)]' : 'text-[#263236]'"
+        >
+          {{ day.dayNumber }}
+        </span>
+        <p
+          v-if="hasWork"
+          class="flex flex-wrap items-baseline gap-x-0.5 text-xs font-black leading-tight sm:text-sm"
+          aria-hidden="true"
+        >
+          <span :class="isOver ? 'text-[#f36b00]' : 'text-[#2c8d98]'">
+            {{ formatWorkDuration(totals.actual) }}
+          </span>
+          <span class="text-[#263236]/40">
+            /{{ formatWorkDuration(totals.planned) }}
+          </span>
+        </p>
+      </div>
       <span
         v-if="projectDots.length"
         class="flex flex-wrap justify-end gap-0.5 pt-1 sm:pt-1.5"
@@ -37,19 +52,6 @@
         </span>
       </span>
     </div>
-
-    <p
-      v-if="hasWork"
-      class="mt-1 flex flex-wrap items-baseline gap-x-0.5 text-[10px] font-black leading-tight sm:text-[11px]"
-      aria-hidden="true"
-    >
-      <span :class="isOver ? 'text-[#f36b00]' : 'text-[#2c8d98]'">
-        {{ formatWorkDuration(totals.actual) }}
-      </span>
-      <span class="text-[#263236]/40">
-        /{{ formatWorkDuration(totals.planned) }}
-      </span>
-    </p>
 
     <div class="mt-1 grid w-full min-w-0 gap-1">
       <span
