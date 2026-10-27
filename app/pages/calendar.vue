@@ -69,20 +69,47 @@
                 今日
               </button>
             </div>
-            <div class="flex flex-wrap items-center justify-end gap-3">
+            <div class="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
               <div class="flex items-center gap-2 text-xs font-black text-[#263236]/60">
                 <span class="h-2 w-8 rounded-full bg-[#2c8d98]" />
-                作業時間
+                実績
               </div>
               <div class="flex items-center gap-2 text-xs font-black text-[#263236]/60">
                 <span class="h-2 w-8 rounded-full border-2 border-[#2c8d98]/50 bg-white" />
                 予定
               </div>
-              <p class="text-sm font-black text-[#263236]/60">
-                {{ formatWorkDuration(monthTotals.actual) }} / {{ formatWorkDuration(monthTotals.planned) }}
+              <div class="flex items-center gap-2 text-xs font-black text-[#263236]/60">
+                <span class="h-2 w-8 rounded-full bg-[#f36b00]" />
+                予定超過
+              </div>
+              <p class="text-sm font-black" :aria-label="`今月の実績 ${formatWorkDuration(monthTotals.actual)}、予定 ${formatWorkDuration(monthTotals.planned)}`">
+                <span :class="monthTotals.actual > monthTotals.planned ? 'text-[#f36b00]' : 'text-[#2c8d98]'">
+                  実績 {{ formatWorkDuration(monthTotals.actual) }}
+                </span>
+                <span class="text-[#263236]/40">
+                  / 予定 {{ formatWorkDuration(monthTotals.planned) }}
+                </span>
               </p>
             </div>
           </div>
+
+          <ul
+            v-if="projects.length"
+            class="flex flex-wrap gap-x-4 gap-y-1 border-b-2 border-dashed border-[#2c8d98]/40 px-5 py-2"
+            aria-label="プロジェクトの色"
+          >
+            <li
+              v-for="project in projects"
+              :key="project.id"
+              class="flex min-w-0 items-center gap-1.5 text-xs font-black text-[#263236]/70"
+            >
+              <span
+                class="h-2.5 w-2.5 shrink-0 rounded-full"
+                :style="{ backgroundColor: projectColors[project.id] }"
+              />
+              <span class="truncate">{{ project.title }}</span>
+            </li>
+          </ul>
 
           <div class="grid grid-cols-7 border-b-2 border-[#2c8d98] bg-[#edf6fa]">
             <div
@@ -95,69 +122,16 @@
           </div>
 
           <div class="grid grid-cols-7">
-            <button
-              v-for="day in calendarDays"
-              :key="day.dateKey"
-              type="button"
-              class="flex min-h-28 flex-col items-start justify-start border-b border-r border-[#2c8d98]/20 p-2 text-left transition hover:bg-[#f7fcfd] sm:min-h-32"
-              :class="[
-                day.isCurrentMonth ? 'bg-white' : 'bg-[#edf6fa]/60 text-[#263236]/40',
-                selectedDate === day.dateKey ? 'ring-2 ring-inset ring-[#2c8d98]' : '',
-              ]"
-              @click="selectDate(day.dateKey)"
-            >
-              <div class="flex w-full items-start justify-between gap-2">
-                <span
-                  class="grid h-7 w-7 place-items-center rounded-full text-sm font-black"
-                  :class="day.isToday ? 'bg-[#ff4b1f] text-white shadow-[2px_2px_0_rgba(255,75,31,0.24)]' : 'text-[#263236]'"
-                >
-                  {{ day.dayNumber }}
-                </span>
-                <span
-                  v-if="dayTotals(day.dateKey).planned || dayTotals(day.dateKey).actual"
-                  class="text-[11px] font-black text-[#263236]/60"
-                >
-                  {{ formatWorkDuration(dayTotals(day.dateKey).actual) }}/{{ formatWorkDuration(dayTotals(day.dateKey).planned) }}
-                </span>
-              </div>
-
-              <div class="mt-2 grid gap-1">
-                <span
-                  v-for="item in daySchedule(day.dateKey).slice(0, 3)"
-                  :key="`${item.projectId}-${item.kind}`"
-                  class="truncate rounded-md border px-2 py-1 text-[11px] font-black"
-                  :class="scheduleClasses[item.kind]"
-                >
-                  {{ scheduleLabels[item.kind] }} {{ item.title }}
-                </span>
-                <span
-                  v-if="daySchedule(day.dateKey).length > 3"
-                  class="px-2 text-[11px] font-black text-[#263236]/40"
-                >
-                  他 {{ daySchedule(day.dateKey).length - 3 }} 件
-                </span>
-              </div>
-
-              <div
-                v-if="workBars(day.dateKey).length"
-                class="mt-auto grid w-full gap-1 pt-2"
-                :aria-label="`${day.dateKey} の作業時間 ${formatWorkDuration(dayTotals(day.dateKey).actual)}、予定 ${formatWorkDuration(dayTotals(day.dateKey).planned)}`"
-              >
-                <span
-                  v-for="bar in workBars(day.dateKey)"
-                  :key="bar.level"
-                  class="h-1.5 w-full rounded-full border"
-                  :class="barClass(bar)"
-                  :style="barStyle(bar)"
-                />
-                <span
-                  v-if="hasHiddenBars(day.dateKey)"
-                  class="text-[10px] font-black text-[#263236]/40"
-                >
-                  +{{ hiddenBarCount(day.dateKey) }}
-                </span>
-              </div>
-            </button>
+            <CalendarDayCell
+              v-for="cell in dayCells"
+              :key="cell.day.dateKey"
+              :day="cell.day"
+              :totals="cell.totals"
+              :schedule="cell.schedule"
+              :project-dots="cell.projectDots"
+              :selected="selectedDate === cell.day.dateKey"
+              @select="selectDate"
+            />
           </div>
         </section>
 
@@ -249,8 +223,13 @@
                 >
                   <NuxtLink
                     :to="`/projects/${project.id}`"
-                    class="block font-black text-[#263236] hover:text-[#2c8d98]"
+                    class="flex items-center gap-2 font-black text-[#263236] hover:text-[#2c8d98]"
                   >
+                    <span
+                      class="h-2.5 w-2.5 shrink-0 rounded-full"
+                      :style="{ backgroundColor: projectColors[project.id] }"
+                      aria-hidden="true"
+                    />
                     {{ project.title }}
                   </NuxtLink>
 
@@ -284,8 +263,8 @@
                           v-for="bar in column"
                           :key="bar.level"
                           class="h-3 w-full rounded-sm border-2"
-                          :class="barClass(bar)"
-                          :style="barStyle(bar)"
+                          :class="getWorkBarClass(bar)"
+                          :style="getWorkBarStyle(bar)"
                         />
                       </div>
                       <span
@@ -580,8 +559,19 @@ import {
   parseDateKey,
 } from "~/utils/planAllocation";
 import { formatProjectDate } from "~/utils/projectDisplay";
-
-type ScheduleKind = "event" | "deadline" | "start";
+import { getProjectColor } from "~/utils/projectColors";
+import {
+  scheduleClasses,
+  scheduleLabels,
+  type ScheduleItem,
+  type ScheduleKind,
+} from "~/utils/calendarSchedule";
+import {
+  createWorkBars,
+  getWorkBarClass,
+  getWorkBarStyle,
+  type WorkTotals,
+} from "~/utils/workBars";
 
 type DateMode = "past" | "today" | "future";
 
@@ -608,15 +598,8 @@ type AllocationPlan = {
   overwriteCount: number;
 };
 
-type WorkTotals = {
-  planned: number;
-  actual: number;
-};
-
-type ScheduleItem = {
-  projectId: string;
-  title: string;
-  kind: ScheduleKind;
+type DayProjectTotals = WorkTotals & {
+  project: Project;
 };
 
 const {
@@ -633,8 +616,6 @@ const {
 } = useProgress();
 
 const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
-const workBarUnit = 60;
-const maxCollapsedWorkBars = 4;
 // カード内のバーは圧縮せず、この本数ごとに右の列へ積み上げる。
 const projectWorkBarsPerColumn = 8;
 const plannedSteps = [
@@ -644,16 +625,6 @@ const plannedSteps = [
 const weekendWeights = [1, 1.5, 2];
 // Firestoreルールの日付キー上限（dailyWorkEntries.keys().size() <= 800）に合わせる。
 const maxDailyEntryCount = 800;
-const scheduleLabels: Record<ScheduleKind, string> = {
-  event: "イベント",
-  deadline: "締切",
-  start: "開始",
-};
-const scheduleClasses: Record<ScheduleKind, string> = {
-  event: "border-red-500 bg-red-50 text-red-700",
-  deadline: "border-[#ff4b1f] bg-[#fff2e3] text-[#f36b00]",
-  start: "border-[#2c8d98] bg-[#edf6fa] text-[#2c8d98]",
-};
 
 const route = useRoute();
 const today = new Date();
@@ -730,17 +701,32 @@ const calendarDays = computed(() => {
   });
 });
 
-const monthTotals = computed(() => {
-  return calendarDays.value.reduce(
-    (sum, day) => {
-      if (!day.isCurrentMonth) return sum;
+const projectColors = computed<Record<string, string>>(() => {
+  return Object.fromEntries(
+    projects.value.map((project, index) => [project.id, getProjectColor(index)])
+  );
+});
 
-      const totals = dayTotals(day.dateKey);
-      sum.planned += totals.planned;
-      sum.actual += totals.actual;
-      return sum;
-    },
-    { planned: 0, actual: 0 }
+const dayCells = computed(() => {
+  return calendarDays.value.map((day) => {
+    const projectTotals = dayProjectTotals(day.dateKey);
+
+    return {
+      day,
+      totals: sumWorkTotals(projectTotals),
+      schedule: daySchedule(day.dateKey),
+      projectDots: projectTotals.map(({ project }) => ({
+        id: project.id,
+        title: project.title,
+        color: projectColors.value[project.id],
+      })),
+    };
+  });
+});
+
+const monthTotals = computed(() => {
+  return sumWorkTotals(
+    dayCells.value.filter((cell) => cell.day.isCurrentMonth).map((cell) => cell.totals)
   );
 });
 
@@ -855,28 +841,24 @@ function toScheduleItem(project: Project, kind: ScheduleKind): ScheduleItem {
   };
 }
 
-function dayTotals(dateKey: string) {
-  return projects.value.reduce(
-    (sum, project) => {
-      const entry = project.dailyWorkEntries[dateKey];
-      const actual = getProjectDailyActualMinutes(project.id, dateKey);
-      // 作業期間外の空データは月合計にも日別バーにも含めない。
-      if (!entry && actual === 0) return sum;
-      if (!isWithinWorkPeriod(project, dateKey) && (entry?.planned ?? 0) === 0 && actual === 0) return sum;
+function dayProjectTotals(dateKey: string): DayProjectTotals[] {
+  return projects.value.flatMap((project) => {
+    const planned = project.dailyWorkEntries[dateKey]?.planned ?? 0;
+    const actual = getProjectDailyActualMinutes(project.id, dateKey);
+    // 予定も実績もない日は、作業期間内でも合計やドットに含めない。
+    if (planned === 0 && actual === 0) return [];
 
-      sum.planned += entry?.planned ?? 0;
-      sum.actual += actual;
-      return sum;
-    },
-    { planned: 0, actual: 0 }
-  );
+    return [{ project, planned, actual }];
+  });
 }
 
-function workBars(dateKey: string) {
-  // 選択中の週以外は最大本数へ圧縮し、月表示の密度を保つ。
-  return createWorkBars(
-    dayTotals(dateKey),
-    shouldShowAllBars(dateKey) ? Infinity : maxCollapsedWorkBars
+function sumWorkTotals(totalsList: WorkTotals[]): WorkTotals {
+  return totalsList.reduce(
+    (sum, totals) => ({
+      planned: sum.planned + totals.planned,
+      actual: sum.actual + totals.actual,
+    }),
+    { planned: 0, actual: 0 }
   );
 }
 
@@ -897,126 +879,6 @@ function projectWorkBarColumns(projectId: string) {
   }
 
   return columns;
-}
-
-function createWorkBars(totals: WorkTotals, maxBars: number) {
-  const plannedBars = Math.ceil(totals.planned / workBarUnit);
-  const actualBars = Math.ceil(totals.actual / workBarUnit);
-  const totalBars = Math.max(plannedBars, actualBars);
-  const isCollapsed = totalBars > maxBars;
-  const visibleBars = isCollapsed
-    ? maxBars
-    : totalBars;
-
-  return Array.from({ length: visibleBars }, (_, index) => {
-    const level = visibleBars - index - 1;
-    const fillRatio = totals.planned > 0
-      ? totals.actual / totals.planned
-      : Number(totals.actual > 0);
-    // 圧縮時は予定と実績の比率を同じ本数の中へ写像して、超過分だけ色を分ける。
-    const plannedRatioOfActual = totals.actual > 0
-      ? totals.planned / totals.actual
-      : 0;
-    const plannedUnits = plannedRatioOfActual * visibleBars;
-    const roundedPlannedUnits = Math.abs(plannedUnits - Math.round(plannedUnits)) < 0.00001
-      ? Math.round(plannedUnits)
-      : Math.floor(plannedUnits);
-    const fillPercent = isCollapsed
-      ? Math.max(0, Math.min((fillRatio * visibleBars - level) * 100, 100))
-      : Number(level < actualBars) * 100;
-    const plannedFillPercent = isCollapsed && totals.actual > totals.planned
-      ? Math.max(0, Math.min((roundedPlannedUnits - level) * 100, 100))
-      : fillPercent;
-
-    return {
-      level,
-      fillPercent,
-      plannedFillPercent,
-      isCompressed: isCollapsed,
-      isPlanned: isCollapsed || level < plannedBars,
-      isActual: fillPercent > 0,
-      isOverActual: totals.actual > totals.planned && fillPercent > 0 && (isCollapsed || level >= plannedBars),
-    };
-  });
-}
-
-function hasHiddenBars(dateKey: string) {
-  if (shouldShowAllBars(dateKey)) return false;
-
-  const totals = dayTotals(dateKey);
-  const totalBars = Math.max(
-    Math.ceil(totals.planned / workBarUnit),
-    Math.ceil(totals.actual / workBarUnit)
-  );
-
-  return totalBars > maxCollapsedWorkBars;
-}
-
-function hiddenBarCount(dateKey: string) {
-  if (shouldShowAllBars(dateKey)) return 0;
-
-  const totals = dayTotals(dateKey);
-  const totalBars = Math.max(
-    Math.ceil(totals.planned / workBarUnit),
-    Math.ceil(totals.actual / workBarUnit)
-  );
-
-  return Math.max(totalBars - maxCollapsedWorkBars, 0);
-}
-
-function barClass(bar: {
-  plannedFillPercent: number;
-  isPlanned: boolean;
-  isActual: boolean;
-  isOverActual: boolean;
-  isCompressed: boolean;
-}) {
-  if (bar.isCompressed) {
-    // 予定内の青い部分を含むバーは枠線を青のままにし、超過分だけのバーを赤枠にする。
-    return bar.isOverActual && bar.plannedFillPercent <= 0
-      ? "border-[#f36b00] bg-white"
-      : "border-[#2c8d98]/50 bg-white";
-  }
-
-  if (bar.isOverActual) return "border-[#f36b00]";
-  if (bar.isActual) return "border-[#2c8d98]";
-  if (bar.isPlanned) return "border-[#2c8d98]/50 bg-white";
-
-  return "border-[#2c8d98]/20 bg-white";
-}
-
-function barStyle(bar: {
-  fillPercent: number;
-  plannedFillPercent: number;
-  isActual: boolean;
-  isOverActual: boolean;
-  isCompressed: boolean;
-}) {
-  if (!bar.isActual) return {};
-
-  if (bar.isCompressed && bar.isOverActual) {
-    return {
-      background: `linear-gradient(to right, #2c8d98 ${bar.plannedFillPercent}%, #f36b00 ${bar.plannedFillPercent}%, #f36b00 ${bar.fillPercent}%, #ffffff ${bar.fillPercent}%)`,
-    };
-  }
-
-  const fillColor = bar.isOverActual ? "#f36b00" : "#2c8d98";
-
-  return {
-    background: `linear-gradient(to right, ${fillColor} ${bar.fillPercent}%, #ffffff ${bar.fillPercent}%)`,
-  };
-}
-
-function shouldShowAllBars(dateKey: string) {
-  // 選択中の週だけ詳細表示にして、クリックした日の周辺を読み取りやすくする。
-  return getWeekStartKey(dateKey) === getWeekStartKey(selectedDate.value);
-}
-
-function getWeekStartKey(dateKey: string) {
-  const date = parseDateKey(dateKey);
-  date.setDate(date.getDate() - date.getDay());
-
-  return formatDateKey(date);
 }
 
 function isWithinWorkPeriod(project: Project, dateKey: string) {
