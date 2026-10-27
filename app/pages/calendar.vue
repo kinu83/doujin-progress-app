@@ -346,56 +346,10 @@
                     </dl>
                   </div>
 
-                  <fieldset v-if="selectedDateMode !== 'past'" class="mt-4 grid gap-2">
-                    <legend class="mb-2 text-xs font-black text-[#263236]/60">
-                      予定を入力
-                    </legend>
-                    <div class="flex items-center gap-2">
-                      <div class="flex min-w-0 flex-1 items-center overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
-                        <input
-                          :value="Math.floor(dailyEntry(project.id).planned / 60)"
-                          type="number"
-                          min="0"
-                          step="1"
-                          inputmode="numeric"
-                          aria-label="予定（時間）"
-                          class="min-h-11 min-w-0 flex-1 px-3 text-sm font-bold text-[#263236] outline-none"
-                          @change="handlePlannedPart(project.id, 'hours', $event)"
-                        >
-                        <span class="shrink-0 pr-3 text-xs font-black text-[#263236]/50">h</span>
-                      </div>
-                      <div class="flex min-w-0 flex-1 items-center overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
-                        <select
-                          :value="dailyEntry(project.id).planned % 60"
-                          aria-label="予定（分）"
-                          class="min-h-11 min-w-0 flex-1 bg-white px-3 text-sm font-bold text-[#263236] outline-none"
-                          @change="handlePlannedPart(project.id, 'minutes', $event)"
-                        >
-                          <option
-                            v-for="minute in plannedMinuteOptions(dailyEntry(project.id).planned)"
-                            :key="minute"
-                            :value="minute"
-                          >
-                            {{ minute }}
-                          </option>
-                        </select>
-                        <span class="shrink-0 pr-3 text-xs font-black text-[#263236]/50">m</span>
-                      </div>
-                      <button
-                        v-if="dailyGuide(project) > 0"
-                        type="button"
-                        :aria-label="`予定を目安の${formatWorkDuration(dailyGuideTarget(project))}にする`"
-                        :aria-pressed="isDailyGuideApplied(project)"
-                        class="min-h-11 shrink-0 rounded-xl border-2 px-3 text-xs font-black transition"
-                        :class="isDailyGuideApplied(project)
-                          ? 'border-[#f36b00] bg-[#f36b00] text-white'
-                          : 'border-[#f36b00]/60 bg-[#fff2e3] text-[#f36b00] hover:border-[#f36b00]'"
-                        @click="applyDailyGuide(project)"
-                      >
-                        目安 {{ formatWorkDuration(dailyGuide(project)) }}
-                      </button>
-                    </div>
-
+                  <div
+                    v-if="selectedDateMode !== 'past' && (plannedClampNotices[project.id] || allocationDoneNotices[project.id])"
+                    class="mt-3 grid gap-1"
+                  >
                     <p
                       v-if="plannedClampNotices[project.id]"
                       class="text-xs font-bold text-[#f36b00]"
@@ -411,7 +365,7 @@
                     >
                       予定を割り振りました。
                     </p>
-                  </fieldset>
+                  </div>
 
                   <section
                     v-if="selectedDateMode !== 'future'"
@@ -621,7 +575,6 @@ import { useProjects } from "~/composables/useProjects";
 import { createStatusList, useProgress } from "~/composables/useProgress";
 import {
   allocatePlannedMinutes,
-  calculateDailyGuide,
   formatDateKey,
   listDateKeys,
   parseDateKey,
@@ -684,7 +637,6 @@ const workBarUnit = 60;
 const maxCollapsedWorkBars = 4;
 // カード内のバーは圧縮せず、この本数ごとに右の列へ積み上げる。
 const projectWorkBarsPerColumn = 8;
-const plannedMinuteSteps = [0, 15, 30, 45];
 const plannedSteps = [
   { amount: -30, label: "−30m", ariaLabel: "予定を30分減らす" },
   { amount: 30, label: "+30m", ariaLabel: "予定を30分増やす" },
@@ -1154,52 +1106,12 @@ function savePlannedEntry(projectId: string, minutes: number) {
   return planned;
 }
 
-function plannedMinuteOptions(planned: number) {
-  // 自動割り振りなどで15分単位以外の値が入っていても、選択肢に出して表示を崩さない。
-  return [...new Set([...plannedMinuteSteps, planned % 60])].sort((a, b) => a - b);
-}
-
-function handlePlannedPart(projectId: string, part: "hours" | "minutes", event: Event) {
-  const field = event.target as HTMLInputElement | HTMLSelectElement;
-  const current = dailyEntry(projectId).planned;
-  const value = Number(field.value);
-  const safeValue = Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
-  const hours = part === "hours" ? safeValue : Math.floor(current / 60);
-  const minutes = part === "minutes" ? safeValue : current % 60;
-  // 入力は確定時（blur/Enter/選択）だけ保存して、1文字ごとの書き込みを避ける。
-  const planned = savePlannedEntry(projectId, hours * 60 + minutes);
-
-  // 上限で丸めて値が変わらなかった場合も、入力欄を保存後の値へ戻す。
-  field.value = String(part === "hours" ? Math.floor(planned / 60) : planned % 60);
-}
-
 function adjustPlannedEntry(projectId: string, amount: number) {
   savePlannedEntry(projectId, dailyEntry(projectId).planned + amount);
 }
 
 function remainingWorkDateKeys(project: Project) {
   return listDateKeys(formatDateKey(new Date()), project.deadline);
-}
-
-function dailyGuide(project: Project) {
-  if (selectedDate.value > project.deadline) return 0;
-
-  return calculateDailyGuide(projectRequiredWork(project), remainingWorkDateKeys(project).length);
-}
-
-function dailyGuideTarget(project: Project) {
-  // 今日の作業済み分は残り作業時間から引かれているため、予定には上乗せして入れる。
-  const base = selectedDateMode.value === "today" ? dailyActual(project.id) : 0;
-
-  return base + dailyGuide(project);
-}
-
-function isDailyGuideApplied(project: Project) {
-  return dailyEntry(project.id).planned === dailyGuideTarget(project);
-}
-
-function applyDailyGuide(project: Project) {
-  savePlannedEntry(project.id, dailyGuideTarget(project));
 }
 
 function allocationOptionsFor(projectId: string): AllocationOptions {

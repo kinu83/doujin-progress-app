@@ -37,17 +37,6 @@ export const listDateKeys = (from: string, to: string) => {
   return dateKeys;
 };
 
-export const calculateDailyGuide = (
-  remainingMinutes: number,
-  dayCount: number,
-  unit = PLAN_ALLOCATION_UNIT
-) => {
-  if (remainingMinutes <= 0 || dayCount <= 0) return 0;
-
-  // 目安は少し多めに見積もれるよう、割り振り単位で切り上げる。
-  return Math.ceil(remainingMinutes / dayCount / unit) * unit;
-};
-
 export const allocatePlannedMinutes = ({
   totalMinutes,
   dateKeys,
