@@ -247,92 +247,109 @@
                   :key="project.id"
                   class="rounded-2xl border-2 border-[#2c8d98] bg-white p-4 shadow-[3px_3px_0_rgba(44,141,152,0.14)]"
                 >
-                  <div class="flex items-start justify-between gap-3">
-                    <NuxtLink
-                      :to="`/projects/${project.id}`"
-                      class="min-w-0 font-black text-[#263236] hover:text-[#2c8d98]"
-                    >
-                      {{ project.title }}
-                    </NuxtLink>
+                  <NuxtLink
+                    :to="`/projects/${project.id}`"
+                    class="block font-black text-[#263236] hover:text-[#2c8d98]"
+                  >
+                    {{ project.title }}
+                  </NuxtLink>
+
+                  <div class="mt-1 flex items-center justify-between gap-3 text-xs font-black text-[#263236]/60">
+                    <p class="flex min-w-0 flex-wrap gap-x-2">
+                      <span v-if="project.eventDate">
+                        {{ formatProjectDate(project.eventDate) }}
+                      </span>
+                      <span v-if="project.eventName.trim()" class="min-w-0 break-all">
+                        {{ project.eventName.trim() }} 合わせ
+                      </span>
+                    </p>
                     <span class="shrink-0 rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-2 py-1 text-xs font-black text-[#2c8d98]">
                       {{ project.totalPages }}P
                     </span>
                   </div>
 
-                  <div class="mt-3 grid grid-cols-2 gap-2 text-xs font-black text-[#263236]/70">
-                    <span class="rounded-xl border-2 border-[#2c8d98]/40 bg-[#edf6fa] px-3 py-2">
-                      進捗 {{ calculateTotalProgress(project.pages, project.workProcessSteps) }}%
-                    </span>
-                    <span class="rounded-xl border-2 border-[#2c8d98]/40 bg-[#edf6fa] px-3 py-2">
-                      残り {{ formatWorkDuration(calculateRemainingWork(project.pages, project.workProcessSteps)) }}
-                    </span>
+                  <div class="mt-5 flex items-center gap-6">
+                    <div
+                      class="flex shrink-0 items-end gap-1.5"
+                      role="img"
+                      :aria-label="`作業時間 ${formatWorkDuration(dailyActual(project.id))}、予定 ${formatWorkDuration(dailyEntry(project.id).planned)}`"
+                    >
+                      <div
+                        v-for="(column, columnIndex) in projectWorkBarColumns(project.id)"
+                        :key="columnIndex"
+                        class="grid gap-1.5"
+                        :class="projectWorkBarColumns(project.id).length > 1 ? 'w-12' : 'w-24'"
+                      >
+                        <span
+                          v-for="bar in column"
+                          :key="bar.level"
+                          class="h-3 w-full rounded-sm border-2"
+                          :class="barClass(bar)"
+                          :style="barStyle(bar)"
+                        />
+                      </div>
+                      <span
+                        v-if="projectWorkBarColumns(project.id).length === 0"
+                        class="h-3 w-24 rounded-sm border-2 border-dashed border-[#2c8d98]/30"
+                      />
+                    </div>
+
+                    <dl class="flex items-start gap-4">
+                      <div v-if="selectedDateMode !== 'future'" class="grid gap-2">
+                        <dt class="text-sm font-black text-[#263236]">
+                          実績
+                        </dt>
+                        <dd class="text-xl font-black text-[#263236]">
+                          {{ formatWorkDuration(dailyActual(project.id)) }}
+                        </dd>
+                      </div>
+                      <!-- 見出し1行分（20px）と行間（8px）を空けて、時間の数字と高さをそろえる。 -->
+                      <div
+                        v-if="selectedDateMode !== 'future'"
+                        class="pt-7 text-xl font-black text-[#263236]/40"
+                        aria-hidden="true"
+                      >
+                        /
+                      </div>
+                      <div class="grid gap-2">
+                        <dt class="text-sm font-black text-[#263236]">
+                          予定
+                        </dt>
+                        <dd class="flex flex-wrap items-center gap-x-3">
+                          <span class="text-xl font-black text-[#2c8d98]">
+                            {{ formatWorkDuration(dailyEntry(project.id).planned) }}
+                          </span>
+                          <button
+                            v-if="selectedDateMode !== 'past'"
+                            type="button"
+                            class="inline-flex min-h-10 items-center text-xs font-black text-[#f36b00] underline-offset-2 hover:underline"
+                            aria-haspopup="dialog"
+                            aria-label="今日〜締切の予定を自動で割り振る"
+                            @click="openAllocationDialog(project.id)"
+                          >
+                            自動割り振り ›
+                          </button>
+                        </dd>
+                        <dd v-if="selectedDateMode !== 'past'" class="flex gap-1.5">
+                          <button
+                            v-for="step in plannedSteps"
+                            :key="step.amount"
+                            type="button"
+                            :aria-label="step.ariaLabel"
+                            class="min-h-10 min-w-14 rounded-xl border-2 border-[#2c8d98]/40 bg-white px-2 text-xs font-black text-[#263236] transition hover:border-[#2c8d98] hover:bg-[#edf6fa]"
+                            @click="adjustPlannedEntry(project.id, step.amount)"
+                          >
+                            {{ step.label }}
+                          </button>
+                        </dd>
+                      </div>
+                    </dl>
                   </div>
 
-                  <p
-                    v-if="projectUnplannedWork(project) > 0"
-                    class="mt-3 w-fit rounded-full border border-[#263236]/20 bg-[#f7fcfd] px-3 py-1 text-[11px] font-black text-[#263236]/60"
+                  <div
+                    v-if="selectedDateMode !== 'past' && (plannedClampNotices[project.id] || allocationDoneNotices[project.id])"
+                    class="mt-3 grid gap-1"
                   >
-                    未割り振り {{ formatWorkDuration(projectUnplannedWork(project)) }}
-                  </p>
-
-                  <p
-                    v-if="selectedDateMode === 'past' && dailyEntry(project.id).planned > 0"
-                    class="mt-3 text-xs font-black text-[#263236]/50"
-                  >
-                    この日の予定（参考）: {{ formatWorkDuration(dailyEntry(project.id).planned) }}
-                  </p>
-
-                  <div v-if="selectedDateMode !== 'past'" class="mt-4 grid gap-2">
-                    <div
-                      v-if="dailyGuide(project) > 0"
-                      class="flex items-center justify-between gap-3 rounded-xl border-2 border-[#f36b00]/30 bg-[#fff2e3] px-3 py-2"
-                    >
-                      <span class="text-xs font-black text-[#f36b00]">
-                        目安 {{ formatWorkDuration(dailyGuide(project)) }}/日
-                      </span>
-                      <button
-                        type="button"
-                        class="min-h-8 rounded-lg border-2 border-[#f36b00] bg-white px-3 py-1 text-xs font-black text-[#f36b00] transition hover:bg-[#fff8f0]"
-                        @click="applyDailyGuide(project)"
-                      >
-                        目安を入れる
-                      </button>
-                    </div>
-
-                    <label
-                      :for="`planned-${project.id}`"
-                      class="text-xs font-black text-[#263236]/60"
-                    >
-                      予定（時間）
-                    </label>
-                    <div class="flex items-center overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
-                      <input
-                        :id="`planned-${project.id}`"
-                        :value="minutesToHoursInput(dailyEntry(project.id).planned)"
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        :max="minutesToHoursInput(maxPlannedEntry(project.id))"
-                        inputmode="decimal"
-                        class="min-w-0 flex-1 px-3 py-2 text-sm font-bold text-[#263236] outline-none"
-                        @change="handlePlannedEntry(project.id, $event)"
-                      >
-                      <span class="shrink-0 pr-3 text-xs font-black text-[#263236]/50">h</span>
-                    </div>
-
-                    <div class="flex flex-wrap gap-2">
-                      <button
-                        v-for="step in plannedSteps"
-                        :key="step.amount"
-                        type="button"
-                        :aria-label="step.ariaLabel"
-                        class="min-h-9 rounded-xl border-2 border-[#2c8d98]/40 bg-white px-3 py-1 text-xs font-black text-[#263236] transition hover:border-[#2c8d98] hover:bg-[#edf6fa]"
-                        @click="adjustPlannedEntry(project.id, step.amount)"
-                      >
-                        {{ step.label }}
-                      </button>
-                    </div>
-
                     <p
                       v-if="plannedClampNotices[project.id]"
                       class="text-xs font-bold text-[#f36b00]"
@@ -341,234 +358,211 @@
                       残り作業時間を超えるため、{{ formatWorkDuration(plannedClampNotices[project.id]) }} に合わせました。
                     </p>
 
-                    <div class="mt-2 rounded-xl border-2 border-[#2c8d98]/40">
-                      <button
-                        type="button"
-                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-black text-[#263236] transition hover:bg-[#f7fcfd] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2c8d98]"
-                        :aria-expanded="Boolean(openAllocationSections[project.id])"
-                        :aria-controls="`plan-allocation-${project.id}`"
-                        @click="toggleAllocationSection(project.id)"
-                      >
-                        <span
-                          class="text-xs transition-transform"
-                          :class="{ 'rotate-90': openAllocationSections[project.id] }"
-                          aria-hidden="true"
-                        >
-                          ▶
-                        </span>
-                        自動で割り振る
-                      </button>
-
-                      <div
-                        v-if="openAllocationSections[project.id]"
-                        :id="`plan-allocation-${project.id}`"
-                        class="grid gap-3 border-t-2 border-[#2c8d98]/20 p-3"
-                      >
-                        <p class="text-xs font-bold text-[#263236]/60">
-                          今日から締切までの残り作業を、日ごとに均等に割り振ります。
-                        </p>
-
-                        <label class="grid gap-1 text-xs font-black text-[#263236]/60">
-                          土日の重み
-                          <select
-                            v-model.number="allocationOptionsFor(project.id).weekendWeight"
-                            class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-3 py-2 text-sm font-bold text-[#263236] outline-none focus:border-[#2c8d98]"
-                            @change="cancelAllocation(project.id)"
-                          >
-                            <option
-                              v-for="weight in weekendWeights"
-                              :key="weight"
-                              :value="weight"
-                            >
-                              ×{{ weight }}
-                            </option>
-                          </select>
-                        </label>
-
-                        <fieldset class="grid gap-1">
-                          <legend class="text-xs font-black text-[#263236]/60">
-                            作業しない曜日
-                          </legend>
-                          <div class="flex flex-wrap gap-1">
-                            <label
-                              v-for="(weekday, index) in weekdays"
-                              :key="weekday"
-                              class="flex min-h-8 cursor-pointer items-center gap-1 rounded-lg border-2 px-2 text-xs font-black transition"
-                              :class="allocationOptionsFor(project.id).restDays.includes(index)
-                                ? 'border-[#263236]/40 bg-[#263236]/10 text-[#263236]/60'
-                                : 'border-[#2c8d98]/40 bg-white text-[#263236]'"
-                            >
-                              <input
-                                v-model="allocationOptionsFor(project.id).restDays"
-                                type="checkbox"
-                                :value="index"
-                                class="h-3.5 w-3.5 accent-[#263236]"
-                                @change="cancelAllocation(project.id)"
-                              >
-                              {{ weekday }}
-                            </label>
-                          </div>
-                        </fieldset>
-
-                        <p
-                          v-if="allocationPlans[project.id]?.blockReason"
-                          class="rounded-xl bg-[#edf6fa] px-3 py-2 text-xs font-bold text-[#263236]/60"
-                        >
-                          {{ allocationPlans[project.id]?.blockReason }}
-                        </p>
-
-                        <template v-else-if="allocationPlans[project.id]">
-                          <div
-                            v-if="confirmingAllocations[project.id]"
-                            class="grid gap-2 rounded-xl border-2 border-[#f36b00]/40 bg-[#fff2e3] p-3 text-xs font-bold text-[#263236]"
-                            role="alert"
-                          >
-                            <p>
-                              {{ formatAllocationRange(allocationPlans[project.id]!) }} の {{ allocationPlans[project.id]!.workDayCount }}日<span v-if="allocationPlans[project.id]!.restDayCount">（休み {{ allocationPlans[project.id]!.restDayCount }}日）</span>に
-                              {{ formatWorkDuration(allocationPlans[project.id]!.totalMinutes) }} を割り振ります。
-                            </p>
-                            <p v-if="allocationPlans[project.id]!.weekdayRange">
-                              平日 {{ formatMinutesRange(allocationPlans[project.id]!.weekdayRange!) }}
-                            </p>
-                            <p v-if="allocationPlans[project.id]!.weekendRange">
-                              土日 {{ formatMinutesRange(allocationPlans[project.id]!.weekendRange!) }}
-                            </p>
-                            <p
-                              v-if="allocationPlans[project.id]!.overwriteCount"
-                              class="font-black text-[#f36b00]"
-                            >
-                              既存の予定 {{ allocationPlans[project.id]!.overwriteCount }}日分は上書きされます。
-                            </p>
-                            <div class="flex gap-2">
-                              <button
-                                type="button"
-                                class="min-h-9 flex-1 rounded-xl border-2 border-[#f36b00] bg-[#f36b00] px-3 py-1 text-xs font-black text-white transition hover:bg-[#e06200]"
-                                @click="confirmAllocation(project.id)"
-                              >
-                                {{ allocationPlans[project.id]!.overwriteCount ? '上書きする' : '割り振る' }}
-                              </button>
-                              <button
-                                type="button"
-                                class="min-h-9 flex-1 rounded-xl border-2 border-[#263236]/30 bg-white px-3 py-1 text-xs font-black text-[#263236] transition hover:bg-[#f7fcfd]"
-                                @click="cancelAllocation(project.id)"
-                              >
-                                やめる
-                              </button>
-                            </div>
-                          </div>
-
-                          <button
-                            v-else
-                            type="button"
-                            class="min-h-9 rounded-xl border-2 border-[#2c8d98] bg-[#2c8d98] px-3 py-1 text-xs font-black text-white transition hover:bg-[#247a84]"
-                            @click="requestAllocation(project.id)"
-                          >
-                            割り振る
-                          </button>
-                        </template>
-
-                        <p
-                          v-if="allocationDoneNotices[project.id]"
-                          class="text-xs font-bold text-[#2c8d98]"
-                          role="status"
-                        >
-                          予定を割り振りました。
-                        </p>
-                      </div>
-                    </div>
+                    <p
+                      v-if="allocationDoneNotices[project.id]"
+                      class="text-xs font-bold text-[#2c8d98]"
+                      role="status"
+                    >
+                      予定を割り振りました。
+                    </p>
                   </div>
 
-                  <div
+                  <section
                     v-if="selectedDateMode !== 'future'"
-                    class="mt-4 grid gap-3 border-t-2 border-dashed border-[#2c8d98]/40 pt-4"
+                    class="mt-5 grid gap-2 border-t-2 border-dashed border-[#2c8d98]/40 pt-4"
+                    :aria-labelledby="`page-progress-title-${project.id}`"
                   >
                     <div class="flex items-center justify-between gap-3">
-                      <span class="text-xs font-black text-[#263236]/60">作業時間（実績）</span>
-                      <span class="rounded-xl border-2 border-[#2c8d98]/40 bg-[#edf6fa] px-3 py-1 text-sm font-black text-[#263236]">
-                        {{ formatWorkDuration(dailyActual(project.id)) }}
+                      <h4
+                        :id="`page-progress-title-${project.id}`"
+                        class="text-sm font-black text-[#263236]"
+                      >
+                        実績入力
+                      </h4>
+                      <span class="text-xs font-black text-[#263236]/50">
+                        未完了 {{ incompletePageCount(project) }}P
                       </span>
                     </div>
 
-                    <div class="rounded-xl border-2 border-[#2c8d98]/40">
-                      <button
-                        type="button"
-                        class="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm font-black text-[#263236] transition hover:bg-[#f7fcfd] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2c8d98]"
-                        :aria-expanded="Boolean(openPageSections[project.id])"
-                        :aria-controls="`page-progress-${project.id}`"
-                        @click="togglePageSection(project.id)"
+                    <label class="flex min-h-9 w-fit items-center gap-2 text-xs font-black text-[#263236]/60">
+                      <input
+                        v-model="showCompletedPages[project.id]"
+                        type="checkbox"
+                        class="h-4 w-4 accent-[#2c8d98]"
                       >
-                        <span class="flex items-center gap-2">
-                          <span
-                            class="text-xs transition-transform"
-                            :class="{ 'rotate-90': openPageSections[project.id] }"
-                            aria-hidden="true"
-                          >
-                            ▶
-                          </span>
-                          ページを進める
-                        </span>
-                        <span class="text-xs text-[#263236]/50">
-                          未完了 {{ incompletePageCount(project) }}P
-                        </span>
-                      </button>
+                      完了済みのページも表示
+                    </label>
 
-                      <div
-                        v-if="openPageSections[project.id]"
-                        :id="`page-progress-${project.id}`"
-                        class="grid gap-2 border-t-2 border-[#2c8d98]/20 p-3"
+                    <div class="grid max-h-96 gap-2 overflow-y-auto pr-1">
+                      <PageProgressSlider
+                        v-for="page in visiblePages(project)"
+                        :key="page.pageNumber"
+                        :page="page"
+                        :work-process-steps="project.workProcessSteps"
+                        @change="updatePageStatusForSelectedDate(project.id, page.pageNumber, $event)"
+                      />
+
+                      <p
+                        v-if="visiblePages(project).length === 0"
+                        class="rounded-xl bg-[#edf6fa] px-3 py-2 text-center text-xs font-bold text-[#263236]/60"
                       >
-                        <label class="flex w-fit items-center gap-2 text-xs font-black text-[#263236]/60">
-                          <input
-                            v-model="showCompletedPages[project.id]"
-                            type="checkbox"
-                            class="h-4 w-4 accent-[#2c8d98]"
-                          >
-                          完了済みのページも表示
-                        </label>
-
-                        <PageProgressSlider
-                          v-for="page in visiblePages(project)"
-                          :key="page.pageNumber"
-                          :page="page"
-                          :work-process-steps="project.workProcessSteps"
-                          @change="updatePageStatusForSelectedDate(project.id, page.pageNumber, $event)"
-                        />
-
-                        <p
-                          v-if="visiblePages(project).length === 0"
-                          class="rounded-xl bg-[#edf6fa] px-3 py-2 text-center text-xs font-bold text-[#263236]/60"
-                        >
-                          すべてのページが完了しています。
-                        </p>
-                      </div>
+                        すべてのページが完了しています。
+                      </p>
                     </div>
-
-                    <div class="grid gap-2">
-                      <label
-                        :for="`manual-actual-${project.id}`"
-                        class="text-xs font-black text-[#263236]/60"
-                      >
-                        その他の作業時間（ネーム・資料集め・入稿など）
-                      </label>
-                      <div class="flex items-center overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
-                        <input
-                          :id="`manual-actual-${project.id}`"
-                          :value="minutesToHoursInput(getProjectManualActualMinutes(project.id, selectedDate))"
-                          type="number"
-                          min="0"
-                          step="0.25"
-                          inputmode="decimal"
-                          class="min-w-0 flex-1 px-3 py-2 text-sm font-bold text-[#263236] outline-none"
-                          @change="handleManualActualEntry(project.id, $event)"
-                        >
-                        <span class="shrink-0 pr-3 text-xs font-black text-[#263236]/50">h</span>
-                      </div>
-                    </div>
-                  </div>
+                  </section>
                 </div>
               </section>
             </div>
           </aside>
+        </div>
+
+        <div
+          v-if="allocationTarget"
+          class="fixed inset-0 z-50 grid place-items-center bg-[#263236]/30 px-4"
+          @click.self="closeAllocationDialog"
+        >
+          <div
+            class="grid max-h-[90vh] w-full max-w-sm gap-3 overflow-y-auto rounded-2xl border-4 border-[#2c8d98] bg-white p-5 shadow-[5px_5px_0_rgba(44,141,152,0.16)]"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="allocation-dialog-title"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h2 id="allocation-dialog-title" class="text-base font-black text-[#263236]">
+                  自動で割り振る
+                </h2>
+                <p class="mt-1 text-xs font-black text-[#263236]/60">
+                  {{ allocationTarget.title }}
+                </p>
+              </div>
+              <button
+                ref="closeAllocationButton"
+                type="button"
+                aria-label="自動割り振りを閉じる"
+                title="閉じる"
+                class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-[#263236] bg-white text-[#263236] transition hover:bg-[#f7fcfd]"
+                @click="closeAllocationDialog"
+              >
+                <svg
+                  class="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <p class="text-xs font-bold text-[#263236]/60">
+              今日から締切までの残り作業を、日ごとに均等に割り振ります。
+            </p>
+
+            <label class="grid gap-1 text-xs font-black text-[#263236]/60">
+              土日の重み
+              <select
+                v-model.number="allocationOptionsFor(allocationTarget.id).weekendWeight"
+                class="min-h-11 rounded-xl border-2 border-[#2c8d98]/40 bg-white px-3 text-sm font-bold text-[#263236] outline-none focus:border-[#2c8d98]"
+                @change="isConfirmingAllocation = false"
+              >
+                <option
+                  v-for="weight in weekendWeights"
+                  :key="weight"
+                  :value="weight"
+                >
+                  ×{{ weight }}
+                </option>
+              </select>
+            </label>
+
+            <fieldset class="grid gap-1">
+              <legend class="text-xs font-black text-[#263236]/60">
+                作業しない曜日
+              </legend>
+              <div class="grid grid-cols-7 gap-1">
+                <label
+                  v-for="(weekday, index) in weekdays"
+                  :key="weekday"
+                  class="flex min-h-11 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg border-2 text-xs font-black transition"
+                  :class="allocationOptionsFor(allocationTarget.id).restDays.includes(index)
+                    ? 'border-[#263236]/40 bg-[#263236]/10 text-[#263236]/60'
+                    : 'border-[#2c8d98]/40 bg-white text-[#263236]'"
+                >
+                  <input
+                    v-model="allocationOptionsFor(allocationTarget.id).restDays"
+                    type="checkbox"
+                    :value="index"
+                    class="h-3.5 w-3.5 accent-[#263236]"
+                    @change="isConfirmingAllocation = false"
+                  >
+                  {{ weekday }}
+                </label>
+              </div>
+            </fieldset>
+
+            <p
+              v-if="allocationPlan?.blockReason"
+              class="rounded-xl bg-[#edf6fa] px-3 py-2 text-xs font-bold text-[#263236]/60"
+            >
+              {{ allocationPlan.blockReason }}
+            </p>
+
+            <template v-else-if="allocationPlan">
+              <div
+                v-if="isConfirmingAllocation"
+                class="grid gap-2 rounded-xl border-2 border-[#f36b00]/40 bg-[#fff2e3] p-3 text-xs font-bold text-[#263236]"
+                role="alert"
+              >
+                <p>
+                  {{ formatAllocationRange(allocationPlan) }} の {{ allocationPlan.workDayCount }}日<span v-if="allocationPlan.restDayCount">（休み {{ allocationPlan.restDayCount }}日）</span>に
+                  {{ formatWorkDuration(allocationPlan.totalMinutes) }} を割り振ります。
+                </p>
+                <p v-if="allocationPlan.weekdayRange">
+                  平日 {{ formatMinutesRange(allocationPlan.weekdayRange) }}
+                </p>
+                <p v-if="allocationPlan.weekendRange">
+                  土日 {{ formatMinutesRange(allocationPlan.weekendRange) }}
+                </p>
+                <p
+                  v-if="allocationPlan.overwriteCount"
+                  class="font-black text-[#f36b00]"
+                >
+                  既存の予定 {{ allocationPlan.overwriteCount }}日分は上書きされます。
+                </p>
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    class="min-h-11 flex-1 rounded-xl border-2 border-[#f36b00] bg-[#f36b00] px-3 text-xs font-black text-white transition hover:bg-[#e06200]"
+                    @click="confirmAllocation"
+                  >
+                    {{ allocationPlan.overwriteCount ? '上書きする' : '割り振る' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="min-h-11 flex-1 rounded-xl border-2 border-[#263236]/30 bg-white px-3 text-xs font-black text-[#263236] transition hover:bg-[#f7fcfd]"
+                    @click="isConfirmingAllocation = false"
+                  >
+                    やめる
+                  </button>
+                </div>
+              </div>
+
+              <button
+                v-else
+                type="button"
+                class="min-h-11 rounded-xl border-2 border-[#2c8d98] bg-[#2c8d98] px-3 text-sm font-black text-white transition hover:bg-[#247a84]"
+                @click="isConfirmingAllocation = true"
+              >
+                割り振る
+              </button>
+            </template>
+          </div>
         </div>
       </div>
     </div>
@@ -581,11 +575,11 @@ import { useProjects } from "~/composables/useProjects";
 import { createStatusList, useProgress } from "~/composables/useProgress";
 import {
   allocatePlannedMinutes,
-  calculateDailyGuide,
   formatDateKey,
   listDateKeys,
   parseDateKey,
 } from "~/utils/planAllocation";
+import { formatProjectDate } from "~/utils/projectDisplay";
 
 type ScheduleKind = "event" | "deadline" | "start";
 
@@ -614,6 +608,11 @@ type AllocationPlan = {
   overwriteCount: number;
 };
 
+type WorkTotals = {
+  planned: number;
+  actual: number;
+};
+
 type ScheduleItem = {
   projectId: string;
   title: string;
@@ -627,11 +626,8 @@ const {
   replacePlannedEntries,
   updatePageStatus,
   getProjectDailyActualMinutes,
-  getProjectManualActualMinutes,
-  updateManualActualWorkLog,
 } = useProjects();
 const {
-  calculateTotalProgress,
   calculateRemainingWork,
   formatWorkDuration,
 } = useProgress();
@@ -639,10 +635,11 @@ const {
 const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
 const workBarUnit = 60;
 const maxCollapsedWorkBars = 4;
+// カード内のバーは圧縮せず、この本数ごとに右の列へ積み上げる。
+const projectWorkBarsPerColumn = 8;
 const plannedSteps = [
   { amount: -30, label: "−30m", ariaLabel: "予定を30分減らす" },
   { amount: 30, label: "+30m", ariaLabel: "予定を30分増やす" },
-  { amount: 60, label: "+1h", ariaLabel: "予定を1時間増やす" },
 ];
 const weekendWeights = [1, 1.5, 2];
 // Firestoreルールの日付キー上限（dailyWorkEntries.keys().size() <= 800）に合わせる。
@@ -668,12 +665,12 @@ const isWorkPanelOpen = ref(Boolean(route.query.date));
 const closePanelButton = ref<HTMLButtonElement | null>(null);
 // 上限に丸めた入力だけ、丸めた後の値をプロジェクト別に表示する。
 const plannedClampNotices = ref<Record<string, number>>({});
-const openPageSections = ref<Record<string, boolean>>({});
 const showCompletedPages = ref<Record<string, boolean>>({});
 // 自動割り振りのオプションは保存せず、画面を開いている間だけプロジェクト別に保持する。
 const allocationOptions = ref<Record<string, AllocationOptions>>({});
-const openAllocationSections = ref<Record<string, boolean>>({});
-const confirmingAllocations = ref<Record<string, boolean>>({});
+const allocationTargetId = ref<string | null>(null);
+const isConfirmingAllocation = ref(false);
+const closeAllocationButton = ref<HTMLButtonElement | null>(null);
 const allocationDoneNotices = ref<Record<string, boolean>>({});
 
 onMounted(() => {
@@ -695,7 +692,6 @@ watch(isWorkPanelOpen, async (isOpen) => {
 
 watch(selectedDate, () => {
   plannedClampNotices.value = {};
-  confirmingAllocations.value = {};
   allocationDoneNotices.value = {};
 });
 
@@ -769,10 +765,12 @@ const projectSectionTitle = computed(() => {
   return titles[selectedDateMode.value];
 });
 
-const allocationPlans = computed<Record<string, AllocationPlan>>(() => {
-  return Object.fromEntries(
-    editableProjects.value.map((project) => [project.id, buildAllocationPlan(project)])
-  );
+const allocationTarget = computed(() => {
+  return projects.value.find((project) => project.id === allocationTargetId.value) ?? null;
+});
+
+const allocationPlan = computed(() => {
+  return allocationTarget.value ? buildAllocationPlan(allocationTarget.value) : null;
 });
 
 const editableProjects = computed(() => {
@@ -814,7 +812,15 @@ function closeWorkPanel() {
 }
 
 function handleKeydown(event: KeyboardEvent) {
-  if (event.key === "Escape" && isWorkPanelOpen.value) {
+  if (event.key !== "Escape") return;
+
+  // 割り振りダイアログが開いているときは、手前のダイアログだけを閉じる。
+  if (allocationTarget.value) {
+    closeAllocationDialog();
+    return;
+  }
+
+  if (isWorkPanelOpen.value) {
     closeWorkPanel();
   }
 }
@@ -867,14 +873,39 @@ function dayTotals(dateKey: string) {
 }
 
 function workBars(dateKey: string) {
-  const totals = dayTotals(dateKey);
+  // 選択中の週以外は最大本数へ圧縮し、月表示の密度を保つ。
+  return createWorkBars(
+    dayTotals(dateKey),
+    shouldShowAllBars(dateKey) ? Infinity : maxCollapsedWorkBars
+  );
+}
+
+function projectWorkBarColumns(projectId: string) {
+  const bars = createWorkBars(
+    {
+      planned: dailyEntry(projectId).planned,
+      actual: dailyActual(projectId),
+    },
+    Infinity
+  );
+  const columns: typeof bars[] = [];
+
+  // barsは上（大きいlevel）から並ぶので、levelで列を決めて下から8本ずつ積む。
+  for (const bar of bars) {
+    const columnIndex = Math.floor(bar.level / projectWorkBarsPerColumn);
+    (columns[columnIndex] ??= []).push(bar);
+  }
+
+  return columns;
+}
+
+function createWorkBars(totals: WorkTotals, maxBars: number) {
   const plannedBars = Math.ceil(totals.planned / workBarUnit);
   const actualBars = Math.ceil(totals.actual / workBarUnit);
   const totalBars = Math.max(plannedBars, actualBars);
-  // 選択中の週以外は最大本数へ圧縮し、月表示の密度を保つ。
-  const isCollapsed = !shouldShowAllBars(dateKey) && totalBars > maxCollapsedWorkBars;
+  const isCollapsed = totalBars > maxBars;
   const visibleBars = isCollapsed
-    ? maxCollapsedWorkBars
+    ? maxBars
     : totalBars;
 
   return Array.from({ length: visibleBars }, (_, index) => {
@@ -934,13 +965,15 @@ function hiddenBarCount(dateKey: string) {
 }
 
 function barClass(bar: {
+  plannedFillPercent: number;
   isPlanned: boolean;
   isActual: boolean;
   isOverActual: boolean;
   isCompressed: boolean;
 }) {
   if (bar.isCompressed) {
-    return bar.isOverActual
+    // 予定内の青い部分を含むバーは枠線を青のままにし、超過分だけのバーを赤枠にする。
+    return bar.isOverActual && bar.plannedFillPercent <= 0
       ? "border-[#f36b00] bg-white"
       : "border-[#2c8d98]/50 bg-white";
   }
@@ -1035,10 +1068,6 @@ function projectPlannedTotal(project: Project) {
   }, 0);
 }
 
-function projectUnplannedWork(project: Project) {
-  return Math.max(projectRequiredWork(project) - projectPlannedTotal(project), 0);
-}
-
 function maxPlannedEntry(projectId: string) {
   const project = projects.value.find((item) => item.id === projectId);
   if (!project) return 0;
@@ -1054,11 +1083,6 @@ function maxPlannedEntry(projectId: string) {
   if (dateKey === todayKey) return available + dailyActual(projectId);
 
   return available;
-}
-
-function minutesToHoursInput(minutes: number) {
-  // 入力欄は時間単位で表示し、0.25hなどの端数も小数2桁まで見せる。
-  return Math.round((minutes / 60) * 100) / 100;
 }
 
 function savePlannedEntry(projectId: string, minutes: number) {
@@ -1082,13 +1106,6 @@ function savePlannedEntry(projectId: string, minutes: number) {
   return planned;
 }
 
-function handlePlannedEntry(projectId: string, event: Event) {
-  const input = event.target as HTMLInputElement;
-  // 入力は確定時（blur/Enter）だけ保存して、1文字ごとの書き込みを避ける。
-  const planned = savePlannedEntry(projectId, Number(input.value) * 60);
-  input.value = String(minutesToHoursInput(planned));
-}
-
 function adjustPlannedEntry(projectId: string, amount: number) {
   savePlannedEntry(projectId, dailyEntry(projectId).planned + amount);
 }
@@ -1097,21 +1114,8 @@ function remainingWorkDateKeys(project: Project) {
   return listDateKeys(formatDateKey(new Date()), project.deadline);
 }
 
-function dailyGuide(project: Project) {
-  if (selectedDate.value > project.deadline) return 0;
-
-  return calculateDailyGuide(projectRequiredWork(project), remainingWorkDateKeys(project).length);
-}
-
-function applyDailyGuide(project: Project) {
-  // 今日の作業済み分は残り作業時間から引かれているため、予定には上乗せして入れる。
-  const base = selectedDateMode.value === "today" ? dailyActual(project.id) : 0;
-
-  savePlannedEntry(project.id, base + dailyGuide(project));
-}
-
 function allocationOptionsFor(projectId: string): AllocationOptions {
-  // 描画中に状態を書き換えないよう、初期化はセクションを開いたときに行う。
+  // 描画中に状態を書き換えないよう、初期化はダイアログを開いたときに行う。
   return allocationOptions.value[projectId] ?? {
     weekendWeight: 1,
     restDays: [],
@@ -1215,34 +1219,31 @@ function formatAllocationRange(plan: AllocationPlan) {
   return `${format(plan.from)}〜${format(plan.to)}`;
 }
 
-function toggleAllocationSection(projectId: string) {
+async function openAllocationDialog(projectId: string) {
   allocationOptions.value[projectId] ??= allocationOptionsFor(projectId);
-  openAllocationSections.value[projectId] = !openAllocationSections.value[projectId];
-  cancelAllocation(projectId);
-}
-
-function requestAllocation(projectId: string) {
   delete allocationDoneNotices.value[projectId];
-  confirmingAllocations.value[projectId] = true;
+  isConfirmingAllocation.value = false;
+  allocationTargetId.value = projectId;
+
+  await nextTick();
+  closeAllocationButton.value?.focus();
 }
 
-function cancelAllocation(projectId: string) {
-  delete confirmingAllocations.value[projectId];
+function closeAllocationDialog() {
+  allocationTargetId.value = null;
+  isConfirmingAllocation.value = false;
 }
 
-function confirmAllocation(projectId: string) {
-  const plan = allocationPlans.value[projectId];
-  if (!plan || plan.blockReason) return;
+function confirmAllocation() {
+  const project = allocationTarget.value;
+  const plan = allocationPlan.value;
+  if (!project || !plan || plan.blockReason) return;
 
   // 今日以降の予定（締切後も含む）をまとめて置き換え、残り作業時間の上限を超えないようにする。
-  replacePlannedEntries(projectId, formatDateKey(new Date()), plan.plannedByDate);
-  delete confirmingAllocations.value[projectId];
-  delete plannedClampNotices.value[projectId];
-  allocationDoneNotices.value[projectId] = true;
-}
-
-function togglePageSection(projectId: string) {
-  openPageSections.value[projectId] = !openPageSections.value[projectId];
+  replacePlannedEntries(project.id, formatDateKey(new Date()), plan.plannedByDate);
+  delete plannedClampNotices.value[project.id];
+  allocationDoneNotices.value[project.id] = true;
+  closeAllocationDialog();
 }
 
 function isCompletedPage(project: Project, status: PageStatus) {
@@ -1276,14 +1277,5 @@ function updatePageStatusForSelectedDate(projectId: string, pageNumber: number, 
     workDate: selectedDate.value,
     syncDailyActual: true,
   });
-}
-
-function handleManualActualEntry(projectId: string, event: Event) {
-  const input = event.target as HTMLInputElement;
-  const hours = Number(input.value);
-  const minutes = Math.max(0, Math.round((Number.isFinite(hours) ? hours : 0) * 60));
-
-  updateManualActualWorkLog(projectId, selectedDate.value, minutes);
-  input.value = String(minutesToHoursInput(getProjectManualActualMinutes(projectId, selectedDate.value)));
 }
 </script>
