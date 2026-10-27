@@ -230,18 +230,3 @@ export const saveRemoteWorkLog = async (
 
   await batch.commit();
 };
-
-export const deleteRemoteWorkLog = async (
-  db: Firestore,
-  uid: string,
-  projectId: string,
-  workLogId: string
-) => {
-  const updatedAt = new Date().toISOString();
-  const batch = writeBatch(db);
-
-  batch.delete(userProjectWorkLogDoc(db, uid, projectId, workLogId));
-  touchUserInBatch(batch, db, uid, updatedAt);
-
-  await batch.commit();
-};

@@ -6,7 +6,6 @@ import { useSettings } from "~/composables/useSettings";
 import { useState } from "#app";
 import {
   deleteRemoteProject,
-  deleteRemoteWorkLog,
   loadRemoteProjects,
   saveRemoteProject,
   saveRemoteProjects,
@@ -42,12 +41,6 @@ type CreateProjectInput = {
 type UpdatePageStatusOptions = {
   workDate?: string;
   syncDailyActual?: boolean;
-};
-
-type ManualActualUpdateResult = {
-  project: Project;
-  workLog?: WorkLog;
-  deletedWorkLog?: WorkLog;
 };
 
 let remoteProjectWriteQueue: Promise<void> = Promise.resolve();
@@ -389,23 +382,6 @@ export const useProjects = () => {
       const { $firestore } = useNuxtApp();
       await saveRemoteWorkLog($firestore, user.uid, workLogSnapshot);
     }, "作業履歴の保存に失敗しました。");
-  };
-
-  const persistWorkLogDelete = (workLog: WorkLog) => {
-    const workLogSnapshot = cloneJson(workLog);
-
-    return enqueueRemoteWrite(async () => {
-      const user = await ensureAuthenticated();
-      if (!user) return;
-
-      const { $firestore } = useNuxtApp();
-      await deleteRemoteWorkLog(
-        $firestore,
-        user.uid,
-        workLogSnapshot.projectId,
-        workLogSnapshot.id
-      );
-    }, "作業履歴の削除に失敗しました。");
   };
 
   const persistProjectDeletes = (projectIds: string[], rethrow = false) => {
@@ -770,76 +746,6 @@ export const useProjects = () => {
     return getDailyActualMinutes(project, date);
   };
 
-  const getProjectManualActualMinutes = (projectId: string, date: string) => {
-    const project = getProjectById(projectId);
-    if (!project) return 0;
-
-    return sumWorkLogMinutes(
-      project.workLogs.filter((log) => {
-        return log.workDate === date && ["manualActual", "legacyActual"].includes(log.kind);
-      })
-    );
-  };
-
-  const updateManualActualWorkLog = (
-    projectId: string,
-    date: string,
-    minutes: number
-  ): ManualActualUpdateResult | undefined => {
-    const project = getProjectById(projectId);
-    if (!project) return;
-
-    const actual = Math.max(0, Math.round(Number(minutes) || 0));
-    // 1日1件の手入力ログに寄せて、入力欄の値とログ集計が一対一になるようにする。
-    const existingLog = project.workLogs.find((log) => {
-      return log.workDate === date && ["manualActual", "legacyActual"].includes(log.kind);
-    });
-
-    let workLog: WorkLog | undefined;
-    let deletedWorkLog: WorkLog | undefined;
-    const now = new Date().toISOString();
-
-    if (actual === 0 && existingLog) {
-      // 0分入力は「手入力ログを消す」操作として扱う。
-      deletedWorkLog = existingLog;
-      project.workLogs = project.workLogs.filter((log) => log.id !== existingLog.id);
-    } else if (actual > 0 && existingLog) {
-      // 旧移行ログを編集した時点で、通常の手入力ログとして扱う。
-      existingLog.kind = "manualActual";
-      existingLog.minutes = actual;
-      existingLog.updatedAt = now;
-      workLog = existingLog;
-    } else if (actual > 0) {
-      workLog = {
-        id: `manual-actual-${date}`,
-        projectId,
-        workDate: date,
-        kind: "manualActual",
-        minutes: actual,
-        createdAt: now,
-        updatedAt: now,
-      };
-      project.workLogs.push(workLog);
-    }
-
-    refreshDailyActualCache(project, date);
-    saveProject(project);
-
-    if (workLog) {
-      void persistWorkLog(workLog);
-    }
-
-    if (deletedWorkLog) {
-      void persistWorkLogDelete(deletedWorkLog);
-    }
-
-    return {
-      project,
-      workLog,
-      deletedWorkLog,
-    };
-  };
-
   const applyWorkProcessToProjects = (process: WorkProcess) => {
     const updatedProjects: Project[] = [];
 
@@ -886,8 +792,6 @@ export const useProjects = () => {
     updateDailyWorkEntry,
     replacePlannedEntries,
     getProjectDailyActualMinutes,
-    getProjectManualActualMinutes,
-    updateManualActualWorkLog,
     applyWorkProcessToProjects,
   };
 };
