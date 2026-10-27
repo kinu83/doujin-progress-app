@@ -283,6 +283,22 @@
                   </p>
 
                   <div v-if="selectedDateMode !== 'past'" class="mt-4 grid gap-2">
+                    <div
+                      v-if="dailyGuide(project) > 0"
+                      class="flex items-center justify-between gap-3 rounded-xl border-2 border-[#f36b00]/30 bg-[#fff2e3] px-3 py-2"
+                    >
+                      <span class="text-xs font-black text-[#f36b00]">
+                        目安 {{ formatWorkDuration(dailyGuide(project)) }}/日
+                      </span>
+                      <button
+                        type="button"
+                        class="min-h-8 rounded-lg border-2 border-[#f36b00] bg-white px-3 py-1 text-xs font-black text-[#f36b00] transition hover:bg-[#fff8f0]"
+                        @click="applyDailyGuide(project)"
+                      >
+                        目安を入れる
+                      </button>
+                    </div>
+
                     <label
                       :for="`planned-${project.id}`"
                       class="text-xs font-black text-[#263236]/60"
@@ -324,6 +340,142 @@
                     >
                       残り作業時間を超えるため、{{ formatWorkDuration(plannedClampNotices[project.id]) }} に合わせました。
                     </p>
+
+                    <div class="mt-2 rounded-xl border-2 border-[#2c8d98]/40">
+                      <button
+                        type="button"
+                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-black text-[#263236] transition hover:bg-[#f7fcfd] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2c8d98]"
+                        :aria-expanded="Boolean(openAllocationSections[project.id])"
+                        :aria-controls="`plan-allocation-${project.id}`"
+                        @click="toggleAllocationSection(project.id)"
+                      >
+                        <span
+                          class="text-xs transition-transform"
+                          :class="{ 'rotate-90': openAllocationSections[project.id] }"
+                          aria-hidden="true"
+                        >
+                          ▶
+                        </span>
+                        自動で割り振る
+                      </button>
+
+                      <div
+                        v-if="openAllocationSections[project.id]"
+                        :id="`plan-allocation-${project.id}`"
+                        class="grid gap-3 border-t-2 border-[#2c8d98]/20 p-3"
+                      >
+                        <p class="text-xs font-bold text-[#263236]/60">
+                          今日から締切までの残り作業を、日ごとに均等に割り振ります。
+                        </p>
+
+                        <label class="grid gap-1 text-xs font-black text-[#263236]/60">
+                          土日の重み
+                          <select
+                            v-model.number="allocationOptionsFor(project.id).weekendWeight"
+                            class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-3 py-2 text-sm font-bold text-[#263236] outline-none focus:border-[#2c8d98]"
+                            @change="cancelAllocation(project.id)"
+                          >
+                            <option
+                              v-for="weight in weekendWeights"
+                              :key="weight"
+                              :value="weight"
+                            >
+                              ×{{ weight }}
+                            </option>
+                          </select>
+                        </label>
+
+                        <fieldset class="grid gap-1">
+                          <legend class="text-xs font-black text-[#263236]/60">
+                            作業しない曜日
+                          </legend>
+                          <div class="flex flex-wrap gap-1">
+                            <label
+                              v-for="(weekday, index) in weekdays"
+                              :key="weekday"
+                              class="flex min-h-8 cursor-pointer items-center gap-1 rounded-lg border-2 px-2 text-xs font-black transition"
+                              :class="allocationOptionsFor(project.id).restDays.includes(index)
+                                ? 'border-[#263236]/40 bg-[#263236]/10 text-[#263236]/60'
+                                : 'border-[#2c8d98]/40 bg-white text-[#263236]'"
+                            >
+                              <input
+                                v-model="allocationOptionsFor(project.id).restDays"
+                                type="checkbox"
+                                :value="index"
+                                class="h-3.5 w-3.5 accent-[#263236]"
+                                @change="cancelAllocation(project.id)"
+                              >
+                              {{ weekday }}
+                            </label>
+                          </div>
+                        </fieldset>
+
+                        <p
+                          v-if="allocationPlans[project.id]?.blockReason"
+                          class="rounded-xl bg-[#edf6fa] px-3 py-2 text-xs font-bold text-[#263236]/60"
+                        >
+                          {{ allocationPlans[project.id]?.blockReason }}
+                        </p>
+
+                        <template v-else-if="allocationPlans[project.id]">
+                          <div
+                            v-if="confirmingAllocations[project.id]"
+                            class="grid gap-2 rounded-xl border-2 border-[#f36b00]/40 bg-[#fff2e3] p-3 text-xs font-bold text-[#263236]"
+                            role="alert"
+                          >
+                            <p>
+                              {{ formatAllocationRange(allocationPlans[project.id]!) }} の {{ allocationPlans[project.id]!.workDayCount }}日<span v-if="allocationPlans[project.id]!.restDayCount">（休み {{ allocationPlans[project.id]!.restDayCount }}日）</span>に
+                              {{ formatWorkDuration(allocationPlans[project.id]!.totalMinutes) }} を割り振ります。
+                            </p>
+                            <p v-if="allocationPlans[project.id]!.weekdayRange">
+                              平日 {{ formatMinutesRange(allocationPlans[project.id]!.weekdayRange!) }}
+                            </p>
+                            <p v-if="allocationPlans[project.id]!.weekendRange">
+                              土日 {{ formatMinutesRange(allocationPlans[project.id]!.weekendRange!) }}
+                            </p>
+                            <p
+                              v-if="allocationPlans[project.id]!.overwriteCount"
+                              class="font-black text-[#f36b00]"
+                            >
+                              既存の予定 {{ allocationPlans[project.id]!.overwriteCount }}日分は上書きされます。
+                            </p>
+                            <div class="flex gap-2">
+                              <button
+                                type="button"
+                                class="min-h-9 flex-1 rounded-xl border-2 border-[#f36b00] bg-[#f36b00] px-3 py-1 text-xs font-black text-white transition hover:bg-[#e06200]"
+                                @click="confirmAllocation(project.id)"
+                              >
+                                {{ allocationPlans[project.id]!.overwriteCount ? '上書きする' : '割り振る' }}
+                              </button>
+                              <button
+                                type="button"
+                                class="min-h-9 flex-1 rounded-xl border-2 border-[#263236]/30 bg-white px-3 py-1 text-xs font-black text-[#263236] transition hover:bg-[#f7fcfd]"
+                                @click="cancelAllocation(project.id)"
+                              >
+                                やめる
+                              </button>
+                            </div>
+                          </div>
+
+                          <button
+                            v-else
+                            type="button"
+                            class="min-h-9 rounded-xl border-2 border-[#2c8d98] bg-[#2c8d98] px-3 py-1 text-xs font-black text-white transition hover:bg-[#247a84]"
+                            @click="requestAllocation(project.id)"
+                          >
+                            割り振る
+                          </button>
+                        </template>
+
+                        <p
+                          v-if="allocationDoneNotices[project.id]"
+                          class="text-xs font-bold text-[#2c8d98]"
+                          role="status"
+                        >
+                          予定を割り振りました。
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   <div
@@ -427,10 +579,40 @@
 import type { DailyWorkEntry, PageStatus, Project } from "~/types/project";
 import { useProjects } from "~/composables/useProjects";
 import { createStatusList, useProgress } from "~/composables/useProgress";
+import {
+  allocatePlannedMinutes,
+  calculateDailyGuide,
+  formatDateKey,
+  listDateKeys,
+  parseDateKey,
+} from "~/utils/planAllocation";
 
 type ScheduleKind = "event" | "deadline" | "start";
 
 type DateMode = "past" | "today" | "future";
+
+type AllocationOptions = {
+  weekendWeight: number;
+  restDays: number[];
+};
+
+type MinutesRange = {
+  min: number;
+  max: number;
+};
+
+type AllocationPlan = {
+  blockReason?: string;
+  plannedByDate: Record<string, number>;
+  from: string;
+  to: string;
+  totalMinutes: number;
+  workDayCount: number;
+  restDayCount: number;
+  weekdayRange?: MinutesRange;
+  weekendRange?: MinutesRange;
+  overwriteCount: number;
+};
 
 type ScheduleItem = {
   projectId: string;
@@ -442,6 +624,7 @@ const {
   projects,
   loadProjects,
   updateDailyWorkEntry,
+  replacePlannedEntries,
   updatePageStatus,
   getProjectDailyActualMinutes,
   getProjectManualActualMinutes,
@@ -461,6 +644,9 @@ const plannedSteps = [
   { amount: 30, label: "+30m", ariaLabel: "予定を30分増やす" },
   { amount: 60, label: "+1h", ariaLabel: "予定を1時間増やす" },
 ];
+const weekendWeights = [1, 1.5, 2];
+// Firestoreルールの日付キー上限（dailyWorkEntries.keys().size() <= 800）に合わせる。
+const maxDailyEntryCount = 800;
 const scheduleLabels: Record<ScheduleKind, string> = {
   event: "イベント",
   deadline: "締切",
@@ -484,6 +670,11 @@ const closePanelButton = ref<HTMLButtonElement | null>(null);
 const plannedClampNotices = ref<Record<string, number>>({});
 const openPageSections = ref<Record<string, boolean>>({});
 const showCompletedPages = ref<Record<string, boolean>>({});
+// 自動割り振りのオプションは保存せず、画面を開いている間だけプロジェクト別に保持する。
+const allocationOptions = ref<Record<string, AllocationOptions>>({});
+const openAllocationSections = ref<Record<string, boolean>>({});
+const confirmingAllocations = ref<Record<string, boolean>>({});
+const allocationDoneNotices = ref<Record<string, boolean>>({});
 
 onMounted(() => {
   loadProjects();
@@ -504,6 +695,8 @@ watch(isWorkPanelOpen, async (isOpen) => {
 
 watch(selectedDate, () => {
   plannedClampNotices.value = {};
+  confirmingAllocations.value = {};
+  allocationDoneNotices.value = {};
 });
 
 const monthTitle = computed(() => {
@@ -576,26 +769,18 @@ const projectSectionTitle = computed(() => {
   return titles[selectedDateMode.value];
 });
 
+const allocationPlans = computed<Record<string, AllocationPlan>>(() => {
+  return Object.fromEntries(
+    editableProjects.value.map((project) => [project.id, buildAllocationPlan(project)])
+  );
+});
+
 const editableProjects = computed(() => {
   return projects.value.filter((project) => {
     // 作業期間外でも、すでに予定や実績がある日は編集できるように残す。
     return isWithinWorkPeriod(project, selectedDate.value) || hasDailyEntry(project, selectedDate.value);
   });
 });
-
-function formatDateKey(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
-function parseDateKey(dateKey: string) {
-  const [year, month, day] = dateKey.split("-").map(Number);
-
-  return new Date(year, month - 1, day);
-}
 
 function parseDateKeyFromQuery(value: unknown) {
   const dateKey = Array.isArray(value) ? value[0] : value;
@@ -906,6 +1091,154 @@ function handlePlannedEntry(projectId: string, event: Event) {
 
 function adjustPlannedEntry(projectId: string, amount: number) {
   savePlannedEntry(projectId, dailyEntry(projectId).planned + amount);
+}
+
+function remainingWorkDateKeys(project: Project) {
+  return listDateKeys(formatDateKey(new Date()), project.deadline);
+}
+
+function dailyGuide(project: Project) {
+  if (selectedDate.value > project.deadline) return 0;
+
+  return calculateDailyGuide(projectRequiredWork(project), remainingWorkDateKeys(project).length);
+}
+
+function applyDailyGuide(project: Project) {
+  // 今日の作業済み分は残り作業時間から引かれているため、予定には上乗せして入れる。
+  const base = selectedDateMode.value === "today" ? dailyActual(project.id) : 0;
+
+  savePlannedEntry(project.id, base + dailyGuide(project));
+}
+
+function allocationOptionsFor(projectId: string): AllocationOptions {
+  // 描画中に状態を書き換えないよう、初期化はセクションを開いたときに行う。
+  return allocationOptions.value[projectId] ?? {
+    weekendWeight: 1,
+    restDays: [],
+  };
+}
+
+function allocationWeight(options: AllocationOptions, dateKey: string) {
+  const weekday = parseDateKey(dateKey).getDay();
+  if (options.restDays.includes(weekday)) return 0;
+
+  return isWeekend(weekday) ? options.weekendWeight : 1;
+}
+
+function isWeekend(weekday: number) {
+  return weekday === 0 || weekday === 6;
+}
+
+function buildAllocationPlan(project: Project): AllocationPlan {
+  const todayKey = formatDateKey(new Date());
+  const options = allocationOptionsFor(project.id);
+  const dateKeys = remainingWorkDateKeys(project);
+  const totalMinutes = projectRequiredWork(project);
+  const workDateKeys = dateKeys.filter((dateKey) => allocationWeight(options, dateKey) > 0);
+  const plan: AllocationPlan = {
+    plannedByDate: {},
+    from: dateKeys[0] ?? todayKey,
+    to: project.deadline,
+    totalMinutes,
+    workDayCount: workDateKeys.length,
+    restDayCount: dateKeys.length - workDateKeys.length,
+    overwriteCount: Object.entries(project.dailyWorkEntries)
+      .filter(([dateKey, entry]) => dateKey >= todayKey && entry.planned > 0)
+      .length,
+  };
+
+  if (totalMinutes <= 0) return { ...plan, blockReason: "残り作業時間がないため、割り振る予定はありません。" };
+  if (dateKeys.length === 0) return { ...plan, blockReason: "締切を過ぎているため、割り振れません。" };
+  if (workDateKeys.length === 0) return { ...plan, blockReason: "作業する曜日を1つ以上残してください。" };
+
+  const allocated = allocatePlannedMinutes({
+    totalMinutes,
+    dateKeys,
+    weightOf: (dateKey) => allocationWeight(options, dateKey),
+  });
+  const weekdayMinutes: number[] = [];
+  const weekendMinutes: number[] = [];
+
+  for (const dateKey of workDateKeys) {
+    const minutes = allocated[dateKey] ?? 0;
+    (isWeekend(parseDateKey(dateKey).getDay()) ? weekendMinutes : weekdayMinutes).push(minutes);
+  }
+
+  // 今日の作業済み分は残り作業時間から引かれているため、予定には上乗せして保存する。
+  const plannedByDate = Object.fromEntries(
+    Object.entries(allocated).map(([dateKey, minutes]) => [
+      dateKey,
+      dateKey === todayKey ? minutes + getProjectDailyActualMinutes(project.id, dateKey) : minutes,
+    ])
+  );
+
+  const remainingKeys = Object.keys(project.dailyWorkEntries).filter((dateKey) => {
+    return dateKey < todayKey || getProjectDailyActualMinutes(project.id, dateKey) > 0;
+  });
+  const resultingKeys = new Set([
+    ...remainingKeys,
+    ...Object.keys(plannedByDate).filter((dateKey) => plannedByDate[dateKey] > 0),
+  ]);
+  if (resultingKeys.size > maxDailyEntryCount) {
+    return { ...plan, blockReason: "期間が長すぎるため、自動割り振りできません。" };
+  }
+
+  return {
+    ...plan,
+    plannedByDate,
+    weekdayRange: toMinutesRange(weekdayMinutes),
+    weekendRange: toMinutesRange(weekendMinutes),
+  };
+}
+
+function toMinutesRange(values: number[]): MinutesRange | undefined {
+  if (values.length === 0) return undefined;
+
+  return {
+    min: Math.min(...values),
+    max: Math.max(...values),
+  };
+}
+
+function formatMinutesRange(range: MinutesRange) {
+  if (range.min === range.max) return formatWorkDuration(range.min);
+
+  return `${formatWorkDuration(range.min)}〜${formatWorkDuration(range.max)}`;
+}
+
+function formatAllocationRange(plan: AllocationPlan) {
+  const format = (dateKey: string) => {
+    const date = parseDateKey(dateKey);
+    return `${date.getMonth() + 1}/${date.getDate()}`;
+  };
+
+  return `${format(plan.from)}〜${format(plan.to)}`;
+}
+
+function toggleAllocationSection(projectId: string) {
+  allocationOptions.value[projectId] ??= allocationOptionsFor(projectId);
+  openAllocationSections.value[projectId] = !openAllocationSections.value[projectId];
+  cancelAllocation(projectId);
+}
+
+function requestAllocation(projectId: string) {
+  delete allocationDoneNotices.value[projectId];
+  confirmingAllocations.value[projectId] = true;
+}
+
+function cancelAllocation(projectId: string) {
+  delete confirmingAllocations.value[projectId];
+}
+
+function confirmAllocation(projectId: string) {
+  const plan = allocationPlans.value[projectId];
+  if (!plan || plan.blockReason) return;
+
+  // 今日以降の予定（締切後も含む）をまとめて置き換え、残り作業時間の上限を超えないようにする。
+  replacePlannedEntries(projectId, formatDateKey(new Date()), plan.plannedByDate);
+  delete confirmingAllocations.value[projectId];
+  delete plannedClampNotices.value[projectId];
+  allocationDoneNotices.value[projectId] = true;
 }
 
 function togglePageSection(projectId: string) {
