@@ -254,36 +254,42 @@
                     {{ project.title }}
                   </NuxtLink>
 
-                  <div class="mt-1 flex items-start justify-between gap-3 text-xs font-black text-[#263236]/60">
+                  <div class="mt-1 flex items-center justify-between gap-3 text-xs font-black text-[#263236]/60">
                     <p class="flex min-w-0 flex-wrap gap-x-2">
                       <span v-if="project.eventDate">
-                        開催 {{ formatProjectDate(project.eventDate) }}
+                        {{ formatProjectDate(project.eventDate) }}
                       </span>
                       <span v-if="project.eventName.trim()" class="min-w-0 break-all">
                         {{ project.eventName.trim() }} 合わせ
                       </span>
                     </p>
-                    <span class="shrink-0">
+                    <span class="shrink-0 rounded-full border-2 border-[#2c8d98] bg-[#edf6fa] px-2 py-1 text-xs font-black text-[#2c8d98]">
                       {{ project.totalPages }}P
                     </span>
                   </div>
 
                   <div class="mt-4 flex items-center gap-4">
                     <div
-                      class="grid w-20 shrink-0 gap-1"
+                      class="flex shrink-0 items-end gap-1"
                       role="img"
                       :aria-label="`作業時間 ${formatWorkDuration(dailyActual(project.id))}、予定 ${formatWorkDuration(dailyEntry(project.id).planned)}`"
                     >
+                      <div
+                        v-for="(column, columnIndex) in projectWorkBarColumns(project.id)"
+                        :key="columnIndex"
+                        class="grid w-10 gap-1"
+                      >
+                        <span
+                          v-for="bar in column"
+                          :key="bar.level"
+                          class="h-2 w-full rounded-full border"
+                          :class="barClass(bar)"
+                          :style="barStyle(bar)"
+                        />
+                      </div>
                       <span
-                        v-for="bar in projectWorkBars(project.id)"
-                        :key="bar.level"
-                        class="h-2 w-full rounded-full border"
-                        :class="barClass(bar)"
-                        :style="barStyle(bar)"
-                      />
-                      <span
-                        v-if="projectWorkBars(project.id).length === 0"
-                        class="h-2 w-full rounded-full border border-dashed border-[#2c8d98]/30"
+                        v-if="projectWorkBarColumns(project.id).length === 0"
+                        class="h-2 w-10 rounded-full border border-dashed border-[#2c8d98]/30"
                       />
                     </div>
 
@@ -666,8 +672,8 @@ const {
 const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
 const workBarUnit = 60;
 const maxCollapsedWorkBars = 4;
-// カード内のバーは日付マスより広いので、この本数を超えたら圧縮する。
-const maxProjectWorkBars = 8;
+// カード内のバーは圧縮せず、この本数ごとに右の列へ積み上げる。
+const projectWorkBarsPerColumn = 8;
 const plannedMinuteSteps = [0, 15, 30, 45];
 const plannedSteps = [
   { amount: -30, label: "−30m", ariaLabel: "予定を30分減らす" },
@@ -912,14 +918,23 @@ function workBars(dateKey: string) {
   );
 }
 
-function projectWorkBars(projectId: string) {
-  return createWorkBars(
+function projectWorkBarColumns(projectId: string) {
+  const bars = createWorkBars(
     {
       planned: dailyEntry(projectId).planned,
       actual: dailyActual(projectId),
     },
-    maxProjectWorkBars
+    Infinity
   );
+  const columns: typeof bars[] = [];
+
+  // barsは上（大きいlevel）から並ぶので、levelで列を決めて下から8本ずつ積む。
+  for (const bar of bars) {
+    const columnIndex = Math.floor(bar.level / projectWorkBarsPerColumn);
+    (columns[columnIndex] ??= []).push(bar);
+  }
+
+  return columns;
 }
 
 function createWorkBars(totals: WorkTotals, maxBars: number) {
@@ -988,13 +1003,15 @@ function hiddenBarCount(dateKey: string) {
 }
 
 function barClass(bar: {
+  plannedFillPercent: number;
   isPlanned: boolean;
   isActual: boolean;
   isOverActual: boolean;
   isCompressed: boolean;
 }) {
   if (bar.isCompressed) {
-    return bar.isOverActual
+    // 予定内の青い部分を含むバーは枠線を青のままにし、超過分だけのバーを赤枠にする。
+    return bar.isOverActual && bar.plannedFillPercent <= 0
       ? "border-[#f36b00] bg-white"
       : "border-[#2c8d98]/50 bg-white";
   }
