@@ -293,7 +293,7 @@
                       />
                     </div>
 
-                    <dl class="grid flex-1 grid-cols-2 gap-2">
+                    <dl class="flex flex-1 gap-10">
                       <div v-if="selectedDateMode !== 'future'">
                         <dt class="text-xs font-black text-[#263236]/60">
                           実績
