@@ -2,12 +2,7 @@
   <main class="min-h-screen bg-[#edf6fa] px-6 py-8 text-[#263236]">
     <div class="mx-auto max-w-5xl">
       <div class="flex flex-wrap items-center gap-3">
-        <NuxtLink
-          to="/"
-          class="inline-flex items-center rounded-xl border-2 border-[#263236] bg-white px-4 py-2 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] hover:shadow-[4px_4px_0_rgba(38,50,54,0.22)]"
-        >
-          ← 一覧に戻る
-        </NuxtLink>
+        <UiBackLink />
         <NuxtLink
           to="/calendar"
           aria-label="カレンダーを表示"
@@ -219,343 +214,271 @@
           </div>
         </section>
 
-        <Teleport to="body">
-          <div
-            v-if="isConfirmingDelete"
-            class="fixed inset-0 z-50 grid place-items-center bg-[#263236]/50 px-4 py-6"
-            @click.self="closeDeleteConfirm"
+        <UiConfirmDialog
+          :open="isConfirmingDelete"
+          tone="danger"
+          eyebrow="削除前の確認"
+          title="この作品情報を削除しますか？"
+          :confirm-label="isDeleting ? '削除中...' : '削除する'"
+          :confirm-disabled="isDeleting"
+          @confirm="handleDelete"
+          @cancel="closeDeleteConfirm"
+        >
+          <p class="text-sm font-bold leading-6 text-[#263236]/70">
+            「{{ project.title }}」とページ別進捗は完全に削除されます。この操作は元に戻せません。
+          </p>
+          <p
+            v-if="deleteError"
+            class="mt-3 rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700"
           >
-            <section class="w-full max-w-md overflow-hidden rounded-3xl border-4 border-red-500 bg-white shadow-[5px_5px_0_rgba(220,38,38,0.18)]">
-              <div class="border-b-2 border-red-500 bg-red-50 px-6 py-5">
-                <p class="text-sm font-black text-red-700">
-                  削除前の確認
-                </p>
-                <h2 class="mt-1 text-lg font-black text-[#263236]">
-                  この作品情報を削除しますか？
-                </h2>
-              </div>
+            {{ deleteError }}
+          </p>
+        </UiConfirmDialog>
 
-              <div class="px-6 py-5">
-                <p class="text-sm font-bold leading-6 text-[#263236]/70">
-                  「{{ project.title }}」とページ別進捗は完全に削除されます。この操作は元に戻せません。
-                </p>
-                <p
-                  v-if="deleteError"
-                  class="mt-3 rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700"
-                >
-                  {{ deleteError }}
-                </p>
-              </div>
-
-              <div class="flex flex-col-reverse gap-3 border-t-2 border-red-100 px-6 py-4 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  class="rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
-                  @click="closeDeleteConfirm"
-                >
-                  キャンセル
-                </button>
-                <button
-                  type="button"
-                  :disabled="isDeleting"
-                  class="rounded-xl border-2 border-red-700 bg-red-600 px-5 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(220,38,38,0.28)] transition hover:-translate-y-0.5 hover:bg-red-700"
-                  @click="handleDelete"
-                >
-                  {{ isDeleting ? "削除中..." : "削除する" }}
-                </button>
-              </div>
-            </section>
-          </div>
-        </Teleport>
-
-        <Teleport to="body">
-          <div
-            v-if="isEditingInfo"
-            class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-[#263236]/50 px-4 py-6"
-            @click.self="cancelInfoEdit"
+        <UiModal
+          :open="isEditingInfo"
+          overlay-class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-[#263236]/50 px-4 py-6"
+          @close="cancelInfoEdit"
+        >
+          <form
+            class="flex max-h-[calc(100dvh-3rem)] w-full max-w-xl flex-col overflow-hidden rounded-3xl border-4 border-[#2c8d98] bg-white shadow-[5px_5px_0_rgba(44,141,152,0.18)]"
+            @submit.prevent="handleInfoSubmit"
           >
-            <form
-              class="flex max-h-[calc(100dvh-3rem)] w-full max-w-xl flex-col overflow-hidden rounded-3xl border-4 border-[#2c8d98] bg-white shadow-[5px_5px_0_rgba(44,141,152,0.18)]"
-              @submit.prevent="handleInfoSubmit"
-            >
-              <div class="shrink-0 border-b-2 border-dashed border-[#2c8d98] px-6 py-5">
-                <h2 class="text-lg font-black text-[#263236]">
-                  プロジェクト情報を編集
-                </h2>
-                <p class="mt-1 text-sm font-bold text-[#263236]/60">
-                  作業開始日や締切など、進捗計算に使う情報を更新できます。
-                </p>
-              </div>
+            <div class="shrink-0 border-b-2 border-dashed border-[#2c8d98] px-6 py-5">
+              <h2 class="text-lg font-black text-[#263236]">
+                プロジェクト情報を編集
+              </h2>
+              <p class="mt-1 text-sm font-bold text-[#263236]/60">
+                作業開始日や締切など、進捗計算に使う情報を更新できます。
+              </p>
+            </div>
 
-              <div class="grid gap-4 overflow-y-auto px-6 py-5 md:grid-cols-2">
-                <label class="grid gap-2 md:col-span-2">
-                  <span class="text-sm font-black text-[#263236]">タイトル</span>
-                  <input
-                    v-model="editTitle"
-                    type="text"
-                    required
-                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
-                  >
-                </label>
-                
-                <label class="grid gap-2 md:col-span-2">
-                  <span class="text-sm font-black text-[#263236]">イベント名</span>
-                  <input
-                    v-model="editEventName"
-                    type="text"
-                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
-                  >
-                </label>
-
-                <label class="grid gap-2 md:col-span-2">
-                  <span class="text-sm font-black text-[#263236]">イベント開催日</span>
-                  <input
-                    v-model="editEventDate"
-                    type="date"
-                    :min="editEventDateMin"
-                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
-                  >
-                </label>
-
-                <label class="grid gap-2">
-                  <span class="text-sm font-black text-[#263236]">作業開始日</span>
-                  <input
-                    v-model="editStartDate"
-                    type="date"
-                    :max="editDeadline"
-                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
-                  >
-                </label>
-
-                <label class="grid gap-2">
-                  <span class="text-sm font-black text-[#263236]">締切日</span>
-                  <input
-                    v-model="editDeadline"
-                    type="date"
-                    required
-                    :min="editDeadlineMin"
-                    :max="editEventDate || undefined"
-                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
-                  >
-                </label>
-
-                <label class="grid gap-2">
-                  <span class="text-sm font-black text-[#263236]">ページ数</span>
-                  <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
-                    <input
-                      v-model.number="editTotalPages"
-                      type="number"
-                      min="1"
-                      required
-                      class="min-w-0 flex-1 border-0 px-4 py-3 font-bold text-[#263236] outline-none"
-                    >
-                    <div class="grid w-11 shrink-0 border-l-2 border-[#2c8d98]/30">
-                      <button
-                        type="button"
-                        aria-label="ページ数を増やす"
-                        class="grid place-items-center text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
-                        @click="incrementEditTotalPages"
-                      >
-                        ▲
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="ページ数を減らす"
-                        class="grid place-items-center border-t-2 border-[#2c8d98]/30 text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
-                        @click="decrementEditTotalPages"
-                      >
-                        ▼
-                      </button>
-                    </div>
-                  </div>
-                </label>
-
-                <label class="grid gap-2">
-                  <span class="text-sm font-black text-[#263236]">作業工程</span>
-                  <select
-                    v-model="editWorkProcessId"
-                    class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
-                  >
-                    <option
-                      v-for="process in settings.workProcesses"
-                      :key="process.id"
-                      :value="process.id"
-                    >
-                      {{ process.name }}
-                    </option>
-                  </select>
-                </label>
-
-                <p
-                  v-if="infoEditError"
-                  class="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700 md:col-span-2"
+            <div class="grid gap-4 overflow-y-auto px-6 py-5 md:grid-cols-2">
+              <label class="grid gap-2 md:col-span-2">
+                <span class="text-sm font-black text-[#263236]">タイトル</span>
+                <input
+                  v-model="editTitle"
+                  type="text"
+                  required
+                  class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                 >
-                  {{ infoEditError }}
-                </p>
-              </div>
-
-              <div class="shrink-0 flex flex-col-reverse gap-3 border-t-2 border-dashed border-[#2c8d98] px-6 py-4 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  class="rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
-                  @click="cancelInfoEdit"
+              </label>
+              
+              <label class="grid gap-2 md:col-span-2">
+                <span class="text-sm font-black text-[#263236]">イベント名</span>
+                <input
+                  v-model="editEventName"
+                  type="text"
+                  class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                 >
-                  キャンセル
-                </button>
-                <button
-                  type="submit"
-                  :disabled="!canSaveInfo"
-                  class="rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-5 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984] disabled:cursor-not-allowed disabled:border-[#d7d7d7] disabled:bg-[#d7d7d7]"
-                >
-                  保存
-                </button>
-              </div>
-            </form>
-          </div>
-        </Teleport>
+              </label>
 
-        <Teleport to="body">
-          <div
-            v-if="isEditingBookSpec"
-            class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-[#263236]/50 px-4 py-6"
-            @click.self="cancelBookSpecEdit"
+              <label class="grid gap-2 md:col-span-2">
+                <span class="text-sm font-black text-[#263236]">イベント開催日</span>
+                <input
+                  v-model="editEventDate"
+                  type="date"
+                  :min="editEventDateMin"
+                  class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
+                >
+              </label>
+
+              <label class="grid gap-2">
+                <span class="text-sm font-black text-[#263236]">作業開始日</span>
+                <input
+                  v-model="editStartDate"
+                  type="date"
+                  :max="editDeadline"
+                  class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
+                >
+              </label>
+
+              <label class="grid gap-2">
+                <span class="text-sm font-black text-[#263236]">締切日</span>
+                <input
+                  v-model="editDeadline"
+                  type="date"
+                  required
+                  :min="editDeadlineMin"
+                  :max="editEventDate || undefined"
+                  class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
+                >
+              </label>
+
+              <label class="grid gap-2">
+                <span class="text-sm font-black text-[#263236]">ページ数</span>
+                <UiNumberStepper
+                  v-model="editTotalPages"
+                  required
+                  increase-label="ページ数を増やす"
+                  decrease-label="ページ数を減らす"
+                />
+              </label>
+
+              <label class="grid gap-2">
+                <span class="text-sm font-black text-[#263236]">作業工程</span>
+                <select
+                  v-model="editWorkProcessId"
+                  class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
+                >
+                  <option
+                    v-for="process in settings.workProcesses"
+                    :key="process.id"
+                    :value="process.id"
+                  >
+                    {{ process.name }}
+                  </option>
+                </select>
+              </label>
+
+              <p
+                v-if="infoEditError"
+                class="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700 md:col-span-2"
+              >
+                {{ infoEditError }}
+              </p>
+            </div>
+
+            <div class="shrink-0 flex flex-col-reverse gap-3 border-t-2 border-dashed border-[#2c8d98] px-6 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                class="rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
+                @click="cancelInfoEdit"
+              >
+                キャンセル
+              </button>
+              <button
+                type="submit"
+                :disabled="!canSaveInfo"
+                class="rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-5 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984] disabled:cursor-not-allowed disabled:border-[#d7d7d7] disabled:bg-[#d7d7d7]"
+              >
+                保存
+              </button>
+            </div>
+          </form>
+        </UiModal>
+
+        <UiModal
+          :open="isEditingBookSpec"
+          overlay-class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-[#263236]/50 px-4 py-6"
+          @close="cancelBookSpecEdit"
+        >
+          <form
+            class="flex max-h-[calc(100dvh-3rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border-4 border-[#2c8d98] bg-white shadow-[5px_5px_0_rgba(44,141,152,0.18)]"
+            @submit.prevent="handleBookSpecSubmit"
           >
-            <form
-              class="flex max-h-[calc(100dvh-3rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border-4 border-[#2c8d98] bg-white shadow-[5px_5px_0_rgba(44,141,152,0.18)]"
-              @submit.prevent="handleBookSpecSubmit"
-            >
-              <div class="shrink-0 border-b-2 border-dashed border-[#2c8d98] px-6 py-5">
-                <h2 class="text-lg font-black text-[#263236]">
-                  本の情報を編集
-                </h2>
-                <p class="mt-1 text-sm font-bold text-[#263236]/60">
-                  ページ数や印刷仕様を更新できます。
-                </p>
-              </div>
+            <div class="shrink-0 border-b-2 border-dashed border-[#2c8d98] px-6 py-5">
+              <h2 class="text-lg font-black text-[#263236]">
+                本の情報を編集
+              </h2>
+              <p class="mt-1 text-sm font-bold text-[#263236]/60">
+                ページ数や印刷仕様を更新できます。
+              </p>
+            </div>
 
-              <div class="grid gap-4 overflow-y-auto px-6 py-5 md:grid-cols-2">
-                <label class="grid gap-2">
-                  <span class="text-sm font-black text-[#263236]">ページ数</span>
-                  <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
-                    <input
-                      v-model.number="bookSpecForm.totalPages"
-                      type="number"
-                      min="1"
-                      required
-                      class="min-w-0 flex-1 border-0 px-4 py-3 font-bold text-[#263236] outline-none"
-                    >
-                    <div class="grid w-11 shrink-0 border-l-2 border-[#2c8d98]/30">
-                      <button
-                        type="button"
-                        aria-label="ページ数を増やす"
-                        class="grid place-items-center text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
-                        @click="incrementBookSpecTotalPages"
-                      >
-                        ▲
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="ページ数を減らす"
-                        class="grid place-items-center border-t-2 border-[#2c8d98]/30 text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
-                        @click="decrementBookSpecTotalPages"
-                      >
-                        ▼
-                      </button>
-                    </div>
-                  </div>
-                </label>
+            <div class="grid gap-4 overflow-y-auto px-6 py-5 md:grid-cols-2">
+              <label class="grid gap-2">
+                <span class="text-sm font-black text-[#263236]">ページ数</span>
+                <UiNumberStepper
+                  v-model="bookSpecForm.totalPages"
+                  required
+                  increase-label="ページ数を増やす"
+                  decrease-label="ページ数を減らす"
+                />
+              </label>
 
-                <label class="grid gap-2">
-                  <span class="text-sm font-black text-[#263236]">カラー</span>
-                  <select
-                    v-model="bookSpecForm.colorMode"
-                    class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
-                  >
-                    <option
-                      v-for="colorMode in colorModes"
-                      :key="colorMode"
-                      :value="colorMode"
-                    >
-                      {{ colorMode }}
-                    </option>
-                  </select>
-                </label>
-
-                <label class="grid gap-2">
-                  <span class="text-sm font-black text-[#263236]">表紙の紙</span>
-                  <input
-                    v-model="bookSpecForm.coverPaper"
-                    type="text"
-                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
-                  >
-                </label>
-
-                <label class="grid gap-2">
-                  <span class="text-sm font-black text-[#263236]">本文の紙</span>
-                  <input
-                    v-model="bookSpecForm.bodyPaper"
-                    type="text"
-                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
-                  >
-                </label>
-
-                <label class="grid gap-2">
-                  <span class="text-sm font-black text-[#263236]">印刷会社</span>
-                  <input
-                    v-model="bookSpecForm.printer"
-                    type="text"
-                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
-                  >
-                </label>
-
-                <label class="grid gap-2">
-                  <span class="text-sm font-black text-[#263236]">発行部数</span>
-                  <input
-                    v-model.number="bookSpecForm.printRun"
-                    type="number"
-                    min="0"
-                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
-                  >
-                </label>
-
-                <label class="grid gap-2">
-                  <span class="text-sm font-black text-[#263236]">予算</span>
-                  <input
-                    v-model.number="bookSpecForm.budget"
-                    type="number"
-                    min="0"
-                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
-                  >
-                </label>
-
-                <label class="grid gap-2 md:col-span-2">
-                  <span class="text-sm font-black text-[#263236]">メモ</span>
-                  <textarea
-                    v-model="bookSpecForm.note"
-                    rows="5"
-                    class="resize-y rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold leading-6 text-[#263236] outline-none transition focus:border-[#2c8d98]"
-                  />
-                </label>
-              </div>
-
-              <div class="shrink-0 flex flex-col-reverse gap-3 border-t-2 border-dashed border-[#2c8d98] px-6 py-4 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  class="rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
-                  @click="cancelBookSpecEdit"
+              <label class="grid gap-2">
+                <span class="text-sm font-black text-[#263236]">カラー</span>
+                <select
+                  v-model="bookSpecForm.colorMode"
+                  class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                 >
-                  キャンセル
-                </button>
-                <button
-                  type="submit"
-                  class="rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-5 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984]"
+                  <option
+                    v-for="colorMode in colorModes"
+                    :key="colorMode"
+                    :value="colorMode"
+                  >
+                    {{ colorMode }}
+                  </option>
+                </select>
+              </label>
+
+              <label class="grid gap-2">
+                <span class="text-sm font-black text-[#263236]">表紙の紙</span>
+                <input
+                  v-model="bookSpecForm.coverPaper"
+                  type="text"
+                  class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
                 >
-                  保存
-                </button>
-              </div>
-            </form>
-          </div>
-        </Teleport>
+              </label>
+
+              <label class="grid gap-2">
+                <span class="text-sm font-black text-[#263236]">本文の紙</span>
+                <input
+                  v-model="bookSpecForm.bodyPaper"
+                  type="text"
+                  class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
+                >
+              </label>
+
+              <label class="grid gap-2">
+                <span class="text-sm font-black text-[#263236]">印刷会社</span>
+                <input
+                  v-model="bookSpecForm.printer"
+                  type="text"
+                  class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none transition focus:border-[#2c8d98]"
+                >
+              </label>
+
+              <label class="grid gap-2">
+                <span class="text-sm font-black text-[#263236]">発行部数</span>
+                <UiNumberStepper
+                  v-model="bookSpecForm.printRun"
+                  :step="10"
+                  :min="0"
+                  increase-label="発行部数を10部増やす"
+                  decrease-label="発行部数を10部減らす"
+                />
+              </label>
+
+              <label class="grid gap-2">
+                <span class="text-sm font-black text-[#263236]">予算</span>
+                <UiNumberStepper
+                  v-model="bookSpecForm.budget"
+                  :step="1000"
+                  :min="0"
+                  increase-label="予算を1000円増やす"
+                  decrease-label="予算を1000円減らす"
+                />
+              </label>
+
+              <label class="grid gap-2 md:col-span-2">
+                <span class="text-sm font-black text-[#263236]">メモ</span>
+                <textarea
+                  v-model="bookSpecForm.note"
+                  rows="5"
+                  class="resize-y rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold leading-6 text-[#263236] outline-none transition focus:border-[#2c8d98]"
+                />
+              </label>
+            </div>
+
+            <div class="shrink-0 flex flex-col-reverse gap-3 border-t-2 border-dashed border-[#2c8d98] px-6 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                class="rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
+                @click="cancelBookSpecEdit"
+              >
+                キャンセル
+              </button>
+              <button
+                type="submit"
+                class="rounded-xl border-2 border-[#263236] bg-[#2c8d98] px-5 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(38,50,54,0.28)] transition hover:-translate-y-0.5 hover:bg-[#237984]"
+              >
+                保存
+              </button>
+            </div>
+          </form>
+        </UiModal>
       </div>
 
       <div v-else class="mt-6 rounded-3xl border-4 border-dashed border-[#2c8d98] bg-white p-8 text-center shadow-[5px_5px_0_rgba(44,141,152,0.18)]">
@@ -853,22 +776,6 @@ const cancelBookSpecEdit = () => {
   // 仕様編集も同じく、モーダルを閉じる前にフォームを保存済み状態へ戻す。
   fillBookSpecForm();
   isEditingBookSpec.value = false;
-};
-
-const incrementEditTotalPages = () => {
-  editTotalPages.value = Math.max(1, Number(editTotalPages.value) || 1) + 1;
-};
-
-const decrementEditTotalPages = () => {
-  editTotalPages.value = Math.max(1, (Number(editTotalPages.value) || 1) - 1);
-};
-
-const incrementBookSpecTotalPages = () => {
-  bookSpecForm.totalPages = Math.max(1, Number(bookSpecForm.totalPages) || 1) + 1;
-};
-
-const decrementBookSpecTotalPages = () => {
-  bookSpecForm.totalPages = Math.max(1, (Number(bookSpecForm.totalPages) || 1) - 1);
 };
 
 const openDeleteConfirm = () => {

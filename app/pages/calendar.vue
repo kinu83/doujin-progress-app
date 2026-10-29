@@ -3,12 +3,7 @@
     <div class="mx-auto max-w-7xl">
       <div class="mb-5 flex flex-wrap items-center gap-3">
         <div class="items-center gap-3">
-          <NuxtLink
-            to="/"
-            class="inline-flex items-center rounded-xl border-2 border-[#263236] bg-white px-4 py-2 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] hover:shadow-[4px_4px_0_rgba(38,50,54,0.22)]"
-          >
-            ← 一覧に戻る
-          </NuxtLink>
+          <UiBackLink />
         </div>
       </div>
 
@@ -135,10 +130,10 @@
           </div>
         </section>
 
-        <div
-          v-if="isWorkPanelOpen"
-          class="fixed inset-0 z-40 bg-[#263236]/20 backdrop-blur-[1px]"
-          @click.self="closeWorkPanel"
+        <UiModal
+          :open="isWorkPanelOpen"
+          overlay-class="fixed inset-0 z-40 bg-[#263236]/20 backdrop-blur-[1px]"
+          @close="closeWorkPanel"
         >
           <aside
             class="ml-auto flex h-full min-h-0 w-full max-w-[420px] flex-col border-l-4 border-[#2c8d98] bg-white shadow-[-8px_0_0_rgba(44,141,152,0.16)]"
@@ -155,28 +150,12 @@
                   作業時間
                 </h2>
               </div>
-              <button
-                ref="closePanelButton"
-                type="button"
-                aria-label="作業時間入力を閉じる"
-                title="閉じる"
-                class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 border-[#263236] bg-white text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.14)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
+              <UiCloseButton
+                label="作業時間入力を閉じる"
+                data-autofocus
+                class="shadow-[3px_3px_0_rgba(38,50,54,0.14)] hover:-translate-y-0.5"
                 @click="closeWorkPanel"
-              >
-                <svg
-                  class="h-5 w-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M18 6 6 18" />
-                  <path d="m6 6 12 12" />
-                </svg>
-              </button>
+              />
             </div>
 
             <div class="grid min-h-0 flex-1 auto-rows-max content-start gap-5 overflow-y-auto px-5 py-5">
@@ -393,14 +372,15 @@
               </section>
             </div>
           </aside>
-        </div>
+        </UiModal>
 
-        <div
-          v-if="allocationTarget"
-          class="fixed inset-0 z-50 grid place-items-center bg-[#263236]/30 px-4"
-          @click.self="closeAllocationDialog"
+        <UiModal
+          :open="Boolean(allocationTarget)"
+          overlay-class="fixed inset-0 z-50 grid place-items-center bg-[#263236]/30 px-4"
+          @close="closeAllocationDialog"
         >
           <div
+            v-if="allocationTarget"
             class="grid max-h-[90vh] w-full max-w-sm gap-3 overflow-y-auto rounded-2xl border-4 border-[#2c8d98] bg-white p-5 shadow-[5px_5px_0_rgba(44,141,152,0.16)]"
             role="dialog"
             aria-modal="true"
@@ -415,28 +395,12 @@
                   {{ allocationTarget.title }}
                 </p>
               </div>
-              <button
-                ref="closeAllocationButton"
-                type="button"
-                aria-label="自動割り振りを閉じる"
-                title="閉じる"
-                class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-[#263236] bg-white text-[#263236] transition hover:bg-[#f7fcfd]"
+              <UiCloseButton
+                label="自動割り振りを閉じる"
+                size="lg"
+                data-autofocus
                 @click="closeAllocationDialog"
-              >
-                <svg
-                  class="h-5 w-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M18 6 6 18" />
-                  <path d="m6 6 12 12" />
-                </svg>
-              </button>
+              />
             </div>
 
             <p class="text-xs font-bold text-[#263236]/60">
@@ -542,7 +506,7 @@
               </button>
             </template>
           </div>
-        </div>
+        </UiModal>
       </div>
     </div>
   </main>
@@ -633,7 +597,6 @@ const selectedDate = ref(formatDateKey(initialDate));
 const visibleYear = ref(initialDate.getFullYear());
 const visibleMonth = ref(initialDate.getMonth());
 const isWorkPanelOpen = ref(Boolean(route.query.date));
-const closePanelButton = ref<HTMLButtonElement | null>(null);
 // 上限に丸めた入力だけ、丸めた後の値をプロジェクト別に表示する。
 const plannedClampNotices = ref<Record<string, number>>({});
 const showCompletedPages = ref<Record<string, boolean>>({});
@@ -641,24 +604,10 @@ const showCompletedPages = ref<Record<string, boolean>>({});
 const allocationOptions = ref<Record<string, AllocationOptions>>({});
 const allocationTargetId = ref<string | null>(null);
 const isConfirmingAllocation = ref(false);
-const closeAllocationButton = ref<HTMLButtonElement | null>(null);
 const allocationDoneNotices = ref<Record<string, boolean>>({});
 
 onMounted(() => {
   loadProjects();
-  window.addEventListener("keydown", handleKeydown);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("keydown", handleKeydown);
-});
-
-watch(isWorkPanelOpen, async (isOpen) => {
-  if (!isOpen) return;
-
-  // パネルを開いたらダイアログ内へフォーカスを移し、キーボード操作の起点にする。
-  await nextTick();
-  closePanelButton.value?.focus();
 });
 
 watch(selectedDate, () => {
@@ -795,20 +744,6 @@ function selectDate(dateKey: string) {
 
 function closeWorkPanel() {
   isWorkPanelOpen.value = false;
-}
-
-function handleKeydown(event: KeyboardEvent) {
-  if (event.key !== "Escape") return;
-
-  // 割り振りダイアログが開いているときは、手前のダイアログだけを閉じる。
-  if (allocationTarget.value) {
-    closeAllocationDialog();
-    return;
-  }
-
-  if (isWorkPanelOpen.value) {
-    closeWorkPanel();
-  }
 }
 
 function daySchedule(dateKey: string): ScheduleItem[] {
@@ -1081,14 +1016,11 @@ function formatAllocationRange(plan: AllocationPlan) {
   return `${format(plan.from)}〜${format(plan.to)}`;
 }
 
-async function openAllocationDialog(projectId: string) {
+function openAllocationDialog(projectId: string) {
   allocationOptions.value[projectId] ??= allocationOptionsFor(projectId);
   delete allocationDoneNotices.value[projectId];
   isConfirmingAllocation.value = false;
   allocationTargetId.value = projectId;
-
-  await nextTick();
-  closeAllocationButton.value?.focus();
 }
 
 function closeAllocationDialog() {

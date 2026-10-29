@@ -1,12 +1,7 @@
 <template>
   <main class="min-h-screen bg-[#edf6fa] px-6 py-8 text-[#263236]">
     <div class="mx-auto max-w-3xl">
-      <NuxtLink
-        to="/"
-        class="inline-flex items-center rounded-xl border-2 border-[#263236] bg-white px-4 py-2 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] hover:shadow-[4px_4px_0_rgba(38,50,54,0.22)]"
-      >
-        ← 一覧に戻る
-      </NuxtLink>
+      <UiBackLink />
 
       <section class="mt-4 rounded-3xl border-4 border-[#2c8d98] bg-white p-6 shadow-[5px_5px_0_rgba(44,141,152,0.16)] sm:p-8">
         <div class="flex flex-wrap items-start justify-between gap-3 border-b-2 border-dashed border-[#2c8d98] pb-5">
@@ -79,13 +74,12 @@
           <section class="grid gap-5 border-t-2 border-dashed border-[#2c8d98] pt-6 md:grid-cols-2">
             <label class="grid gap-2">
               <span class="text-sm font-black text-[#263236]">総ページ数</span>
-              <input
-                v-model.number="totalPages"
-                type="number"
-                min="1"
+              <UiNumberStepper
+                v-model="totalPages"
                 required
-                class="rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
-              >
+                increase-label="総ページ数を増やす"
+                decrease-label="総ページ数を減らす"
+              />
             </label>
 
             <label class="grid gap-2">
