@@ -1,12 +1,7 @@
 <template>
   <main class="min-h-screen bg-[#edf6fa] px-6 py-8 text-[#263236]">
     <div class="mx-auto max-w-5xl">
-      <NuxtLink
-        to="/"
-        class="inline-flex items-center rounded-xl border-2 border-[#263236] bg-white px-4 py-2 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd] hover:shadow-[4px_4px_0_rgba(38,50,54,0.22)]"
-      >
-        ← 一覧に戻る
-      </NuxtLink>
+      <UiBackLink />
 
       <div class="mt-4">
         <h1 class="text-3xl font-black text-[#263236]">
@@ -72,13 +67,12 @@
               >
                 <label class="grid gap-2">
                   <span class="text-sm font-black text-[#263236]">新規作成時の初期ページ数</span>
-                  <input
-                    v-model.number="defaultTotalPages"
-                    type="number"
-                    min="1"
+                  <UiNumberStepper
+                    v-model="defaultTotalPages"
                     required
-                    class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
-                  >
+                    increase-label="初期ページ数を増やす"
+                    decrease-label="初期ページ数を減らす"
+                  />
                 </label>
 
                 <section class="grid gap-4 border-t-2 border-dashed border-[#2c8d98] pt-6">
@@ -94,33 +88,33 @@
                   <div class="grid gap-3 md:grid-cols-3">
                     <label class="grid min-w-0 gap-2">
                       <span class="text-sm font-black text-[#263236]">一歩手前（分/日）</span>
-                      <input
-                        v-model.number="crunchThresholds.warningMinutes"
-                        type="number"
-                        min="1"
+                      <UiNumberStepper
+                        v-model="crunchThresholds.warningMinutes"
+                        :step="10"
                         required
-                        class="w-full min-w-0 rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
-                      >
+                        increase-label="一歩手前を10分増やす"
+                        decrease-label="一歩手前を10分減らす"
+                      />
                     </label>
                     <label class="grid min-w-0 gap-2">
                       <span class="text-sm font-black text-[#263236]">修羅場（分/日）</span>
-                      <input
-                        v-model.number="crunchThresholds.crunchMinutes"
-                        type="number"
-                        min="1"
+                      <UiNumberStepper
+                        v-model="crunchThresholds.crunchMinutes"
+                        :step="10"
                         required
-                        class="w-full min-w-0 rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
-                      >
+                        increase-label="修羅場を10分増やす"
+                        decrease-label="修羅場を10分減らす"
+                      />
                     </label>
                     <label class="grid min-w-0 gap-2">
                       <span class="text-sm font-black text-[#263236]">限界修羅場（分/日）</span>
-                      <input
-                        v-model.number="crunchThresholds.extremeMinutes"
-                        type="number"
-                        min="1"
+                      <UiNumberStepper
+                        v-model="crunchThresholds.extremeMinutes"
+                        :step="10"
                         required
-                        class="w-full min-w-0 rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
-                      >
+                        increase-label="限界修羅場を10分増やす"
+                        decrease-label="限界修羅場を10分減らす"
+                      />
                     </label>
                   </div>
 
@@ -234,37 +228,17 @@
                               :placeholder="`工程${index + 1}`"
                               class="min-w-0 flex-1 rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                             >
-                            <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
-                              <input
-                                v-model.number="workProcessSteps[index].minutesPerPage"
-                                type="number"
-                                min="1"
-                                step="any"
-                                required
-                                aria-label="1Pあたりの作業時間（分）"
-                                class="min-w-0 flex-1 border-0 px-4 py-3 outline-none"
-                              >
-                              <div class="grid w-10 shrink-0 border-l-2 border-[#2c8d98]/30">
-                                <button
-                                  type="button"
-                                  aria-label="作業時間を10分増やす"
-                                  title="10分増やす"
-                                  class="grid place-items-center text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
-                                  @click="adjustWorkProcessMinutes(index, 10)"
-                                >
-                                  ▲
-                                </button>
-                                <button
-                                  type="button"
-                                  aria-label="作業時間を10分減らす"
-                                  title="10分減らす"
-                                  class="grid place-items-center border-t-2 border-[#2c8d98]/30 text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
-                                  @click="adjustWorkProcessMinutes(index, -10)"
-                                >
-                                  ▼
-                                </button>
-                              </div>
-                            </div>
+                            <UiNumberStepper
+                              v-model="workProcessSteps[index].minutesPerPage"
+                              :step="10"
+                              input-step="any"
+                              required
+                              aria-label="1Pあたりの作業時間（分）"
+                              increase-label="作業時間を10分増やす"
+                              decrease-label="作業時間を10分減らす"
+                              increase-title="10分増やす"
+                              decrease-title="10分減らす"
+                            />
                             <button
                               type="button"
                               aria-label="工程を削除"
@@ -418,13 +392,12 @@
           >
             <label class="grid gap-2">
               <span class="text-sm font-black text-[#263236]">新規作成時の初期ページ数</span>
-              <input
-                v-model.number="defaultTotalPages"
-                type="number"
-                min="1"
+              <UiNumberStepper
+                v-model="defaultTotalPages"
                 required
-                class="rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
-              >
+                increase-label="初期ページ数を増やす"
+                decrease-label="初期ページ数を減らす"
+              />
             </label>
 
             <section class="grid gap-4 border-t-2 border-dashed border-[#2c8d98] pt-6">
@@ -440,33 +413,33 @@
               <div class="grid gap-3 md:grid-cols-3">
                 <label class="grid min-w-0 gap-2">
                   <span class="text-sm font-black text-[#263236]">一歩手前（分/日）</span>
-                  <input
-                    v-model.number="crunchThresholds.warningMinutes"
-                    type="number"
-                    min="1"
+                  <UiNumberStepper
+                    v-model="crunchThresholds.warningMinutes"
+                    :step="10"
                     required
-                    class="w-full min-w-0 rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
-                  >
+                    increase-label="一歩手前を10分増やす"
+                    decrease-label="一歩手前を10分減らす"
+                  />
                 </label>
                 <label class="grid min-w-0 gap-2">
                   <span class="text-sm font-black text-[#263236]">修羅場（分/日）</span>
-                  <input
-                    v-model.number="crunchThresholds.crunchMinutes"
-                    type="number"
-                    min="1"
+                  <UiNumberStepper
+                    v-model="crunchThresholds.crunchMinutes"
+                    :step="10"
                     required
-                    class="w-full min-w-0 rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
-                  >
+                    increase-label="修羅場を10分増やす"
+                    decrease-label="修羅場を10分減らす"
+                  />
                 </label>
                 <label class="grid min-w-0 gap-2">
                   <span class="text-sm font-black text-[#263236]">限界修羅場（分/日）</span>
-                  <input
-                    v-model.number="crunchThresholds.extremeMinutes"
-                    type="number"
-                    min="1"
+                  <UiNumberStepper
+                    v-model="crunchThresholds.extremeMinutes"
+                    :step="10"
                     required
-                    class="w-full min-w-0 rounded-xl border-2 border-[#2c8d98]/40 px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
-                  >
+                    increase-label="限界修羅場を10分増やす"
+                    decrease-label="限界修羅場を10分減らす"
+                  />
                 </label>
               </div>
 
@@ -580,37 +553,17 @@
                           :placeholder="`工程${index + 1}`"
                           class="min-w-0 flex-1 rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
                         >
-                        <div class="flex overflow-hidden rounded-xl border-2 border-[#2c8d98]/40 bg-white focus-within:border-[#2c8d98]">
-                          <input
-                            v-model.number="workProcessSteps[index].minutesPerPage"
-                            type="number"
-                            min="1"
-                            step="any"
-                            required
-                            aria-label="1Pあたりの作業時間（分）"
-                            class="min-w-0 flex-1 border-0 px-4 py-3 outline-none"
-                          >
-                          <div class="grid w-10 shrink-0 border-l-2 border-[#2c8d98]/30">
-                            <button
-                              type="button"
-                              aria-label="作業時間を10分増やす"
-                              title="10分増やす"
-                              class="grid place-items-center text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
-                              @click="adjustWorkProcessMinutes(index, 10)"
-                            >
-                              ▲
-                            </button>
-                            <button
-                              type="button"
-                              aria-label="作業時間を10分減らす"
-                              title="10分減らす"
-                              class="grid place-items-center border-t-2 border-[#2c8d98]/30 text-xs font-black text-[#263236] transition hover:bg-[#edf6fa]"
-                              @click="adjustWorkProcessMinutes(index, -10)"
-                            >
-                              ▼
-                            </button>
-                          </div>
-                        </div>
+                        <UiNumberStepper
+                          v-model="workProcessSteps[index].minutesPerPage"
+                          :step="10"
+                          input-step="any"
+                          required
+                          aria-label="1Pあたりの作業時間（分）"
+                          increase-label="作業時間を10分増やす"
+                          decrease-label="作業時間を10分減らす"
+                          increase-title="10分増やす"
+                          decrease-title="10分減らす"
+                        />
                         <button
                           type="button"
                           aria-label="工程を削除"
@@ -739,47 +692,19 @@
       </div>
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="isConfirmingReset"
-        class="fixed inset-0 z-50 grid place-items-center bg-[#263236]/50 px-4 py-6"
-        @click.self="closeResetConfirm"
-      >
-        <section class="w-full max-w-md overflow-hidden rounded-3xl border-4 border-amber-500 bg-white shadow-[5px_5px_0_rgba(245,158,11,0.18)]">
-          <div class="border-b-2 border-amber-500 bg-amber-50 px-6 py-5">
-            <p class="text-sm font-black text-amber-700">
-              初期値に戻す前の確認
-            </p>
-            <h2 class="mt-1 text-lg font-black text-[#263236]">
-              作業カスタムの基本値を戻しますか？
-            </h2>
-          </div>
-
-          <div class="px-6 py-5">
-            <p class="text-sm font-bold leading-6 text-[#263236]/70">
-              初期ページ数は {{ DEFAULT_SETTINGS.defaultTotalPages }}P、修羅場メーターは中設定（{{ DEFAULT_CRUNCH_THRESHOLDS.warningMinutes }}分 / {{ DEFAULT_CRUNCH_THRESHOLDS.crunchMinutes }}分 / {{ DEFAULT_CRUNCH_THRESHOLDS.extremeMinutes }}分）に戻ります。作業工程の保存内容は変更されません。
-            </p>
-          </div>
-
-          <div class="flex flex-col-reverse gap-3 border-t-2 border-amber-100 px-6 py-4 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              class="rounded-xl border-2 border-[#263236] bg-white px-4 py-3 text-sm font-black text-[#263236] shadow-[3px_3px_0_rgba(38,50,54,0.18)] transition hover:-translate-y-0.5 hover:bg-[#f7fcfd]"
-              @click="closeResetConfirm"
-            >
-              キャンセル
-            </button>
-            <button
-              type="button"
-              class="rounded-xl border-2 border-amber-700 bg-amber-600 px-5 py-3 text-sm font-black text-white shadow-[3px_3px_0_rgba(245,158,11,0.28)] transition hover:-translate-y-0.5 hover:bg-amber-700"
-              @click="handleReset"
-            >
-              初期値に戻す
-            </button>
-          </div>
-        </section>
-      </div>
-    </Teleport>
+    <UiConfirmDialog
+      :open="isConfirmingReset"
+      tone="warning"
+      eyebrow="初期値に戻す前の確認"
+      title="作業カスタムの基本値を戻しますか？"
+      confirm-label="初期値に戻す"
+      @confirm="handleReset"
+      @cancel="closeResetConfirm"
+    >
+      <p class="text-sm font-bold leading-6 text-[#263236]/70">
+        初期ページ数は {{ DEFAULT_SETTINGS.defaultTotalPages }}P、修羅場メーターは中設定（{{ DEFAULT_CRUNCH_THRESHOLDS.warningMinutes }}分 / {{ DEFAULT_CRUNCH_THRESHOLDS.crunchMinutes }}分 / {{ DEFAULT_CRUNCH_THRESHOLDS.extremeMinutes }}分）に戻ります。作業工程の保存内容は変更されません。
+      </p>
+    </UiConfirmDialog>
   </main>
 </template>
 
@@ -950,13 +875,6 @@ const removeWorkProcessStep = (index: number) => {
   if (workProcessSteps.value.length <= 1) return;
 
   workProcessSteps.value.splice(index, 1);
-};
-
-const adjustWorkProcessMinutes = (index: number, amount: number) => {
-  const step = workProcessSteps.value[index];
-  if (!step) return;
-
-  step.minutesPerPage = Math.max(1, (Number(step.minutesPerPage) || 0) + amount);
 };
 
 const handleSaveWorkProcess = () => {
