@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import { useProgress } from "~/composables/useProgress";
-import type { Project } from "~/types/project";
+import type { Project } from "~~/types/project";
 import { getCrunchLevelClasses } from "~/utils/crunchLevelDisplay";
 import { formatDateKey } from "~/utils/planAllocation";
 

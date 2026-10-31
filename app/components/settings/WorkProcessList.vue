@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import type { WorkProcess, WorkProcessStep } from "~/types/settings";
+import type { WorkProcess, WorkProcessStep } from "~~/types/settings";
 
 defineProps<{
   processes: WorkProcess[];

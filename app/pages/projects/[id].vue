@@ -85,7 +85,7 @@
 <script setup lang="ts">
 import { useProjects } from "~/composables/useProjects";
 import type { BookSpecInput, ProjectInfoInput } from "~/composables/useProjects";
-import type { PageStatus } from "~/types/project";
+import type { PageStatus } from "~~/types/project";
 import { formatDateKey } from "~/utils/planAllocation";
 
 const route = useRoute();

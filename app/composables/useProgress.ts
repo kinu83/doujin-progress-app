@@ -1,5 +1,5 @@
-import type { ManuscriptPage, PageStatus } from "~/types/project";
-import type { CrunchThresholds, WorkProcessStep } from "~/types/settings";
+import type { ManuscriptPage, PageStatus } from "~~/types/project";
+import type { CrunchThresholds, WorkProcessStep } from "~~/types/settings";
 import {
   DEFAULT_CRUNCH_THRESHOLDS,
   DEFAULT_WORK_STEPS,

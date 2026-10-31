@@ -125,8 +125,8 @@
 
 <script setup lang="ts">
 import type { ProjectInfoInput } from "~/composables/useProjects";
-import type { Project } from "~/types/project";
-import type { WorkProcess } from "~/types/settings";
+import type { Project } from "~~/types/project";
+import type { WorkProcess } from "~~/types/settings";
 import { formatDateKey } from "~/utils/planAllocation";
 
 const props = defineProps<{
