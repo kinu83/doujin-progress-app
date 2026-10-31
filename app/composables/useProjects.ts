@@ -14,7 +14,7 @@ import {
 
 const STORAGE_KEY_PREFIX = "doujin-progress-projects";
 
-type ProjectInfoInput = {
+export type ProjectInfoInput = {
   eventName: string;
   title: string;
   startDate: string;
@@ -24,7 +24,7 @@ type ProjectInfoInput = {
   workProcessId: string;
 };
 
-type BookSpecInput = BookSpec & {
+export type BookSpecInput = BookSpec & {
   totalPages: number;
 };
 
