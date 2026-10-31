@@ -3,7 +3,7 @@ import type {
   CrunchThresholds,
   WorkProcess,
   WorkProcessStep,
-} from "~/types/settings";
+} from "~~/types/settings";
 
 export const DEFAULT_WORK_STEPS: WorkProcessStep[] = [
   { name: "ネーム", minutesPerPage: 60 },

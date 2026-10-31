@@ -29,18 +29,18 @@
         <span class="text-sm font-black text-[#263236]">工程項目・作業時間(分/1P)</span>
         <div class="grid gap-2">
           <div
-            v-for="(_, index) in steps"
+            v-for="(step, index) in steps"
             :key="index"
             class="grid gap-2 md:grid-cols-[minmax(0,1fr)_160px_48px]"
           >
             <input
-              v-model="steps[index].name"
+              v-model="step.name"
               type="text"
               :placeholder="`工程${index + 1}`"
               class="min-w-0 flex-1 rounded-xl border-2 border-[#2c8d98]/40 bg-white px-4 py-3 font-bold text-[#263236] outline-none ring-0 transition focus:border-[#2c8d98]"
             >
             <UiNumberStepper
-              v-model="steps[index].minutesPerPage"
+              v-model="step.minutesPerPage"
               :step="10"
               input-step="any"
               required
@@ -84,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import type { WorkProcessStep } from "~/types/settings";
+import type { WorkProcessStep } from "~~/types/settings";
 
 defineProps<{
   isEditing: boolean;

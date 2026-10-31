@@ -3,7 +3,7 @@ import type {
   CrunchThresholds,
   WorkProcess,
   WorkProcessStep,
-} from "~/types/settings";
+} from "~~/types/settings";
 import {
   DEFAULT_CRUNCH_THRESHOLDS,
   DEFAULT_SETTINGS,
@@ -88,7 +88,7 @@ const normalizeSettings = (settings: Partial<AppSettings> = {}): AppSettings => 
     (process) => process.id === settings.defaultWorkProcessId
   )
     ? String(settings.defaultWorkProcessId)
-    : workProcesses[0].id;
+    : workProcesses[0]?.id ?? DEFAULT_WORK_PROCESS.id;
 
   return {
     defaultTotalPages: Math.max(
@@ -257,7 +257,7 @@ export const useSettings = () => {
       workProcesses: nextProcesses,
       defaultWorkProcessId:
         settings.value.defaultWorkProcessId === processId
-          ? nextProcesses[0].id
+          ? nextProcesses[0]?.id ?? DEFAULT_WORK_PROCESS.id
           : settings.value.defaultWorkProcessId,
     });
 
