@@ -1,10 +1,45 @@
+import type { Project } from "~~/types/project";
+
 export const PLAN_ALLOCATION_UNIT = 15;
+// Firestoreルールの日付キー上限（dailyWorkEntries.keys().size() <= 800）に合わせる。
+const MAX_DAILY_ENTRY_COUNT = 800;
 
 type AllocatePlannedMinutesInput = {
   totalMinutes: number;
   dateKeys: string[];
   weightOf: (dateKey: string) => number;
   unit?: number;
+};
+
+export type AllocationOptions = {
+  weekendWeight: number;
+  restDays: number[];
+};
+
+export type MinutesRange = {
+  min: number;
+  max: number;
+};
+
+export type AllocationPlan = {
+  blockReason?: string;
+  plannedByDate: Record<string, number>;
+  from: string;
+  to: string;
+  totalMinutes: number;
+  workDayCount: number;
+  restDayCount: number;
+  weekdayRange?: MinutesRange;
+  weekendRange?: MinutesRange;
+  overwriteCount: number;
+};
+
+type BuildAllocationPlanInput = {
+  project: Project;
+  options: AllocationOptions;
+  remainingMinutes: number;
+  todayKey: string;
+  getActualMinutes: (dateKey: string) => number;
 };
 
 export const formatDateKey = (date: Date) => {
@@ -85,4 +120,107 @@ export const allocatePlannedMinutes = ({
   }
 
   return result;
+};
+
+const isWeekend = (weekday: number) => {
+  return weekday === 0 || weekday === 6;
+};
+
+const allocationWeight = (options: AllocationOptions, dateKey: string) => {
+  const weekday = parseDateKey(dateKey).getDay();
+  if (options.restDays.includes(weekday)) return 0;
+
+  return isWeekend(weekday) ? options.weekendWeight : 1;
+};
+
+const toMinutesRange = (values: number[]): MinutesRange | undefined => {
+  if (values.length === 0) return undefined;
+
+  return {
+    min: Math.min(...values),
+    max: Math.max(...values),
+  };
+};
+
+export const buildAllocationPlan = ({
+  project,
+  options,
+  remainingMinutes: totalMinutes,
+  todayKey,
+  getActualMinutes,
+}: BuildAllocationPlanInput): AllocationPlan => {
+  const dateKeys = listDateKeys(todayKey, project.deadline);
+  const workDateKeys = dateKeys.filter((dateKey) => allocationWeight(options, dateKey) > 0);
+  const plan: AllocationPlan = {
+    plannedByDate: {},
+    from: dateKeys[0] ?? todayKey,
+    to: project.deadline,
+    totalMinutes,
+    workDayCount: workDateKeys.length,
+    restDayCount: dateKeys.length - workDateKeys.length,
+    overwriteCount: Object.entries(project.dailyWorkEntries)
+      .filter(([dateKey, entry]) => dateKey >= todayKey && entry.planned > 0)
+      .length,
+  };
+
+  if (totalMinutes <= 0) return { ...plan, blockReason: "残り作業時間がないため、割り振る予定はありません。" };
+  if (dateKeys.length === 0) return { ...plan, blockReason: "締切を過ぎているため、割り振れません。" };
+  if (workDateKeys.length === 0) return { ...plan, blockReason: "作業する曜日を1つ以上残してください。" };
+
+  const allocated = allocatePlannedMinutes({
+    totalMinutes,
+    dateKeys,
+    weightOf: (dateKey) => allocationWeight(options, dateKey),
+  });
+  const weekdayMinutes: number[] = [];
+  const weekendMinutes: number[] = [];
+
+  for (const dateKey of workDateKeys) {
+    const minutes = allocated[dateKey] ?? 0;
+    (isWeekend(parseDateKey(dateKey).getDay()) ? weekendMinutes : weekdayMinutes).push(minutes);
+  }
+
+  // 今日の作業済み分は残り作業時間から引かれているため、予定には上乗せして保存する。
+  const plannedByDate = Object.fromEntries(
+    Object.entries(allocated).map(([dateKey, minutes]) => [
+      dateKey,
+      dateKey === todayKey ? minutes + getActualMinutes(dateKey) : minutes,
+    ])
+  );
+
+  const remainingKeys = Object.keys(project.dailyWorkEntries).filter((dateKey) => {
+    return dateKey < todayKey || getActualMinutes(dateKey) > 0;
+  });
+  const resultingKeys = new Set([
+    ...remainingKeys,
+    ...Object.keys(plannedByDate).filter((dateKey) => (plannedByDate[dateKey] ?? 0) > 0),
+  ]);
+  if (resultingKeys.size > MAX_DAILY_ENTRY_COUNT) {
+    return { ...plan, blockReason: "期間が長すぎるため、自動割り振りできません。" };
+  }
+
+  return {
+    ...plan,
+    plannedByDate,
+    weekdayRange: toMinutesRange(weekdayMinutes),
+    weekendRange: toMinutesRange(weekendMinutes),
+  };
+};
+
+export const formatMinutesRange = (
+  range: MinutesRange,
+  formatMinutes: (minutes: number) => string
+) => {
+  if (range.min === range.max) return formatMinutes(range.min);
+
+  return `${formatMinutes(range.min)}〜${formatMinutes(range.max)}`;
+};
+
+export const formatAllocationRange = (plan: AllocationPlan) => {
+  const format = (dateKey: string) => {
+    const date = parseDateKey(dateKey);
+    return `${date.getMonth() + 1}/${date.getDate()}`;
+  };
+
+  return `${format(plan.from)}〜${format(plan.to)}`;
 };
