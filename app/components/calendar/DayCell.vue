@@ -87,6 +87,7 @@
 </template>
 
 <script setup lang="ts">
+import type { CalendarDay } from "~/composables/useCalendarMonth";
 import { useProgress } from "~/composables/useProgress";
 import {
   scheduleClasses,
@@ -100,13 +101,6 @@ import {
   MAX_DAY_CELL_WORK_BARS,
   type WorkTotals,
 } from "~/utils/workBars";
-
-type CalendarDay = {
-  dateKey: string;
-  dayNumber: number;
-  isCurrentMonth: boolean;
-  isToday: boolean;
-};
 
 type ProjectDot = {
   id: string;
