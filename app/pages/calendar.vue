@@ -313,7 +313,7 @@
                       class="text-xs font-bold text-[#f36b00]"
                       role="status"
                     >
-                      残り作業時間を超えるため、{{ formatWorkDuration(plannedClampNotices[project.id]) }} に合わせました。
+                      残り作業時間を超えるため、{{ formatWorkDuration(plannedClampNotices[project.id] ?? 0) }} に合わせました。
                     </p>
 
                     <p
@@ -513,7 +513,7 @@
 </template>
 
 <script setup lang="ts">
-import type { DailyWorkEntry, PageStatus, Project } from "~/types/project";
+import type { DailyWorkEntry, PageStatus, Project } from "~~/types/project";
 import { useProjects } from "~/composables/useProjects";
 import { createStatusList, useProgress } from "~/composables/useProgress";
 import {
@@ -523,7 +523,7 @@ import {
   parseDateKey,
 } from "~/utils/planAllocation";
 import { formatProjectDate } from "~/utils/projectDisplay";
-import { getProjectColor } from "~/utils/projectColors";
+import { fallbackProjectColor, getProjectColor } from "~/utils/projectColors";
 import {
   scheduleClasses,
   scheduleLabels,
@@ -667,7 +667,7 @@ const dayCells = computed(() => {
       projectDots: projectTotals.map(({ project }) => ({
         id: project.id,
         title: project.title,
-        color: projectColors.value[project.id],
+        color: projectColors.value[project.id] ?? fallbackProjectColor,
       })),
     };
   });
@@ -978,7 +978,7 @@ function buildAllocationPlan(project: Project): AllocationPlan {
   });
   const resultingKeys = new Set([
     ...remainingKeys,
-    ...Object.keys(plannedByDate).filter((dateKey) => plannedByDate[dateKey] > 0),
+    ...Object.keys(plannedByDate).filter((dateKey) => (plannedByDate[dateKey] ?? 0) > 0),
   ]);
   if (resultingKeys.size > maxDailyEntryCount) {
     return { ...plan, blockReason: "期間が長すぎるため、自動割り振りできません。" };

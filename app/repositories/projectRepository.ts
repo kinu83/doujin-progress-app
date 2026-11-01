@@ -7,7 +7,7 @@ import {
   setDoc,
   writeBatch,
 } from "firebase/firestore";
-import type { Project, WorkLog } from "~/types/project";
+import type { Project, WorkLog } from "~~/types/project";
 
 type ProjectDocument = Omit<Project, "workLogs"> & {
   updatedAt?: string;

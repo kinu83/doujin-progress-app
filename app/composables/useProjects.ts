@@ -1,5 +1,5 @@
-import type { BookSpec, DailyWorkEntry, Project, PageStatus, WorkLog } from "~/types/project";
-import type { WorkProcess, WorkProcessStep } from "~/types/settings";
+import type { BookSpec, DailyWorkEntry, Project, PageStatus, WorkLog } from "~~/types/project";
+import type { WorkProcess, WorkProcessStep } from "~~/types/settings";
 import { calculateStatusCompletedMinutes } from "~/composables/useProgress";
 import { DEFAULT_WORK_PROCESS } from "~/constants/defaultSettings";
 import { useSettings } from "~/composables/useSettings";
@@ -217,7 +217,7 @@ const normalizeStatusForSteps = (
   status: PageStatus,
   previousSteps: WorkProcessStep[],
   nextSteps: WorkProcessStep[]
-) => {
+): PageStatus => {
   const nextStatuses = getProjectStatusList(nextSteps);
   if (nextStatuses.includes(status)) return status;
 
@@ -225,7 +225,7 @@ const normalizeStatusForSteps = (
   const previousIndex = previousStatuses.indexOf(status);
   // 旧工程で完了済みだったページは、新工程でも最後の工程に移して完了扱いを保つ。
   if (previousIndex === previousStatuses.length - 1) {
-    return nextStatuses[nextStatuses.length - 1];
+    return nextStatuses.at(-1) ?? "未着手";
   }
 
   return "未着手";

@@ -1,6 +1,6 @@
 import type { Firestore } from "firebase/firestore";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import type { AppSettings } from "~/types/settings";
+import type { AppSettings } from "~~/types/settings";
 
 const userSettingsDoc = (db: Firestore, uid: string) => {
   return doc(db, "users", uid, "settings", "app");

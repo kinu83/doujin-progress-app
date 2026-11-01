@@ -124,7 +124,7 @@
 
 <script setup lang="ts">
 import type { BookSpecInput } from "~/composables/useProjects";
-import type { PrintColorMode, Project } from "~/types/project";
+import type { PrintColorMode, Project } from "~~/types/project";
 
 const props = defineProps<{
   open: boolean;

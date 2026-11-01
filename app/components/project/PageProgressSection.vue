@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import type { PageStatus, Project } from "~/types/project";
+import type { PageStatus, Project } from "~~/types/project";
 import { parseDateKey } from "~/utils/planAllocation";
 
 const props = defineProps<{

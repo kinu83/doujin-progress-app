@@ -10,7 +10,9 @@ const projectColorPalette = [
   "#5f6b70",
 ];
 
+export const fallbackProjectColor = "#5f6b70";
+
 // 色はFirestoreに保存せず、作成順の並びから決める。
 export const getProjectColor = (index: number) => {
-  return projectColorPalette[index % projectColorPalette.length];
+  return projectColorPalette[index % projectColorPalette.length] ?? fallbackProjectColor;
 };

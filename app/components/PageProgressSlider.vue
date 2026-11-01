@@ -45,8 +45,8 @@
 
 <script setup lang="ts">
 import { calculatePageProgress, createStatusList } from "~/composables/useProgress";
-import type { ManuscriptPage, PageStatus } from "~/types/project";
-import type { WorkProcessStep } from "~/types/settings";
+import type { ManuscriptPage, PageStatus } from "~~/types/project";
+import type { WorkProcessStep } from "~~/types/settings";
 
 const props = defineProps<{
   page: ManuscriptPage;

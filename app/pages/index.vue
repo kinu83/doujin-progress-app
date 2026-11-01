@@ -144,7 +144,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Project } from "~/types/project";
+import type { Project } from "~~/types/project";
 import { getCrunchLevelClasses } from "~/utils/crunchLevelDisplay";
 import { formatEventLabel, formatProjectDate } from "~/utils/projectDisplay";
 

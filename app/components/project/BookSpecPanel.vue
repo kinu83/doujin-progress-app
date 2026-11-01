@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Project } from "~/types/project";
+import type { Project } from "~~/types/project";
 
 const props = defineProps<{
   project: Project;

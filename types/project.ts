@@ -48,7 +48,7 @@ export type Project = {
   totalPages: number;
   workProcessId: string;
   workProcessName: string;
-  workProcessSteps: import("~/types/settings").WorkProcessStep[];
+  workProcessSteps: import("~~/types/settings").WorkProcessStep[];
   bookSpec: BookSpec;
   pages: ManuscriptPage[];
   dailyWorkEntries: Record<string, DailyWorkEntry>;
