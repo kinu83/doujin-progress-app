@@ -11,7 +11,7 @@ node_modules
 
 # Agents
 .agents
-.claude
+.claude/settings.local.json
 
 # Logs
 logs
