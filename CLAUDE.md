@@ -23,7 +23,7 @@
 - `app/utils/` 表示用の純粋関数
 - `app/constants/` 定数・初期設定
 - `firestore.rules` セキュリティルール
-- `.claude/skills/` Firebase の Skill（`skills-lock.json` で管理）
+- `.claude/skills/` Skill（`firebase-*` は外部から取得し `skills-lock.json` で管理、それ以外はこのリポジトリ用）
 
 ## 常に守ること
 
@@ -33,4 +33,4 @@
 
 ## コミット・PR・Issue
 
-- 対応する Skill に従う。Skill が用意されるまでは `CLAUDE.local.md` のルールに従う。
+- `commit`・`pr`・`issue` の Skill に従う。どれも実行前に内容を見せて承認を得る。
