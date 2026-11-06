@@ -56,6 +56,15 @@ export const parseDateKey = (dateKey: string) => {
   return new Date(year, month - 1, day);
 };
 
+export const parseDateKeyFromQuery = (value: unknown) => {
+  const dateKey = Array.isArray(value) ? value[0] : value;
+  if (typeof dateKey !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+    return null;
+  }
+
+  return parseDateKey(dateKey);
+};
+
 export const listDateKeys = (from: string, to: string) => {
   const dateKeys: string[] = [];
   if (!from || !to || from > to) return dateKeys;

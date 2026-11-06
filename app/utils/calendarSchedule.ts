@@ -87,3 +87,32 @@ export const isWithinWorkPeriod = (project: Project, dateKey: string) => {
 
   return project.startDate <= dateKey && dateKey <= project.deadline;
 };
+
+export const dateModeOf = (dateKey: string, todayKey: string): DateMode => {
+  if (dateKey < todayKey) return "past";
+  if (dateKey === todayKey) return "today";
+
+  return "future";
+};
+
+const hasDailyEntry = (
+  project: Project,
+  dateKey: string,
+  getActualMinutes: (projectId: string, dateKey: string) => number
+) => {
+  const entry = project.dailyWorkEntries[dateKey];
+  const actual = getActualMinutes(project.id, dateKey);
+
+  return Boolean((entry && entry.planned > 0) || actual > 0);
+};
+
+export const editableProjectsOn = (
+  projects: Project[],
+  dateKey: string,
+  getActualMinutes: (projectId: string, dateKey: string) => number
+) => {
+  return projects.filter((project) => {
+    // 作業期間外でも、すでに予定や実績がある日は編集できるように残す。
+    return isWithinWorkPeriod(project, dateKey) || hasDailyEntry(project, dateKey, getActualMinutes);
+  });
+};
