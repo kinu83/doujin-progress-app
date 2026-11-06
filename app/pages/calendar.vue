@@ -78,7 +78,7 @@
           :options="allocationOptionsFor(allocationTarget.id)"
           :project-title="allocationTarget.title"
           :plan="allocationPlan"
-          @update:options="allocationOptions[allocationTarget.id] = $event"
+          @update:options="updateAllocationOptions(allocationTarget.id, $event)"
           @close="closeAllocationDialog"
           @confirm="confirmAllocation"
         />
@@ -88,25 +88,20 @@
 </template>
 
 <script setup lang="ts">
-import type { PageStatus, Project } from "~~/types/project";
+import type { PageStatus } from "~~/types/project";
 import { WEEKDAY_LABELS } from "~/constants/calendar";
+import { useAllocationDialog } from "~/composables/useAllocationDialog";
 import { useCalendarMonth } from "~/composables/useCalendarMonth";
 import { useDailyPlan } from "~/composables/useDailyPlan";
-import { useProgress } from "~/composables/useProgress";
 import { useProjects } from "~/composables/useProjects";
-import {
-  buildAllocationPlan,
-  formatDateKey,
-  parseDateKey,
-  type AllocationOptions,
-} from "~/utils/planAllocation";
+import { formatDateKey, parseDateKeyFromQuery } from "~/utils/planAllocation";
 import { fallbackProjectColor, getProjectColor } from "~/utils/projectColors";
 import {
+  dateModeOf,
   dayProjectTotals,
   daySchedule,
-  isWithinWorkPeriod,
+  editableProjectsOn,
   sumWorkTotals,
-  type DateMode,
 } from "~/utils/calendarSchedule";
 
 const {
@@ -115,16 +110,12 @@ const {
   updatePageStatus,
   getProjectDailyActualMinutes,
 } = useProjects();
-const { calculateRemainingWork } = useProgress();
 
 const route = useRoute();
 const initialDate = parseDateKeyFromQuery(route.query.date) ?? new Date();
 const selectedDate = ref(formatDateKey(initialDate));
 const isWorkPanelOpen = ref(Boolean(route.query.date));
 const showCompletedPages = ref<Record<string, boolean>>({});
-// 自動割り振りのオプションは保存せず、画面を開いている間だけプロジェクト別に保持する。
-const allocationOptions = ref<Record<string, AllocationOptions>>({});
-const allocationTargetId = ref<string | null>(null);
 
 const {
   monthTitle,
@@ -141,6 +132,15 @@ const {
   clearAllocationDone,
   applyAllocation,
 } = useDailyPlan(selectedDate);
+const {
+  allocationTarget,
+  allocationPlan,
+  allocationOptionsFor,
+  updateAllocationOptions,
+  openAllocationDialog,
+  closeAllocationDialog,
+  confirmAllocation,
+} = useAllocationDialog({ clearAllocationDone, applyAllocation });
 
 onMounted(() => {
   loadProjects();
@@ -177,47 +177,11 @@ const monthTotals = computed(() => {
 
 const selectedSchedule = computed(() => daySchedule(projects.value, selectedDate.value));
 
-const selectedDateMode = computed<DateMode>(() => {
-  const todayKey = formatDateKey(new Date());
-
-  if (selectedDate.value < todayKey) return "past";
-  if (selectedDate.value === todayKey) return "today";
-
-  return "future";
-});
-
-const allocationTarget = computed(() => {
-  return projects.value.find((project) => project.id === allocationTargetId.value) ?? null;
-});
-
-const allocationPlan = computed(() => {
-  const project = allocationTarget.value;
-  if (!project) return null;
-
-  return buildAllocationPlan({
-    project,
-    options: allocationOptionsFor(project.id),
-    remainingMinutes: calculateRemainingWork(project.pages, project.workProcessSteps),
-    todayKey: formatDateKey(new Date()),
-    getActualMinutes: (dateKey) => getProjectDailyActualMinutes(project.id, dateKey),
-  });
-});
+const selectedDateMode = computed(() => dateModeOf(selectedDate.value, formatDateKey(new Date())));
 
 const editableProjects = computed(() => {
-  return projects.value.filter((project) => {
-    // 作業期間外でも、すでに予定や実績がある日は編集できるように残す。
-    return isWithinWorkPeriod(project, selectedDate.value) || hasDailyEntry(project, selectedDate.value);
-  });
+  return editableProjectsOn(projects.value, selectedDate.value, getProjectDailyActualMinutes);
 });
-
-function parseDateKeyFromQuery(value: unknown) {
-  const dateKey = Array.isArray(value) ? value[0] : value;
-  if (typeof dateKey !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
-    return null;
-  }
-
-  return parseDateKey(dateKey);
-}
 
 function goToday() {
   const now = new Date();
@@ -232,40 +196,6 @@ function selectDate(dateKey: string) {
 
 function closeWorkPanel() {
   isWorkPanelOpen.value = false;
-}
-
-function hasDailyEntry(project: Project, dateKey: string) {
-  const entry = project.dailyWorkEntries[dateKey];
-  const actual = getProjectDailyActualMinutes(project.id, dateKey);
-
-  return Boolean((entry && entry.planned > 0) || actual > 0);
-}
-
-function allocationOptionsFor(projectId: string): AllocationOptions {
-  // 描画中に状態を書き換えないよう、初期化はダイアログを開いたときに行う。
-  return allocationOptions.value[projectId] ?? {
-    weekendWeight: 1,
-    restDays: [],
-  };
-}
-
-function openAllocationDialog(projectId: string) {
-  allocationOptions.value[projectId] ??= allocationOptionsFor(projectId);
-  clearAllocationDone(projectId);
-  allocationTargetId.value = projectId;
-}
-
-function closeAllocationDialog() {
-  allocationTargetId.value = null;
-}
-
-function confirmAllocation() {
-  const project = allocationTarget.value;
-  const plan = allocationPlan.value;
-  if (!project || !plan || plan.blockReason) return;
-
-  applyAllocation(project.id, plan.plannedByDate);
-  closeAllocationDialog();
 }
 
 function updatePageStatusForSelectedDate(projectId: string, pageNumber: number, status: PageStatus) {
