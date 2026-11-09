@@ -41,5 +41,5 @@ description: Firestore に保存するデータの構造を変えるときに使
 
 - `firestore.rules` を変えずにデータ構造だけを変えない（CLAUDE.md のルール）。
 - 既存ユーザーのデータを移行する処理は `utils/projectNormalize.ts` に書き、移行前後で値が変わらないかを確認する。
-- `users/{uid}` のルールには、過去に保存していた `email` などのフィールドが残っている。新しい個人情報のフィールドを足す根拠にしない。
+- `users/{uid}` のルールは `email`・`displayName`・`photoURL` を許可しない（過去に保存していた値は `scripts/remove-user-profile-fields.mjs` で削除する）。個人情報のフィールドを足さない。
 - ルールの変更が大きいときは firebase-security-rules-auditor でレビューする。

@@ -18,7 +18,8 @@ export const saveGoogleUserProfile = async (db: Firestore, user: User) => {
     {
       authType: "google",
       isGuest: false,
-      // メールアドレス等のプロフィールはアプリで使わないため保存しない。過去に保存した値もここで削除する
+      // メールアドレス等のプロフィールはアプリで使わないため保存しない。
+      // 過去に保存した値が残っているとルールで書き込みが拒否されるため、ここでも削除する
       email: deleteField(),
       displayName: deleteField(),
       photoURL: deleteField(),
