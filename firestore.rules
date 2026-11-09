@@ -18,10 +18,6 @@ service cloud.firestore {
       return value is string && value.size() <= maxLength;
     }
 
-    function isNullableString(value, maxLength) {
-      return value == null || isString(value, maxLength);
-    }
-
     function isDateString(value) {
       return isString(value, 40);
     }
@@ -51,9 +47,6 @@ service cloud.firestore {
           "username",
           "authType",
           "isGuest",
-          "email",
-          "displayName",
-          "photoURL",
           "createdAt",
           "updatedAt"
         ])
@@ -69,18 +62,6 @@ service cloud.firestore {
         && (
           !request.resource.data.keys().hasAny(["isGuest"])
           || request.resource.data.isGuest is bool
-        )
-        && (
-          !request.resource.data.keys().hasAny(["email"])
-          || isNullableString(request.resource.data.email, 320)
-        )
-        && (
-          !request.resource.data.keys().hasAny(["displayName"])
-          || isNullableString(request.resource.data.displayName, 120)
-        )
-        && (
-          !request.resource.data.keys().hasAny(["photoURL"])
-          || isNullableString(request.resource.data.photoURL, 2048)
         )
         && (
           !request.resource.data.keys().hasAny(["createdAt"])

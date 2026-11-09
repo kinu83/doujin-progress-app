@@ -90,28 +90,47 @@
 ```text
 users
 └── {userId}
-    ├── displayName
-    ├── email
-    └── projects
-        └── {projectId}
-            ├── title
-            ├── eventName
-            ├── deadline
-            ├── eventDate
-            ├── totalPages
-            ├── progressLevel
-            ├── processTimes
-            │   └── [
-            │       ├── name
-            │       ├── hours
-            │       └── order
-            │      ]
-            ├── pages
-            │   └── [
-            │       ├── pageNumber
-            │       ├── currentProcess
-            │       └── status
-            │      ]
-            ├── createdAt
+    ├── authType          # "google"
+    ├── isGuest
+    ├── createdAt
+    ├── updatedAt
+    ├── projects
+    │   └── {projectId}
+    │       ├── id
+    │       ├── title
+    │       ├── eventName
+    │       ├── startDate
+    │       ├── eventDate
+    │       ├── deadline
+    │       ├── totalPages
+    │       ├── workProcessId
+    │       ├── workProcessName
+    │       ├── workProcessSteps   # [{ name, minutesPerPage }]
+    │       ├── bookSpec           # { colorMode, coverPaper, bodyPaper, printer, printRun, budget, note }
+    │       ├── pages              # [{ pageNumber, status }]
+    │       ├── dailyWorkEntries   # { 日付: { planned, actual } }
+    │       ├── createdAt
+    │       ├── updatedAt
+    │       └── workLogs
+    │           └── {workLogId}
+    │               ├── id
+    │               ├── projectId
+    │               ├── workDate
+    │               ├── kind       # "pageStatus" | "manualActual" | "legacyActual"
+    │               ├── minutes
+    │               ├── pageNumber # 任意
+    │               ├── fromStatus # 任意
+    │               ├── toStatus   # 任意
+    │               ├── note       # 任意
+    │               ├── createdAt
+    │               └── updatedAt
+    └── settings
+        └── app
+            ├── defaultTotalPages
+            ├── defaultWorkProcessId
+            ├── workProcesses      # [{ id, name, steps: [{ name, minutesPerPage }] }]
+            ├── crunchThresholds   # { warningMinutes, crunchMinutes, extremeMinutes }
             └── updatedAt
 ```
+
+メールアドレス・表示名・プロフィール画像のURLなどの個人情報は保存しない（`firestore.rules` でも許可していない）。
