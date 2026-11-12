@@ -33,4 +33,4 @@
 
 ## コミット・PR・Issue
 
-- `commit`・`pr`・`issue` の Skill に従う。どれも実行前に内容を見せて承認を得る。
+- `commit`・`pr`・`issue` の Skill に従う。コミット・push・PR 作成は承認なしで実行してよい。Issue の作成・編集は実行前に内容を見せて承認を得る。

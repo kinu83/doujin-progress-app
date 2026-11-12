@@ -1,5 +1,10 @@
 {
   "permissions": {
+    "allow": [
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(gh pr create *)"
+    ],
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
@@ -11,9 +16,6 @@
       "Bash(git push origin HEAD:main*)"
     ],
     "ask": [
-      "Bash(git commit *)",
-      "Bash(git push *)",
-      "Bash(gh pr create *)",
       "Bash(gh pr merge *)",
       "Bash(gh pr edit *)",
       "Bash(gh issue create *)",
