@@ -18,6 +18,12 @@ export default defineNuxtConfig({
   },
 
 
+  // CSPで 'unsafe-inline' を使わずに済むよう、インラインの importmap を出力しない。
+  // 残るインラインスクリプトは scripts/externalize-inline-scripts.mjs で外部ファイルに移す。
+  experimental: {
+    entryImportMap: false,
+  },
+
   css: ["~~/assets/css/main.css"],
   
   vite: {
