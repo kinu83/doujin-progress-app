@@ -5,7 +5,7 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
-    "generate": "nuxt generate",
+    "generate": "nuxt generate && node scripts/externalize-inline-scripts.mjs",
     "preview": "nuxt preview",
     "typecheck": "nuxt typecheck",
     "postinstall": "nuxt prepare"
